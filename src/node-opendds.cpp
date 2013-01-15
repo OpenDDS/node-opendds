@@ -77,6 +77,7 @@ namespace {
 
   Handle<Value> create_participant(const Arguments& args);
   Handle<Value> subscribe(const Arguments& args);
+  Handle<Value> unsubscribe(const Arguments& args);
 
   Handle<Value> initialize(const Arguments& args)
   {
@@ -135,6 +136,7 @@ namespace {
     const Handle<ObjectTemplate> ot = ObjectTemplate::New();
     ot->SetInternalFieldCount(1);
     node::SetMethod(ot, "subscribe", subscribe);
+    node::SetMethod(ot, "unsubscribe", unsubscribe);
     const Local<Object> obj = ot->NewInstance();
     obj->SetPointerInInternalField(0, dp._retn());
     return scope.Close(obj);
@@ -207,6 +209,36 @@ namespace {
     obj->SetPointerInInternalField(0, dr._retn());
     ndrl->set_javascript_datareader(obj);
     return scope.Close(obj);
+  }
+
+  // participant.unsubscribe(reader)
+  Handle<Value> unsubscribe(const Arguments& args)
+  {
+    HandleScope scope;
+    if (args.Length() < 1 || !args[0]->IsObject()) {
+      ThrowException(Exception::TypeError(String::New("1 argument required")));
+      return scope.Close(Undefined());
+    }
+    void* const internal = args.This()->GetPointerFromInternalField(0);
+    DDS::DomainParticipant* dp =
+      static_cast<DDS::DomainParticipant*>(internal);
+
+    const Local<Object> dr_js = args[0]->ToObject();
+    void* const dr_obj = dr_js->GetPointerFromInternalField(0);
+    DDS::DataReader_var dr = static_cast<DDS::DataReader*>(dr_obj);
+    dr_js->SetPointerInInternalField(0, 0);
+
+    DDS::Subscriber_var sub = dr->get_subscriber();
+    DDS::TopicDescription_var td = dr->get_topicdescription();
+    dr = 0;
+    sub->delete_contained_entities();
+    dp->delete_subscriber(sub);
+
+    //TODO: CFT
+    DDS::Topic_var topic = DDS::Topic::_narrow(td);
+    dp->delete_topic(topic);
+
+    return scope.Close(Undefined());
   }
 
   Handle<Value> finalize(const Arguments& args)
