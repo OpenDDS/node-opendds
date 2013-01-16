@@ -1,5 +1,41 @@
 #include "dds/DdsDcpsInfrastructureTypeSupportImpl.h"
 #include "dds/DCPS/Marked_Default_Qos.h"
+#include "dds/DCPS/WaitSet.h"
+
+void wait_for_match(const DDS::DataWriter_var& writer)
+{
+  DDS::StatusCondition_var condition = writer->get_statuscondition();
+  condition->set_enabled_statuses(DDS::PUBLICATION_MATCHED_STATUS);
+
+  DDS::WaitSet_var ws = new DDS::WaitSet;
+  ws->attach_condition(condition);
+
+  DDS::Duration_t timeout =
+    { DDS::DURATION_INFINITE_SEC, DDS::DURATION_INFINITE_NSEC };
+
+  DDS::ConditionSeq conditions;
+  DDS::PublicationMatchedStatus matches = {0, 0, 0, 0, 0};
+
+  while (true) {
+    if (writer->get_publication_matched_status(matches) != ::DDS::RETCODE_OK) {
+      ACE_ERROR((LM_ERROR,
+                 ACE_TEXT("%N:%l: wait_for_match()")
+                 ACE_TEXT(" ERROR: get_publication_matched_status failed!\n")));
+      ACE_OS::exit(-1);
+    }
+
+    if (matches.current_count >= 1) {
+      break;
+    }
+    if (ws->wait(conditions, timeout) != DDS::RETCODE_OK) {
+      ACE_ERROR((LM_ERROR,
+                 ACE_TEXT("%N:%l: wait_for_match()")
+                 ACE_TEXT(" ERROR: wait failed!\n")));
+      ACE_OS::exit(-1);
+    }
+  }
+  ws->detach_condition(condition);
+}
 
 int ACE_TMAIN(int argc, ACE_TCHAR* argv[])
 {
@@ -46,6 +82,7 @@ int ACE_TMAIN(int argc, ACE_TCHAR* argv[])
       pub->create_datawriter(topic,
                              DATAWRITER_QOS_DEFAULT,
                              0, 0);
+    wait_for_match(dw);
 
     DDS::TopicBuiltinTopicDataDataWriter_var writer =
       DDS::TopicBuiltinTopicDataDataWriter::_narrow(dw);

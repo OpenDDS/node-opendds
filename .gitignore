@@ -1,0 +1,7 @@
+build
+.depend*
+.obj
+GNUmakefile*
+test/test_publisher
+test/repo.ior
+*~

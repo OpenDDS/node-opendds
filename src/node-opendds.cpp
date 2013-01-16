@@ -54,8 +54,12 @@ namespace {
 
     void async() // called from libuv event loop
     {
-      Handle<v8::Object> obj;
-      node::MakeCallback(obj, callback_, 0, 0);
+      // invoke callback with (datareader, sampleinfo, sample)
+      Handle<Value> argv[] = {js_dr_,
+                              v8::Object::New(),
+                              v8::Object::New() };
+      node::MakeCallback(Context::GetCurrent()->Global(), callback_,
+                         sizeof(argv) / sizeof(argv[0]), argv);
     }
 
     void set_javascript_datareader(const Local<v8::Object>& js_dr)
