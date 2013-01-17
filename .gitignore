@@ -1,7 +1,10 @@
 build
 .depend*
 .obj
+.shobj
 GNUmakefile*
 test/test_publisher
 test/repo.ior
 *~
+*.so
+*.so.*

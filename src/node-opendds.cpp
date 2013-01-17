@@ -1,85 +1,46 @@
+#include "NodeDRListener.h"
+#include "NodeQosConversion.h"
+
 #include <node.h>
 #include <v8.h>
 
 #include <dds/DCPS/Service_Participant.h>
 #include <dds/DCPS/Registered_Data_Types.h>
+#include <dds/DCPS/Marked_Default_Qos.h>
+#include <dds/DCPS/V8TypeConverter.h>
+
+#include <ace/DLL_Manager.h>
 
 #include <string>
 #include <vector>
+#include <cstring>
 
 using namespace v8;
 using OpenDDS::DCPS::Data_Types_Register;
+using NodeOpenDDS::NodeDRListener;
+using NodeOpenDDS::convertQos;
 
 namespace {
   std::vector<DDS::DomainParticipant_var> participants_;
+  std::string cft_name("CFT000001"); // unique names for ContentFilteredTopic
 
-  class NodeDRListener
-    : public virtual OpenDDS::DCPS::LocalObject<DDS::DataReaderListener> {
-  public:
-    explicit NodeDRListener(const Local<Function>& callback)
-      : callback_(Persistent<Function>::New(callback))
-      , async_uv_(this)
-    {
-      uv_async_init(uv_default_loop(), &async_uv_, async_cb);
+  void increment(std::string& name)
+  {
+    const size_t i = cft_name.find_first_not_of('0', 3);
+    if (name[i] == '9') {
+      if (i == 3) {
+        name = "CFT000001";
+      } else {
+        name[i] = '0';
+        name[i - 1] = '1';
+      }
+    } else {
+      ++name[i];
     }
-
-    static void async_cb(uv_async_t* async_uv, int /*status*/)
-    {
-      static_cast<AsyncUv*>(async_uv)->outer_->async();
-    }
-
-    ~NodeDRListener()
-    {
-      uv_close((uv_handle_t*)&async_uv_, 0);
-      callback_.Dispose();
-      js_dr_.Dispose();
-    }
-
-    typedef DDS::RequestedDeadlineMissedStatus RDMStatus;
-    void on_requested_deadline_missed(DDS::DataReader*, const RDMStatus&) {}
-    typedef DDS::RequestedIncompatibleQosStatus RIQStatus;
-    void on_requested_incompatible_qos(DDS::DataReader*, const RIQStatus&) {}
-    void on_sample_rejected(DDS::DataReader*,
-                            const DDS::SampleRejectedStatus&) {}
-    void on_liveliness_changed(DDS::DataReader*,
-                               const DDS::LivelinessChangedStatus&) {}
-    void on_subscription_matched(DDS::DataReader*,
-                                 const DDS::SubscriptionMatchedStatus&) {}
-    void on_sample_lost(DDS::DataReader*, const DDS::SampleLostStatus&) {}
-
-    void on_data_available(DDS::DataReader*)
-    {
-      uv_async_send(&async_uv_);
-    }
-
-    void async() // called from libuv event loop
-    {
-      // invoke callback with (datareader, sampleinfo, sample)
-      Handle<Value> argv[] = {js_dr_,
-                              v8::Object::New(),
-                              v8::Object::New() };
-      node::MakeCallback(Context::GetCurrent()->Global(), callback_,
-                         sizeof(argv) / sizeof(argv[0]), argv);
-    }
-
-    void set_javascript_datareader(const Local<v8::Object>& js_dr)
-    {
-      js_dr_ = Persistent<v8::Object>::New(js_dr);
-    }
-
-  private:
-    NodeDRListener(const NodeDRListener&);
-    NodeDRListener& operator=(const NodeDRListener&);
-    Persistent<Function> callback_;
-    Persistent<v8::Object> js_dr_;
-
-    struct AsyncUv : uv_async_t {
-      explicit AsyncUv(NodeDRListener* outer) : outer_(outer) {}
-      NodeDRListener* outer_;
-    } async_uv_;
-  };
+  }
 
   Handle<Value> create_participant(const Arguments& args);
+  Handle<Value> delete_participant(const Arguments& args);
   Handle<Value> subscribe(const Arguments& args);
   Handle<Value> unsubscribe(const Arguments& args);
 
@@ -102,6 +63,7 @@ namespace {
     const Handle<ObjectTemplate> ot = ObjectTemplate::New();
     ot->SetInternalFieldCount(1);
     node::SetMethod(ot, "create_participant", create_participant);
+    node::SetMethod(ot, "delete_participant", delete_participant);
     const Local<Object> obj = ot->NewInstance();
     obj->SetPointerInInternalField(0, dpf._retn());
     return scope.Close(obj);
@@ -116,19 +78,13 @@ namespace {
       domain = static_cast<DDS::DomainId_t>(args[0]->NumberValue());
     }
     void* const internal = this_js->GetPointerFromInternalField(0);
-    DDS::DomainParticipantFactory* dpf =
+    DDS::DomainParticipantFactory* const dpf =
       static_cast<DDS::DomainParticipantFactory*>(internal);
     DDS::DomainParticipantQos qos;
     dpf->get_default_participant_qos(qos);
     if (args.Length() > 1) {
       const Local<Object> qos_js = args[1]->ToObject();
-      const Handle<String> user_data = String::NewSymbol("user_data");
-      if (qos_js->Has(user_data)) {
-        const Local<String> ud = qos_js->Get(user_data)->ToString();
-        qos.user_data.value.length(ud->Utf8Length());
-        CORBA::Octet* const buffer = qos.user_data.value.get_buffer();
-        ud->WriteUtf8(reinterpret_cast<char*>(buffer));
-      }
+      convertQos(qos, qos_js);
     }
     DDS::DomainParticipant_var dp = dpf->create_participant(domain, qos, 0, 0);
     if (!dp) {
@@ -146,7 +102,27 @@ namespace {
     return scope.Close(obj);
   }
 
-  // participant.subscribe(topic_name, topic_type, {filter/qos}, callback)
+  Handle<Value> delete_participant(const Arguments& args)
+  {
+    HandleScope scope;
+    if (args.Length() == 0 || !args[0]->IsObject()) {
+      ThrowException(Exception::TypeError(String::New("1 argument required")));
+      return scope.Close(Undefined());
+    }
+    const Local<Object> js_obj = args[0]->ToObject();
+    void* const internal = js_obj->GetPointerFromInternalField(0);
+    const DDS::DomainParticipant_var part =
+      static_cast<DDS::DomainParticipant*>(internal);
+    js_obj->SetPointerInInternalField(0, 0);
+    const std::vector<DDS::DomainParticipant_var>::iterator i =
+      std::find(participants_.begin(), participants_.end(), part);
+    if (i != participants_.end()) participants_.erase(i);
+    part->delete_contained_entities();
+    const DDS::DomainParticipantFactory_var dpf = TheParticipantFactory;
+    dpf->delete_participant(part);
+    return scope.Close(Undefined());
+  }
+
   Handle<Value> subscribe(const Arguments& args)
   {
     HandleScope scope;
@@ -161,7 +137,7 @@ namespace {
       return scope.Close(Undefined());
     }
     void* const internal = args.This()->GetPointerFromInternalField(0);
-    DDS::DomainParticipant* dp =
+    DDS::DomainParticipant* const dp =
       static_cast<DDS::DomainParticipant*>(internal);
 
     const String::Utf8Value topic_name(args[0]);
@@ -169,25 +145,71 @@ namespace {
     OpenDDS::DCPS::TypeSupport* ts =
       Registered_Data_Types->lookup(dp, *topic_type);
     if (!ts) {
-      ThrowException(Exception::Error(String::New("TypeSupport was not "
-                                                  "registered")));
+      ts = Registered_Data_Types->lookup(0, *topic_type);
+      if (!ts) {
+        ThrowException(Exception::Error(String::New("TypeSupport was not "
+                                                    "registered")));
+        return scope.Close(Undefined());
+      }
+      Registered_Data_Types->register_type(dp, *topic_type, ts);
+    }
+    const OpenDDS::DCPS::V8TypeConverter* const tc =
+      dynamic_cast<const OpenDDS::DCPS::V8TypeConverter*>(ts);
+    if (!tc) {
+      ThrowException(Exception::Error(String::New("TypeSupport was not built "
+                                                  "with support for V8.")));
       return scope.Close(Undefined());
     }
 
-    DDS::TopicQos topic_qos;
-    dp->get_default_topic_qos(topic_qos); //TODO: user's topic QoS
-    DDS::Topic_var topic =
-      dp->create_topic(*topic_name, *topic_type, topic_qos, 0, 0);
+    DDS::Topic_var real_topic =
+      dp->create_topic(*topic_name, *topic_type, TOPIC_QOS_DEFAULT, 0, 0);
+    DDS::TopicDescription_var topic =
+      DDS::TopicDescription::_duplicate(real_topic);
     if (!topic) {
       ThrowException(Exception::Error(String::New("couldn't create Topic")));
       return scope.Close(Undefined());
     }
 
-    //TODO: support CFT
+    Local<Object> qos_js;
+    if (args.Length() > 3 && args[2]->IsObject()) {
+      qos_js = args[2]->ToObject();
+    }
+    const Handle<String> cft_str = String::NewSymbol("ContentFilteredTopic");
+    if (*qos_js && qos_js->Has(cft_str)) {
+      const Local<Object> cft_js = qos_js->Get(cft_str)->ToObject();
+      const Handle<String> fe_str = String::NewSymbol("filter_expression"),
+        ep_str = String::NewSymbol("expression_parameters");
+      if (!cft_js->Has(fe_str)) {
+        ThrowException(Exception::Error(String::New("filter_expression is "
+                                                    "required in Content"
+                                                    "FilteredTopic.")));
+      }
+      const String::Utf8Value filt(cft_js->Get(fe_str));
+      DDS::StringSeq params;
+      if (cft_js->Has(ep_str)) {
+        const Local<Object> params_js = cft_js->Get(ep_str)->ToObject();
+        const Local<Number> params_len =
+          params_js->Get(String::NewSymbol("length"))->ToNumber();
+        const uint32_t len = static_cast<uint32_t>(params_len->Value());
+        params.length(len);
+        for (uint32_t i = 0; i < len; ++i) {
+          const String::Utf8Value pstr(params_js->Get(i));
+          params[i] = *pstr;
+        }
+      }
+      topic = dp->create_contentfilteredtopic(cft_name.c_str(), real_topic,
+                                              *filt, params);
+      increment(cft_name);
+    }
 
     DDS::SubscriberQos sub_qos;
-    dp->get_default_subscriber_qos(sub_qos); //TODO: user's sub QoS
-    DDS::Subscriber_var sub = dp->create_subscriber(sub_qos, 0, 0);
+    dp->get_default_subscriber_qos(sub_qos);
+    const Handle<String> subqos_str = String::NewSymbol("SubscriberQos");
+    if (*qos_js && qos_js->Has(subqos_str)) {
+      convertQos(sub_qos, qos_js->Get(subqos_str)->ToObject());
+    }
+
+    const DDS::Subscriber_var sub = dp->create_subscriber(sub_qos, 0, 0);
     if (!sub) {
       ThrowException(Exception::Error(String::New("couldn't create "
                                                   "Subscriber")));
@@ -195,10 +217,16 @@ namespace {
     }
 
     Local<Value> cb = args[args.Length() - 1];
-    NodeDRListener* const ndrl = new NodeDRListener(cb.As<Function>());
-    DDS::DataReaderListener_var listen(ndrl);
+    NodeDRListener* const ndrl = new NodeDRListener(cb.As<Function>(), *tc);
+    const DDS::DataReaderListener_var listen(ndrl);
+
     DDS::DataReaderQos dr_qos;
-    sub->get_default_datareader_qos(dr_qos); //TODO: user's dr QoS
+    sub->get_default_datareader_qos(dr_qos);
+    const Handle<String> drqos_str = String::NewSymbol("DataReaderQos");
+    if (*qos_js && qos_js->Has(drqos_str)) {
+      convertQos(dr_qos, qos_js->Get(drqos_str)->ToObject());
+    }
+
     DDS::DataReader_var dr = sub->create_datareader(topic, dr_qos, listen,
                                                     DDS::DATA_AVAILABLE_STATUS);
     if (!dr) {
@@ -215,7 +243,6 @@ namespace {
     return scope.Close(obj);
   }
 
-  // participant.unsubscribe(reader)
   Handle<Value> unsubscribe(const Arguments& args)
   {
     HandleScope scope;
@@ -224,7 +251,7 @@ namespace {
       return scope.Close(Undefined());
     }
     void* const internal = args.This()->GetPointerFromInternalField(0);
-    DDS::DomainParticipant* dp =
+    DDS::DomainParticipant* const dp =
       static_cast<DDS::DomainParticipant*>(internal);
 
     const Local<Object> dr_js = args[0]->ToObject();
@@ -232,15 +259,22 @@ namespace {
     DDS::DataReader_var dr = static_cast<DDS::DataReader*>(dr_obj);
     dr_js->SetPointerInInternalField(0, 0);
 
-    DDS::Subscriber_var sub = dr->get_subscriber();
-    DDS::TopicDescription_var td = dr->get_topicdescription();
+    const DDS::Subscriber_var sub = dr->get_subscriber();
+    const DDS::TopicDescription_var td = dr->get_topicdescription();
     dr = 0;
     sub->delete_contained_entities();
     dp->delete_subscriber(sub);
 
-    //TODO: CFT
-    DDS::Topic_var topic = DDS::Topic::_narrow(td);
-    dp->delete_topic(topic);
+    const DDS::ContentFilteredTopic_var cft =
+      DDS::ContentFilteredTopic::_narrow(td);
+    if (cft) {
+      const DDS::Topic_var topic = cft->get_related_topic();
+      dp->delete_contentfilteredtopic(cft);
+      dp->delete_topic(topic);
+    } else {
+      const DDS::Topic_var topic = DDS::Topic::_narrow(td);
+      dp->delete_topic(topic);
+    }
 
     return scope.Close(Undefined());
   }
@@ -254,10 +288,10 @@ namespace {
     }
     const Local<Object> dpf_js = args[0]->ToObject();
     void* const internal = dpf_js->GetPointerFromInternalField(0);
-    DDS::DomainParticipantFactory* ptr =
+    const DDS::DomainParticipantFactory_var dpf =
       static_cast<DDS::DomainParticipantFactory*>(internal);
-    DDS::DomainParticipantFactory_var dpf = ptr;
     dpf_js->SetPointerInInternalField(0, 0);
+
     for (size_t i = 0; i < participants_.size(); ++i) {
       DDS::DomainParticipant_var& part = participants_[i];
       part->delete_contained_entities();
@@ -268,10 +302,26 @@ namespace {
     return scope.Close(Undefined());
   }
 
+  Handle<Value> load(const Arguments& args)
+  {
+    HandleScope scope;
+    if (args.Length() == 0 || !args[0]->IsString()) {
+      ThrowException(Exception::TypeError(String::New("1 argument required")));
+      return scope.Close(Undefined());
+    }
+    const String::Utf8Value lib_js(args[0]);
+    const ACE_TString lib(ACE_TEXT_CHAR_TO_TCHAR(*lib_js));
+    const bool ok =
+      ACE_DLL_Manager::instance()->open_dll(lib.c_str(),
+                                            ACE_DEFAULT_SHLIB_MODE, 0);
+    return scope.Close(Boolean::New(ok));
+  }
+
   void init_node_opendds(Handle<Object> target)
   {
     node::SetMethod(target, "initialize", initialize);
     node::SetMethod(target, "finalize", finalize);
+    node::SetMethod(target, "load", load);
   }
 }
 

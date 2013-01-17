@@ -1,0 +1,8 @@
+#pragma DCPS_DATA_TYPE "Mod::Sample"
+#pragma DCPS_DATA_KEY "Mod::Sample id"
+module Mod {
+  struct Sample {
+    long id;
+    string data;
+  };
+};

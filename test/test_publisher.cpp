@@ -1,6 +1,7 @@
-#include "dds/DdsDcpsInfrastructureTypeSupportImpl.h"
 #include "dds/DCPS/Marked_Default_Qos.h"
 #include "dds/DCPS/WaitSet.h"
+
+#include "idl/NodeJSTestTypeSupportImpl.h"
 
 void wait_for_match(const DDS::DataWriter_var& writer)
 {
@@ -53,9 +54,13 @@ int ACE_TMAIN(int argc, ACE_TCHAR* argv[])
                        -1);
     }
 
+    Mod::SampleTypeSupport_var ts = new Mod::SampleTypeSupportImpl;
+    ts->register_type(participant, "");
+    CORBA::String_var type = ts->get_type_name();
+
     DDS::Topic_var topic =
       participant->create_topic("topic",
-                                "TOPIC_BUILT_IN_TOPIC_TYPE",
+                                type,
                                 TOPIC_QOS_DEFAULT,
                                 0, 0);
 
@@ -84,13 +89,13 @@ int ACE_TMAIN(int argc, ACE_TCHAR* argv[])
                              0, 0);
     wait_for_match(dw);
 
-    DDS::TopicBuiltinTopicDataDataWriter_var writer =
-      DDS::TopicBuiltinTopicDataDataWriter::_narrow(dw);
+    Mod::SampleDataWriter_var writer = Mod::SampleDataWriter::_narrow(dw);
 
-    DDS::TopicBuiltinTopicData data;
-    data.name = "Hello, world\n";
+    Mod::Sample sample;
+    sample.id = 23;
+    sample.data = "Hello, world\n";
 
-    writer->write(data, DDS::HANDLE_NIL);
+    writer->write(sample, DDS::HANDLE_NIL);
     ACE_OS::sleep(1);
 
     participant->delete_contained_entities();
