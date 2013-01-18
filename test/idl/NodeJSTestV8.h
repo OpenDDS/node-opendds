@@ -2,9 +2,9 @@
 #include "NodeJSTestC.h"
 
 namespace v8 {
-  class Object;
+  class Value;
 }
 
 namespace Mod {
-  void copyToV8(v8::Object& target, const Sample& src);
+  v8::Value* copyToV8(const Sample& src);
 }

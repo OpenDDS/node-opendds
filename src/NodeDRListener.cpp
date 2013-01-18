@@ -7,21 +7,23 @@
 namespace NodeOpenDDS {
 using namespace v8;
 
-void copyToV8(Object& target, const DDS::Time_t& src)
+Value* copyToV8(const DDS::Time_t& src)
 {
-  target.Set(v8::String::NewSymbol("sec"), v8::Integer::New(src.sec));
-  target.Set(v8::String::NewSymbol("nanosec"), v8::Integer::New(src.nanosec));
+  Local<Object> stru = Object::New();
+  stru->Set(String::NewSymbol("sec"), Integer::New(src.sec));
+  stru->Set(String::NewSymbol("nanosec"), Integer::New(src.nanosec));
+  return *stru;
 }
 
-void copyToV8(Object& target, const DDS::SampleInfo& src)
+Value* copyToV8(const DDS::SampleInfo& src)
 {
-#define INT(X) target.Set(v8::String::NewSymbol(#X), v8::Integer::New(src.X))
+  Local<Object> stru = Object::New();
+#define INT(X) stru->Set(String::NewSymbol(#X), Integer::New(src.X))
   INT(sample_state);
   INT(view_state);
   INT(instance_state);
-  Local<Object> source_timestamp = Object::New();
-  copyToV8(**source_timestamp, src.source_timestamp);
-  target.Set(v8::String::NewSymbol("source_timestamp"), source_timestamp);
+  stru->Set(String::NewSymbol("source_timestamp"),
+            Handle<Value>(copyToV8(src.source_timestamp)));
   INT(instance_handle);
   INT(publication_handle);
   INT(disposed_generation_count);
@@ -30,8 +32,8 @@ void copyToV8(Object& target, const DDS::SampleInfo& src)
   INT(generation_rank);
   INT(absolute_generation_rank);
 #undef INT
-  target.Set(v8::String::NewSymbol("valid_data"),
-             v8::Boolean::New(src.valid_data));
+  stru->Set(String::NewSymbol("valid_data"), Boolean::New(src.valid_data));
+  return *stru;
 }
 
 
@@ -73,12 +75,10 @@ void NodeDRListener::async() // called from libuv event loop
                     DDS::ANY_INSTANCE_STATE); //TODO: take()
 
   for (CORBA::ULong i = 0; i < gen.info_.length(); ++i) {
-    Handle<Value> argv[] = {js_dr_,
-                            v8::Object::New(),
-                            v8::Object::New()};
-    copyToV8(**argv[1].As<v8::Object>(), gen.info_[i]);
+    Handle<Value> argv[] = {js_dr_, Handle<Value>(copyToV8(gen.info_[i])),
+                            Undefined()};
     if (gen.info_[i].valid_data) {
-      conv_.toV8(**argv[2].As<v8::Object>(), gen.samples_[i]);
+      argv[2] = Handle<Value>(conv_.toV8(gen.samples_[i]));
     }
     node::MakeCallback(Context::GetCurrent()->Global(), callback_,
                        sizeof(argv) / sizeof(argv[0]), argv);
