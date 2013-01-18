@@ -258,6 +258,9 @@ namespace {
     void* const dr_obj = dr_js->GetPointerFromInternalField(0);
     DDS::DataReader_var dr = static_cast<DDS::DataReader*>(dr_obj);
     dr_js->SetPointerInInternalField(0, 0);
+    const DDS::DataReaderListener_var drl = dr->get_listener();
+    NodeDRListener* const ndrl = dynamic_cast<NodeDRListener*>(drl.in());
+    ndrl->shutdown();
 
     const DDS::Subscriber_var sub = dr->get_subscriber();
     const DDS::TopicDescription_var td = dr->get_topicdescription();

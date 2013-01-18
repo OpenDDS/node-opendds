@@ -83,10 +83,13 @@ int ACE_TMAIN(int argc, ACE_TCHAR* argv[])
     }
 
     // Create DataWriter
-    DDS::DataWriter_var dw =
-      pub->create_datawriter(topic,
-                             DATAWRITER_QOS_DEFAULT,
-                             0, 0);
+    DDS::DataWriterQos dw_qos;
+    pub->get_default_datawriter_qos(dw_qos);
+    const DDS::Duration_t one = {1, 0}, five = {5, 0};
+    dw_qos.latency_budget.duration = one;
+    dw_qos.liveliness.lease_duration = five;
+    DDS::DataWriter_var dw = pub->create_datawriter(topic, dw_qos, 0, 0);
+
     wait_for_match(dw);
 
     Mod::SampleDataWriter_var writer = Mod::SampleDataWriter::_narrow(dw);

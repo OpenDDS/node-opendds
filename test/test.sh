@@ -1,4 +1,4 @@
-rm -f repo.ior
+rm -f repo.ior test.log
 DCPSInfoRepo &
 until test -f repo.ior; do sleep 1; done
 node test.js &

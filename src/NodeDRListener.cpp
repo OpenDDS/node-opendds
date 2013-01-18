@@ -48,7 +48,7 @@ NodeDRListener::NodeDRListener(const Local<Function>& callback,
 
 NodeDRListener::~NodeDRListener()
 {
-  uv_close((uv_handle_t*)&async_uv_, 0);
+  
   callback_.Dispose();
   js_dr_.Dispose();
 }
@@ -58,6 +58,17 @@ void NodeDRListener::async_cb(uv_async_t* async_uv, int /*status*/)
   static_cast<AsyncUv*>(async_uv)->outer_->async();
 }
 
+void NodeDRListener::close_cb(uv_handle_t* handle_uv)
+{
+  static_cast<AsyncUv*>((uv_async_t*)handle_uv)->outer_->_remove_ref();
+}
+
+void NodeDRListener::shutdown()
+{
+  _add_ref();
+  uv_close((uv_handle_t*)&async_uv_, close_cb);
+}
+
 void NodeDRListener::on_data_available(DDS::DataReader*)
 {
   uv_async_send(&async_uv_);
@@ -65,6 +76,7 @@ void NodeDRListener::on_data_available(DDS::DataReader*)
 
 void NodeDRListener::async() // called from libuv event loop
 {
+  HandleScope scope;
   void* const dr_obj = js_dr_->GetPointerFromInternalField(0);
   DDS::DataReader* const dr = static_cast<DDS::DataReader*>(dr_obj);
   OpenDDS::DCPS::DataReaderImpl* const dri =

@@ -5,8 +5,6 @@ project: dcps {
   dcps_ts_flags += -Wb,export_macro=NodeJSTest_Export
   dynamicflags += NODEJSTEST_BUILD_DLL
 
-  includes += /usr/include/nodejs //TODO
-
   TypeSupport_Files {
     NodeJSTest.idl
   }

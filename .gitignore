@@ -5,6 +5,8 @@ build
 GNUmakefile*
 test/test_publisher
 test/repo.ior
+test/test.log
 *~
 *.so
 *.so.*
+

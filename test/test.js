@@ -2,7 +2,9 @@
 
 var opendds_addon = require('../build/Debug/node_opendds'),
 
-factory = opendds_addon.initialize(),
+factory = opendds_addon.initialize('-DCPSDebugLevel', 10,
+                                   '-ORBLogFile', 'test.log',
+                                   '-ORBVerboseLogging', 1),
 
 library = opendds_addon.load('idl/NodeJSTest'),
 
@@ -29,7 +31,6 @@ try {
             group_data: 'test'},
         DataReaderQos: {
             durability: 'VOLATILE_DURABILITY_QOS',
-            deadline: {sec: 1, nanosec: 0},
             latency_budget: {sec: 1, nanosec: 0},
             liveliness: {
                 kind: 'AUTOMATIC_LIVELINESS_QOS',

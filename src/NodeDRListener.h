@@ -18,9 +18,11 @@ namespace NodeOpenDDS {
                    const OpenDDS::DCPS::V8TypeConverter& conv);
     ~NodeDRListener();
     void set_javascript_datareader(const v8::Local<v8::Object>& js_dr);
+    void shutdown();
 
   private:
     static void async_cb(uv_async_t* async_uv, int /*status*/);
+    static void close_cb(uv_handle_t* handle_uv);
 
     typedef DDS::RequestedDeadlineMissedStatus RDMStatus;
     void on_requested_deadline_missed(DDS::DataReader*, const RDMStatus&) {}

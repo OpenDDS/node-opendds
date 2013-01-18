@@ -1,5 +1,5 @@
 project: dcpsexe {
-  libs += NodeJSTest
+  libs += NodeJSTest v8
   after += NodeJSTest
   libpaths += idl
 }
