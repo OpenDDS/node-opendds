@@ -1,8 +1,40 @@
+#include <tao/LongSeq.pidl>
+#include <tao/StringSeq.pidl>
+
+module Mod {
+
+  enum MyEnum {one, two, three};
+
+  struct BasicTypes {
+    octet o;
+    unsigned short us;
+    short s;
+    unsigned long ul;
+    long l;
+    unsigned long long ull;
+    long long ll;
+    float f;
+    double d;
+    long double ld;
+    boolean b;
+    char c;
+    wchar wc;
+    string str;
+    wstring wstr;
+  };
+
+  typedef sequence<short> MySeq;
+  typedef sequence<CORBA::StringSeq> NestedSeq;
+
 #pragma DCPS_DATA_TYPE "Mod::Sample"
 #pragma DCPS_DATA_KEY "Mod::Sample id"
-module Mod {
   struct Sample {
     long id;
     string data;
+    MyEnum enu;
+    BasicTypes bt;
+    MySeq seq1;
+    CORBA::LongSeq seq2;
+    NestedSeq ns;
   };
 };
