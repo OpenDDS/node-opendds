@@ -129,6 +129,10 @@ int ACE_TMAIN(int argc, ACE_TCHAR* argv[])
     writer->write(sample, DDS::HANDLE_NIL);
     ACE_OS::sleep(1);
 
+    ++sample.id;
+    writer->write(sample, DDS::HANDLE_NIL);
+    ACE_OS::sleep(1);
+
     participant->delete_contained_entities();
     dpf->delete_participant(participant);
     TheServiceParticipant->shutdown();

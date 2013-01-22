@@ -11,7 +11,7 @@ namespace NodeOpenDDS {
 void convert(DDS::OctetSeq& seq, const Local<String>& js_str)
 {
   seq.length(js_str->Utf8Length());
-  js_str->WriteUtf8(reinterpret_cast<char*>(seq.get_buffer()));
+  js_str->WriteUtf8(reinterpret_cast<char*>(seq.get_buffer()), seq.length());
 }
 
 void convertQos(DDS::DomainParticipantQos& qos,

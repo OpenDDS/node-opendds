@@ -2,13 +2,17 @@
 
 var opendds_addon = require('../build/Debug/node_opendds'),
 
-factory = opendds_addon.initialize('-DCPSDebugLevel', 10,
+factory = opendds_addon.initialize(), /*'-DCPSDebugLevel', 10,
                                    '-ORBLogFile', 'test.log',
-                                   '-ORBVerboseLogging', 1),
+                                   '-ORBVerboseLogging', 1),*/
 
 library = opendds_addon.load('idl/NodeJSTest'),
 
-participant = factory.create_participant(32, {user_data: 'foo'}), reader;
+participant = factory.create_participant(32, {user_data: 'foo'}), reader,
+
+last_sample_id = 24,
+
+dds_inf = 0x7fffffff, infinite = {sec: dds_inf, nanosec: dds_inf};
 
 function log(label, object) {
     console.log(label + ': ' + JSON.stringify(object, null, 2));
@@ -20,8 +24,8 @@ try {
     }
     reader = participant.subscribe('topic', 'IDL:Mod/SampleTypeSupport:1.0', {
         ContentFilteredTopic: {
-            filter_expression: 'id = %0',
-            expression_parameters: ['23']},
+            filter_expression: 'id < %0',
+            expression_parameters: ['30']},
         SubscriberQos: {
             presentation: {
                 access_scope: 'INSTANCE_PRESENTATION_QOS',
@@ -34,7 +38,7 @@ try {
             latency_budget: {sec: 1, nanosec: 0},
             liveliness: {
                 kind: 'AUTOMATIC_LIVELINESS_QOS',
-                lease_duration: {sec: 5, nanosec: 0}},
+                lease_duration: infinite},
             reliability: {
                 kind: 'RELIABLE_RELIABILITY_QOS',
                 max_blocking_time: {sec: 1, nanosec: 0}},
@@ -50,12 +54,18 @@ try {
             ownership: 'SHARED_OWNERSHIP_QOS',
             time_based_filter: {sec: 0, nanosec: 0},
             reader_data_lifecycle: {
-                autopurge_nowriter_samples_delay: {sec: 10, nanosec: 0},
-                autopurge_disposed_samples_delay: {sec: 10, nanosec: 0}}}
+                autopurge_nowriter_samples_delay: infinite,
+                autopurge_disposed_samples_delay: infinite}}
     }, function (dr, sinfo, sample) {
-        log('Received callback', sample);
-        log('Sample Info', sinfo);
-        participant.unsubscribe(reader);
+        try {
+            log('Received callback', sample);
+            log('Sample Info', sinfo);
+            if (sinfo.valid_data && sample.id == last_sample_id) {
+                participant.unsubscribe(reader);
+            }
+        } catch (e) {
+            console.log("Error in callback: " + e);
+        }
     });
 } catch (e) {
     console.log(e);
