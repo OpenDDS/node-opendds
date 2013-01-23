@@ -1,6 +1,6 @@
 "use strict";
 
-var opendds_addon = require('../build/Debug/node_opendds'),
+var opendds_addon = require('../lib/node-opendds'),
 
 factory = opendds_addon.initialize(), /*'-DCPSDebugLevel', 10,
                                    '-ORBLogFile', 'test.log',
