@@ -99,6 +99,7 @@ int ACE_TMAIN(int argc, ACE_TCHAR* argv[])
     sample.id = 23;
     sample.data = "Hello, world\n";
     sample.enu = Mod::two;
+    sample.enu2 = static_cast<Mod::MyEnum>(42); // invalid enumerator
     sample.bt.o = 254;
     sample.bt.us = 65500;
     sample.bt.s = 32700;

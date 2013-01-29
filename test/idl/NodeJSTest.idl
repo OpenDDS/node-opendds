@@ -32,6 +32,7 @@ module Mod {
     long id;
     string data;
     MyEnum enu;
+    MyEnum enu2;
     BasicTypes bt;
     MySeq seq1;
     CORBA::LongSeq seq2;
