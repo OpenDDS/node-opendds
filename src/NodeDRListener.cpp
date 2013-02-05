@@ -94,12 +94,15 @@ void NodeDRListener::async() // called from libuv event loop
     }
     node::MakeCallback(Context::GetCurrent()->Global(), callback_,
                        sizeof(argv) / sizeof(argv[0]), argv);
+
+    // check for the case of unsubscribe inside the callback
+    if (!js_dr_->GetPointerFromInternalField(0)) {
+      return;
+    }
   }
 
-  if (js_dr_->GetPointerFromInternalField(0)) { // in case of unsubscribe in cb
-    dri->take_generic(DDS::READ_SAMPLE_STATE, DDS::ANY_VIEW_STATE,
-                      DDS::ANY_INSTANCE_STATE);
-  }
+  dri->take_generic(DDS::READ_SAMPLE_STATE, DDS::ANY_VIEW_STATE,
+                    DDS::ANY_INSTANCE_STATE);
 }
 
 void NodeDRListener::set_javascript_datareader(const Local<v8::Object>& js_dr)

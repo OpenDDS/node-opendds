@@ -1,4 +1,4 @@
-project: dcps {
+project: dcps, v8 {
   libout = .
   idlflags += -Wb,stub_export_include=NodeJSTest_export.h \
               -Wb,stub_export_macro=NodeJSTest_Export

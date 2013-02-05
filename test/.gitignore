@@ -1,0 +1,10 @@
+*.opensdf
+*.sdf
+*.sln
+*.suo
+*.exe
+*.ilk
+*.pdb
+*.vcxproj*
+Debug
+ipch

@@ -46,6 +46,7 @@ namespace {
 
   Handle<Value> initialize(const Arguments& args)
   {
+    ACE::init();
     HandleScope scope;
     std::vector<std::string> arg_storage;
     arg_storage.reserve(args.Length());
@@ -302,6 +303,7 @@ namespace {
     }
     participants_.clear();
     TheServiceParticipant->shutdown();
+    ACE::fini();
     return scope.Close(Undefined());
   }
 

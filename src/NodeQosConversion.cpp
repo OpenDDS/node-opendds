@@ -1,6 +1,6 @@
 #include "NodeQosConversion.h"
 
-#include <v8.h>
+#include <node.h>
 
 #include <cstring>
 

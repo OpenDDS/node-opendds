@@ -13,3 +13,10 @@ NodeJSTestTypeSupportImpl.h
 NodeJSTestTypeSupportS.cpp
 NodeJSTestTypeSupportS.h
 NodeJSTestTypeSupportS.inl
+Debug
+*.vcxproj*
+*.dll
+*.exp
+*.ilk
+*.pdb
+*.lib

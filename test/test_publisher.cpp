@@ -109,7 +109,7 @@ int ACE_TMAIN(int argc, ACE_TCHAR* argv[])
     sample.bt.ll = 5000000000LL;
     sample.bt.f = 2.17f;
     sample.bt.d = 3.14;
-    sample.bt.ld = 1.4142136l;
+    ACE_CDR_LONG_DOUBLE_ASSIGNMENT(sample.bt.ld, 1.4142136l);
     sample.bt.b = true;
     sample.bt.c = 'x';
     sample.bt.wc = L'y';
