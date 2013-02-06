@@ -7,6 +7,8 @@
                       'ACE_HAS_EXCEPTIONS', '__ACE_INLINE__' ],
       }],
       ['OS=="win"', {
+        'include_dirs+': [ '$(V8_ROOT)/include' ],
+        'libraries': [ 'v8.lib' ],
         'msvs_settings': {
           'VCCLCompilerTool': {
             'RuntimeTypeInfo': 'true',
