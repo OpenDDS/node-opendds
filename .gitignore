@@ -9,4 +9,4 @@ test/test.log
 *~
 *.so
 *.so.*
-
+node_modules

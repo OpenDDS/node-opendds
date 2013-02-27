@@ -1,6 +1,6 @@
 {
-  "name": "node-opendds",
-  "version": "0.0.0",
+  "name": "opendds",
+  "version": "0.0.1",
   "description": "OpenDDS module for Node.js",
   "main": "lib/node-opendds.js",
   "directories": {
@@ -12,7 +12,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "ssh://git.ociweb.com/git/opendds/node-opendds.git"
+    "url": "http://www.opendds.org/git/node-opendds.git"
   },
   "keywords": [
     "dds",
