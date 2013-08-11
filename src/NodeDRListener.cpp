@@ -84,7 +84,7 @@ void NodeDRListener::async() // called from libuv event loop
 
   OpenDDS::DCPS::DataReaderImpl::GenericBundle gen;
   dri->read_generic(gen, DDS::NOT_READ_SAMPLE_STATE, DDS::ANY_VIEW_STATE,
-                    DDS::ANY_INSTANCE_STATE);
+                    DDS::ANY_INSTANCE_STATE, true);
 
   for (CORBA::ULong i = 0; i < gen.info_.length(); ++i) {
     Handle<Value> argv[] = {js_dr_, Handle<Value>(copyToV8(gen.info_[i])),
@@ -102,7 +102,7 @@ void NodeDRListener::async() // called from libuv event loop
   }
 
   dri->take_generic(DDS::READ_SAMPLE_STATE, DDS::ANY_VIEW_STATE,
-                    DDS::ANY_INSTANCE_STATE);
+                    DDS::ANY_INSTANCE_STATE, true);
 }
 
 void NodeDRListener::set_javascript_datareader(const Local<v8::Object>& js_dr)
