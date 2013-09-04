@@ -1,5 +1,12 @@
 # OpenDDS module for Node.js
 
+## Version 0.0.3
+
+Updated to use new abstract interface callback from DataReaderImpl to
+execute as an atomic operation rather than in two stages.  This change
+uses updates to OpenDDS starting with r5997 in subversion and any release
+after 3.4.1.  This will not build with older versions of OpenDDS.
+
 ## Version 0.0.2
 
 Updated to use extended data reference counting available in OpenDDS as
