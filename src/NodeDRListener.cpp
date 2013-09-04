@@ -1,11 +1,11 @@
 #include "NodeDRListener.h"
 
 #include <node.h>
-
-#include <dds/DCPS/DataReaderImpl.h>
+#include <stdexcept>
 
 namespace NodeOpenDDS {
 using namespace v8;
+
 
 Value* copyToV8(const DDS::Time_t& src)
 {
@@ -82,27 +82,15 @@ void NodeDRListener::async() // called from libuv event loop
   OpenDDS::DCPS::DataReaderImpl* const dri =
     dynamic_cast<OpenDDS::DCPS::DataReaderImpl*>(dr);
 
-  OpenDDS::DCPS::DataReaderImpl::GenericBundle gen;
-  dri->read_generic(gen, DDS::NOT_READ_SAMPLE_STATE, DDS::ANY_VIEW_STATE,
-                    DDS::ANY_INSTANCE_STATE, true);
-
-  for (CORBA::ULong i = 0; i < gen.info_.length(); ++i) {
-    Handle<Value> argv[] = {js_dr_, Handle<Value>(copyToV8(gen.info_[i])),
-                            Undefined()};
-    if (gen.info_[i].valid_data) {
-      argv[2] = Handle<Value>(conv_.toV8(gen.samples_[i]));
-    }
-    node::MakeCallback(Context::GetCurrent()->Global(), callback_,
-                       sizeof(argv) / sizeof(argv[0]), argv);
-
-    // check for the case of unsubscribe inside the callback
-    if (!js_dr_->GetPointerFromInternalField(0)) {
-      return;
-    }
+  try {
+    OpenDDS::DCPS::DataReaderImpl::GenericBundle gen;
+    dri->take(*this, DDS::NOT_READ_SAMPLE_STATE, DDS::ANY_VIEW_STATE,
+              DDS::ANY_INSTANCE_STATE);
+  }
+  catch (...)
+  {
   }
 
-  dri->take_generic(DDS::READ_SAMPLE_STATE, DDS::ANY_VIEW_STATE,
-                    DDS::ANY_INSTANCE_STATE, true);
 }
 
 void NodeDRListener::set_javascript_datareader(const Local<v8::Object>& js_dr)
@@ -111,4 +99,25 @@ void NodeDRListener::set_javascript_datareader(const Local<v8::Object>& js_dr)
 }
 
 
+void NodeDRListener::reserve(CORBA::ULong)
+{
 }
+
+void NodeDRListener::push_back(const DDS::SampleInfo& src, const void* sample)
+{
+  Handle<Value> argv[] = {js_dr_, Handle<Value>(copyToV8(src)),
+                          Undefined()};
+  if (src.valid_data) {
+    argv[2] = Handle<Value>(conv_.toV8(sample));
+  }
+  node::MakeCallback(Context::GetCurrent()->Global(), callback_,
+                     sizeof(argv) / sizeof(argv[0]), argv);
+                     
+  // check for the case of unsubscribe inside the callback
+  if (!js_dr_->GetPointerFromInternalField(0)) {
+    throw std::runtime_error("");
+  }
+}
+
+}
+

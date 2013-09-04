@@ -8,11 +8,13 @@
 
 #include <dds/DCPS/V8TypeConverter.h>
 #include <dds/DCPS/LocalObject.h>
+#include <dds/DCPS/DataReaderImpl.h>
 
 namespace NodeOpenDDS {
 
   class NodeDRListener
-    : public virtual OpenDDS::DCPS::LocalObject<DDS::DataReaderListener> {
+    : public virtual OpenDDS::DCPS::LocalObject<DDS::DataReaderListener> 
+    , private OpenDDS::DCPS::AbstractSamples {
   public:
     NodeDRListener(const v8::Local<v8::Function>& callback,
                    const OpenDDS::DCPS::V8TypeConverter& conv);
@@ -51,8 +53,13 @@ namespace NodeOpenDDS {
 
     NodeDRListener(const NodeDRListener&);
     NodeDRListener& operator=(const NodeDRListener&);
+  
+   void reserve(CORBA::ULong);
+   void push_back(const DDS::SampleInfo& src, const void* sample);
+
   };
 
 }
 
 #endif
+
