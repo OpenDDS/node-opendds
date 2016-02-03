@@ -1,5 +1,10 @@
 # OpenDDS module for Node.js
 
+## Version 0.0.4
+
+Now hosted on GitHub which required a version bump to tell npm about it.
+No code changes.
+
 ## Version 0.0.3
 
 Updated to use new abstract interface callback from DataReaderImpl to
