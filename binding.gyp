@@ -47,7 +47,8 @@
       'sources': [ 'src/node-opendds.cpp',
                    'src/NodeDRListener.cpp',
                    'src/NodeQosConversion.cpp' ],
-      'include_dirs': [ '$(ACE_ROOT)', '$(TAO_ROOT)', '$(DDS_ROOT)' ],
+      'include_dirs': [ "<!(node -e \"require('nan')\")",
+                      '$(ACE_ROOT)', '$(TAO_ROOT)', '$(DDS_ROOT)' ],
       'conditions': [
         ['OS=="linux"', {
           'link_settings': {

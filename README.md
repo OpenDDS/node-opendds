@@ -1,5 +1,9 @@
 # OpenDDS module for Node.js
 
+## Version 0.0.5
+
+Updated for Node.js version 6.9.5 and V8 version 5.8.1.
+
 ## Version 0.0.4
 
 Now hosted on GitHub which required a version bump to tell npm about it.
@@ -24,9 +28,9 @@ the older versions of OpenDDS.
 * Make sure all of the OpenDDS development environment variables are set before running npm to install this module.  If you use the OpenDDS configure script, these variables can be set using "setenv.sh" or "setenv.cmd" depending on your platform.
 
 ## Tested platforms:
-* Linux (RHEL6.3, Ubuntu12.04) x86_64 using the distro-supplied GCC
-* Windows 7 x86_64 using Visual Studio 2010
+* Linux (Ubuntu16.04) x86_64 using the distro-supplied GCC and c++11=1
+* [TBD: Windows 7 x86_64 using Visual Studio 2010]
 * Other OpenDDS-supported platforms should work, but may required changes to binding.gyp
 
-## To build the module (development only, users can simply use npm -- see above)
+## To build the module (for development of this module, users can simply use npm)
 > $ node-gyp configure build

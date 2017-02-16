@@ -1,8 +1,7 @@
 #ifndef OPENDDS_NODEDRLISTENER_H
 #define OPENDDS_NODEDRLISTENER_H
 
-#include <v8.h>
-#include <uv.h>
+#include <nan.h>
 
 #include <dds/DdsDcpsSubscriptionC.h>
 
@@ -13,7 +12,7 @@
 namespace NodeOpenDDS {
 
   class NodeDRListener
-    : public virtual OpenDDS::DCPS::LocalObject<DDS::DataReaderListener> 
+    : public virtual OpenDDS::DCPS::LocalObject<DDS::DataReaderListener>
     , private OpenDDS::DCPS::AbstractSamples {
   public:
     NodeDRListener(const v8::Local<v8::Function>& callback,
@@ -23,7 +22,7 @@ namespace NodeOpenDDS {
     void shutdown();
 
   private:
-    static void async_cb(uv_async_t* async_uv, int /*status*/);
+    static void async_cb(uv_async_t* async_uv);
     static void close_cb(uv_handle_t* handle_uv);
 
     typedef DDS::RequestedDeadlineMissedStatus RDMStatus;
@@ -40,10 +39,10 @@ namespace NodeOpenDDS {
 
     void on_data_available(DDS::DataReader*);
 
-    void async(); // called from libuv event loop    
+    void async(); // called from libuv event loop
 
-    v8::Persistent<v8::Function> callback_;
-    v8::Persistent<v8::Object> js_dr_;
+    Nan::Persistent<v8::Function> callback_;
+    Nan::Persistent<v8::Object> js_dr_;
     const OpenDDS::DCPS::V8TypeConverter& conv_;
 
     struct AsyncUv : uv_async_t {
@@ -53,7 +52,7 @@ namespace NodeOpenDDS {
 
     NodeDRListener(const NodeDRListener&);
     NodeDRListener& operator=(const NodeDRListener&);
-  
+
    void reserve(CORBA::ULong);
    void push_back(const DDS::SampleInfo& src, const void* sample);
 
@@ -62,4 +61,3 @@ namespace NodeOpenDDS {
 }
 
 #endif
-

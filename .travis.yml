@@ -1,0 +1,31 @@
+dist: trusty
+sudo: false
+language: cpp
+node_js: node
+compiler: gcc
+env:
+  global:
+    - ACE_ROOT=$TRAVIS_BUILD_DIR/ACE_TAO/ACE
+    - TAO_ROOT=$TRAVIS_BUILD_DIR/ACE_TAO/TAO
+    - DDS_ROOT=$TRAVIS_BUILD_DIR/OpenDDS
+    - MPC_ROOT=$TRAVIS_BUILD_DIR/MPC
+    - LD_LIBRARY_PATH=$ACE_ROOT/lib:$DDS_ROOT/lib:$LD_LIBRARY_PATH
+before_install:
+  - git clone --depth 1 git://github.com/DOCGroup/MPC.git
+  - git clone --depth 1 -b Latest_Micro git://github.com/DOCGroup/ACE_TAO.git
+  - git clone --depth 1 -b v8 git://github.com/mitza-oci/OpenDDS.git
+branches:
+  only: master
+before_script:
+  - export
+  - cd OpenDDS
+  - ./configure --no-tests --macros=c++11=1
+  - cd ..
+  - npm install -g node-gyp
+script:
+  - make -C OpenDDS -sj6 DCPSInfoRepo_Main
+  - npm install
+  - $ACE_ROOT/bin/mwc.pl -type gnuace -exclude ACE_TAO,OpenDDS
+  - make
+after_script:
+  - cd test; ./run_test.pl

@@ -19,7 +19,7 @@ try {
   if (!library) {
     throw 'Failed to load shared library';
   }
-  reader = participant.subscribe('topic', 'IDL:Mod/SampleTypeSupport:1.0', {
+  reader = participant.subscribe('topic', 'Mod::Sample', {
     ContentFilteredTopic: {
       filter_expression: 'id < %0',
       expression_parameters: ['30']

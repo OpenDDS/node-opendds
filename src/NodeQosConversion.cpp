@@ -1,7 +1,5 @@
 #include "NodeQosConversion.h"
 
-#include <node.h>
-
 #include <cstring>
 
 using namespace v8;
@@ -17,7 +15,7 @@ void convert(DDS::OctetSeq& seq, const Local<String>& js_str)
 void convertQos(DDS::DomainParticipantQos& qos,
                 const Local<Object>& qos_js)
 {
-  const Handle<String> user_data = String::NewSymbol("user_data");
+  const Local<String> user_data = Nan::New<String>("user_data").ToLocalChecked();
   if (qos_js->Has(user_data)) {
     convert(qos.user_data.value, qos_js->Get(user_data)->ToString());
   }
@@ -26,15 +24,15 @@ void convertQos(DDS::DomainParticipantQos& qos,
 
 void convertQos(DDS::SubscriberQos& qos, const Local<Object>& sqos_js)
 {
-  const Handle<String> pres_str = String::NewSymbol("presentation"),
-    parti_str = String::NewSymbol("partition"),
-    grpd_str = String::NewSymbol("group_data");
+  const Local<String> pres_str = Nan::New<String>("presentation").ToLocalChecked(),
+    parti_str = Nan::New<String>("partition").ToLocalChecked(),
+    grpd_str = Nan::New<String>("group_data").ToLocalChecked();
 
   if (sqos_js->Has(pres_str)) {
     const Local<Object> pres_js = sqos_js->Get(pres_str)->ToObject();
-    const Handle<String> scope_str = String::NewSymbol("access_scope"),
-      coher_str = String::NewSymbol("coherent_access"),
-      order_str = String::NewSymbol("ordered_access");
+    const Local<String> scope_str = Nan::New<String>("access_scope").ToLocalChecked(),
+      coher_str = Nan::New<String>("coherent_access").ToLocalChecked(),
+      order_str = Nan::New<String>("ordered_access").ToLocalChecked();
     if (pres_js->Has(scope_str)) {
       const String::Utf8Value scope(pres_js->Get(scope_str));
       if (0 == std::strcmp(*scope, "INSTANCE_PRESENTATION_QOS")) {
@@ -56,9 +54,10 @@ void convertQos(DDS::SubscriberQos& qos, const Local<Object>& sqos_js)
 
   if (sqos_js->Has(parti_str)) {
     const Local<Object> parti_js = sqos_js->Get(parti_str)->ToObject();
-    const Local<Number> parti_len =
-      parti_js->Get(String::NewSymbol("length"))->ToNumber();
-    const uint32_t len = static_cast<uint32_t>(parti_len->Value());
+    const Local<String> len_str = Nan::New<String>("length").ToLocalChecked();
+    const Nan::Maybe<uint32_t> parti_len =
+      Nan::To<uint32_t>(parti_js->Get(len_str));
+    const uint32_t len = parti_len.FromMaybe(0);
     qos.partition.name.length(len);
     for (uint32_t i = 0; i < len; ++i) {
       const String::Utf8Value elt(parti_js->Get(i));
@@ -73,8 +72,8 @@ void convertQos(DDS::SubscriberQos& qos, const Local<Object>& sqos_js)
 
 void convert(DDS::Duration_t& dur, const Local<Object>& dur_js)
 {
-  const Handle<String> sec_str = String::NewSymbol("sec"),
-    nanosec_str = String::NewSymbol("nanosec");
+  const Local<String> sec_str = Nan::New<String>("sec").ToLocalChecked(),
+    nanosec_str = Nan::New<String>("nanosec").ToLocalChecked();
   if (dur_js->Has(sec_str)) {
     dur.sec = dur_js->Get(sec_str)->Int32Value();
   }
@@ -85,19 +84,19 @@ void convert(DDS::Duration_t& dur, const Local<Object>& dur_js)
 
 void convertQos(DDS::DataReaderQos& qos, const Local<Object>& drqos_js)
 {
-  const Handle<String> durab_str = String::NewSymbol("durability"),
-    deadln_str = String::NewSymbol("deadline"),
-    latbud_str = String::NewSymbol("latency_budget"),
-    liveli_str = String::NewSymbol("liveliness"),
-    reliab_str = String::NewSymbol("reliability"),
-    destord_str = String::NewSymbol("destination_order"),
-    history_str = String::NewSymbol("history"),
-    reslim_str = String::NewSymbol("resource_limits"),
-    userdata_str = String::NewSymbol("user_data"),
-    ownership_str = String::NewSymbol("ownership"),
-    tbfilter_str = String::NewSymbol("time_based_filter"),
-    rdlife_str = String::NewSymbol("reader_data_lifecycle"),
-    kind_str = String::NewSymbol("kind");
+  const Local<String> durab_str = Nan::New<String>("durability").ToLocalChecked(),
+    deadln_str = Nan::New<String>("deadline").ToLocalChecked(),
+    latbud_str = Nan::New<String>("latency_budget").ToLocalChecked(),
+    liveli_str = Nan::New<String>("liveliness").ToLocalChecked(),
+    reliab_str = Nan::New<String>("reliability").ToLocalChecked(),
+    destord_str = Nan::New<String>("destination_order").ToLocalChecked(),
+    history_str = Nan::New<String>("history").ToLocalChecked(),
+    reslim_str = Nan::New<String>("resource_limits").ToLocalChecked(),
+    userdata_str = Nan::New<String>("user_data").ToLocalChecked(),
+    ownership_str = Nan::New<String>("ownership").ToLocalChecked(),
+    tbfilter_str = Nan::New<String>("time_based_filter").ToLocalChecked(),
+    rdlife_str = Nan::New<String>("reader_data_lifecycle").ToLocalChecked(),
+    kind_str = Nan::New<String>("kind").ToLocalChecked();
 
   if (drqos_js->Has(durab_str)) {
     const String::Utf8Value dur(drqos_js->Get(durab_str));
@@ -131,10 +130,10 @@ void convertQos(DDS::DataReaderQos& qos, const Local<Object>& drqos_js)
         qos.liveliness.kind = DDS::MANUAL_BY_PARTICIPANT_LIVELINESS_QOS;
       } else if (0 == std::strcmp(*lv, "MANUAL_BY_TOPIC_LIVELINESS_QOS")) {
         qos.liveliness.kind = DDS::MANUAL_BY_TOPIC_LIVELINESS_QOS;
-      }   
+      }
     }
-    const Handle<String> lease_duration_str =
-      String::NewSymbol("lease_duration");
+    const Local<String> lease_duration_str =
+      Nan::New<String>("lease_duration").ToLocalChecked();
     if (liveliness->Has(lease_duration_str)) {
       convert(qos.liveliness.lease_duration,
               liveliness->Get(lease_duration_str)->ToObject());
@@ -151,7 +150,7 @@ void convertQos(DDS::DataReaderQos& qos, const Local<Object>& drqos_js)
         qos.reliability.kind = DDS::RELIABLE_RELIABILITY_QOS;
       }
     }
-    const Handle<String> mbt_str = String::NewSymbol("max_blocking_time");
+    const Local<String> mbt_str = Nan::New<String>("max_blocking_time").ToLocalChecked();
     if (reliability->Has(mbt_str)) {
       convert(qos.reliability.max_blocking_time,
               reliability->Get(mbt_str)->ToObject());
@@ -180,7 +179,7 @@ void convertQos(DDS::DataReaderQos& qos, const Local<Object>& drqos_js)
         qos.history.kind = DDS::KEEP_ALL_HISTORY_QOS;
       }
     }
-    const Handle<String> depth_str = String::NewSymbol("depth");
+    const Local<String> depth_str = Nan::New<String>("depth").ToLocalChecked();
     if (history->Has(depth_str)) {
       qos.history.depth = history->Get(depth_str)->Int32Value();
     }
@@ -188,9 +187,9 @@ void convertQos(DDS::DataReaderQos& qos, const Local<Object>& drqos_js)
 
   if (drqos_js->Has(reslim_str)) {
     const Local<Object> reslim = drqos_js->Get(reslim_str)->ToObject();
-    const Handle<String> ms_str = String::NewSymbol("max_samples"),
-      mi_str = String::NewSymbol("max_instances"),
-      mspi_str = String::NewSymbol("max_samples_per_instance");
+    const Local<String> ms_str = Nan::New<String>("max_samples").ToLocalChecked(),
+      mi_str = Nan::New<String>("max_instances").ToLocalChecked(),
+      mspi_str = Nan::New<String>("max_samples_per_instance").ToLocalChecked();
     if (reslim->Has(ms_str)) {
       qos.resource_limits.max_samples = reslim->Get(ms_str)->Int32Value();
     }
@@ -223,9 +222,9 @@ void convertQos(DDS::DataReaderQos& qos, const Local<Object>& drqos_js)
 
   if (drqos_js->Has(rdlife_str)) {
     const Local<Object> rdlife = drqos_js->Get(rdlife_str)->ToObject();
-    const Handle<String> ansd_str =
-      String::NewSymbol("autopurge_nowriter_samples_delay"),
-      adsd_str = String::NewSymbol("autopurge_disposed_samples_delay");
+    const Local<String> ansd_str =
+      Nan::New<String>("autopurge_nowriter_samples_delay").ToLocalChecked(),
+      adsd_str = Nan::New<String>("autopurge_disposed_samples_delay").ToLocalChecked();
     if (rdlife->Has(ansd_str)) {
       convert(qos.reader_data_lifecycle.autopurge_nowriter_samples_delay,
               rdlife->Get(ansd_str)->ToObject());
@@ -239,4 +238,3 @@ void convertQos(DDS::DataReaderQos& qos, const Local<Object>& drqos_js)
 
 
 }
-

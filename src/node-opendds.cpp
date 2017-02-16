@@ -1,8 +1,7 @@
 #include "NodeDRListener.h"
 #include "NodeQosConversion.h"
 
-#include <node.h>
-#include <v8.h>
+#include <nan.h>
 
 #include <dds/DCPS/Service_Participant.h>
 #include <dds/DCPS/Registered_Data_Types.h>
@@ -10,6 +9,7 @@
 #include <dds/DCPS/V8TypeConverter.h>
 
 #include <ace/DLL_Manager.h>
+#include <ace/Init_ACE.h>
 
 #include <string>
 #include <vector>
@@ -39,20 +39,19 @@ namespace {
     }
   }
 
-  Handle<Value> create_participant(const Arguments& args);
-  Handle<Value> delete_participant(const Arguments& args);
-  Handle<Value> subscribe(const Arguments& args);
-  Handle<Value> unsubscribe(const Arguments& args);
+  void create_participant(const Nan::FunctionCallbackInfo<Value>& fci);
+  void delete_participant(const Nan::FunctionCallbackInfo<Value>& fci);
+  void subscribe(const Nan::FunctionCallbackInfo<Value>& fci);
+  void unsubscribe(const Nan::FunctionCallbackInfo<Value>& fci);
 
-  Handle<Value> initialize(const Arguments& args)
+  void initialize(const Nan::FunctionCallbackInfo<Value>& fci)
   {
     ACE::init();
-    HandleScope scope;
     std::vector<std::string> arg_storage;
-    arg_storage.reserve(args.Length());
+    arg_storage.reserve(fci.Length());
     ACE_ARGV_T<char> argv(false /*substitute env vars*/);
-    for (int i = 0; i < args.Length(); ++i) {
-      const Local<String> js_str = args[i]->ToString();
+    for (int i = 0; i < fci.Length(); ++i) {
+      const Local<String> js_str = fci[i]->ToString();
       arg_storage.push_back(std::string(js_str->Utf8Length(), '\0'));
       std::string& str = arg_storage.back();
       js_str->WriteUtf8(&str[0]);
@@ -61,105 +60,103 @@ namespace {
     int argc = argv.argc();
     DDS::DomainParticipantFactory_var dpf =
       TheParticipantFactoryWithArgs(argc, argv.argv());
-    const Handle<ObjectTemplate> ot = ObjectTemplate::New();
+    const Local<ObjectTemplate> ot = Nan::New<ObjectTemplate>();
     ot->SetInternalFieldCount(1);
-    node::SetMethod(ot, "create_participant", create_participant);
-    node::SetMethod(ot, "delete_participant", delete_participant);
+    Nan::SetMethod(ot, "create_participant", create_participant);
+    Nan::SetMethod(ot, "delete_participant", delete_participant);
     const Local<Object> obj = ot->NewInstance();
-    obj->SetPointerInInternalField(0, dpf._retn());
-    return scope.Close(obj);
+    Nan::SetInternalFieldPointer(obj, 0, dpf._retn());
+    fci.GetReturnValue().Set(obj);
   }
 
-  Handle<Value> create_participant(const Arguments& args)
+  void create_participant(const Nan::FunctionCallbackInfo<Value>& fci)
   {
-    HandleScope scope;
-    const Local<Object> this_js = args.This();
+    const Local<Object> this_js = fci.This();
     DDS::DomainId_t domain = 0;
-    if (args.Length() > 0) {
-      domain = static_cast<DDS::DomainId_t>(args[0]->NumberValue());
+    if (fci.Length() > 0) {
+      domain = static_cast<DDS::DomainId_t>(fci[0]->NumberValue());
     }
-    void* const internal = this_js->GetPointerFromInternalField(0);
+    void* const internal = Nan::GetInternalFieldPointer(this_js, 0);
     DDS::DomainParticipantFactory* const dpf =
       static_cast<DDS::DomainParticipantFactory*>(internal);
     DDS::DomainParticipantQos qos;
     dpf->get_default_participant_qos(qos);
-    if (args.Length() > 1) {
-      const Local<Object> qos_js = args[1]->ToObject();
+    if (fci.Length() > 1) {
+      const Local<Object> qos_js = fci[1]->ToObject();
       convertQos(qos, qos_js);
     }
     DDS::DomainParticipant_var dp = dpf->create_participant(domain, qos, 0, 0);
     if (!dp) {
-      ThrowException(Exception::Error(String::New("couldn't create "
-                                                  "DomainParticipant")));
-      return scope.Close(Undefined());
+      Nan::ThrowError("couldn't create DomainParticipant");
+      fci.GetReturnValue().SetUndefined();
+      return;
     }
     participants_.push_back(dp);
-    const Handle<ObjectTemplate> ot = ObjectTemplate::New();
+    const Local<ObjectTemplate> ot = Nan::New<ObjectTemplate>();
     ot->SetInternalFieldCount(1);
-    node::SetMethod(ot, "subscribe", subscribe);
-    node::SetMethod(ot, "unsubscribe", unsubscribe);
+    Nan::SetMethod(ot, "subscribe", subscribe);
+    Nan::SetMethod(ot, "unsubscribe", unsubscribe);
     const Local<Object> obj = ot->NewInstance();
-    obj->SetPointerInInternalField(0, dp._retn());
-    return scope.Close(obj);
+    Nan::SetInternalFieldPointer(obj, 0, dp._retn());
+    fci.GetReturnValue().Set(obj);
   }
 
-  Handle<Value> delete_participant(const Arguments& args)
+  void delete_participant(const Nan::FunctionCallbackInfo<Value>& fci)
   {
-    HandleScope scope;
-    if (args.Length() == 0 || !args[0]->IsObject()) {
-      ThrowException(Exception::TypeError(String::New("1 argument required")));
-      return scope.Close(Undefined());
+    if (fci.Length() == 0 || !fci[0]->IsObject()) {
+      Nan::ThrowTypeError("1 argument required");
+      fci.GetReturnValue().SetUndefined();
+      return;
     }
-    const Local<Object> js_obj = args[0]->ToObject();
-    void* const internal = js_obj->GetPointerFromInternalField(0);
+    const Local<Object> js_obj = fci[0]->ToObject();
+    void* const internal = Nan::GetInternalFieldPointer(js_obj, 0);
     const DDS::DomainParticipant_var part =
       static_cast<DDS::DomainParticipant*>(internal);
-    js_obj->SetPointerInInternalField(0, 0);
+    Nan::SetInternalFieldPointer(js_obj, 0, 0);
     const std::vector<DDS::DomainParticipant_var>::iterator i =
       std::find(participants_.begin(), participants_.end(), part);
     if (i != participants_.end()) participants_.erase(i);
     part->delete_contained_entities();
     const DDS::DomainParticipantFactory_var dpf = TheParticipantFactory;
     dpf->delete_participant(part);
-    return scope.Close(Undefined());
+    fci.GetReturnValue().SetUndefined();
   }
 
-  Handle<Value> subscribe(const Arguments& args)
+  void subscribe(const Nan::FunctionCallbackInfo<Value>& fci)
   {
-    HandleScope scope;
-    if (args.Length() < 3) {
-      ThrowException(Exception::TypeError(String::New("At least 3 "
-                                                      "arguments required")));
-      return scope.Close(Undefined());
+    if (fci.Length() < 3) {
+      Nan::ThrowTypeError("At least 3 arguments required");
+      fci.GetReturnValue().SetUndefined();
+      return;
     }
-    if (!args[args.Length() - 1]->IsFunction()) {
-      ThrowException(Exception::TypeError(String::New("Last argument must "
-                                                      "be a function")));
-      return scope.Close(Undefined());
+    if (!fci[fci.Length() - 1]->IsFunction()) {
+      Nan::ThrowTypeError("Last argument must be a function");
+      fci.GetReturnValue().SetUndefined();
+      return;
     }
-    void* const internal = args.This()->GetPointerFromInternalField(0);
+    void* const internal = Nan::GetInternalFieldPointer(fci.This(), 0);
     DDS::DomainParticipant* const dp =
       static_cast<DDS::DomainParticipant*>(internal);
 
-    const String::Utf8Value topic_name(args[0]);
-    const String::Utf8Value topic_type(args[1]);
+    const String::Utf8Value topic_name(fci[0]);
+    const String::Utf8Value topic_type(fci[1]);
     OpenDDS::DCPS::TypeSupport* ts =
       Registered_Data_Types->lookup(dp, *topic_type);
     if (!ts) {
       ts = Registered_Data_Types->lookup(0, *topic_type);
       if (!ts) {
-        ThrowException(Exception::Error(String::New("TypeSupport was not "
-                                                    "registered")));
-        return scope.Close(Undefined());
+        Nan::ThrowError("TypeSupport was not registered");
+        fci.GetReturnValue().SetUndefined();
+        return;
       }
       Registered_Data_Types->register_type(dp, *topic_type, ts);
     }
     const OpenDDS::DCPS::V8TypeConverter* const tc =
       dynamic_cast<const OpenDDS::DCPS::V8TypeConverter*>(ts);
     if (!tc) {
-      ThrowException(Exception::Error(String::New("TypeSupport was not built "
-                                                  "with support for V8.")));
-      return scope.Close(Undefined());
+      Nan::ThrowError("TypeSupport was not built with support for V8.");
+      fci.GetReturnValue().SetUndefined();
+      return;
     }
 
     DDS::Topic_var real_topic =
@@ -167,33 +164,38 @@ namespace {
     DDS::TopicDescription_var topic =
       DDS::TopicDescription::_duplicate(real_topic);
     if (!topic) {
-      ThrowException(Exception::Error(String::New("couldn't create Topic")));
-      return scope.Close(Undefined());
+      Nan::ThrowError("couldn't create Topic");
+      fci.GetReturnValue().SetUndefined();
+      return;
     }
 
     Local<Object> qos_js;
-    if (args.Length() > 3 && args[2]->IsObject()) {
-      qos_js = args[2]->ToObject();
+    if (fci.Length() > 3 && fci[2]->IsObject()) {
+      qos_js = fci[2]->ToObject();
     }
-    const Handle<String> cft_str = String::NewSymbol("ContentFilteredTopic");
-    if (*qos_js && qos_js->Has(cft_str)) {
-      const Local<Object> cft_js = qos_js->Get(cft_str)->ToObject();
-      const Handle<String> fe_str = String::NewSymbol("filter_expression"),
-        ep_str = String::NewSymbol("expression_parameters");
-      if (!cft_js->Has(fe_str)) {
-        ThrowException(Exception::Error(String::New("filter_expression is "
-                                                    "required in Content"
-                                                    "FilteredTopic.")));
+    Nan::MaybeLocal<String> cft_str = Nan::New<String>("ContentFilteredTopic");
+    const Local<String> cft_lstr = cft_str.ToLocalChecked();
+    if (*qos_js && qos_js->Has(cft_lstr)) {
+      const Local<Object> cft_js = qos_js->Get(cft_lstr)->ToObject();
+      Nan::MaybeLocal<String> fe_str = Nan::New<String>("filter_expression"),
+        ep_str = Nan::New<String>("expression_parameters");
+      const Local<String> fe_lstr = fe_str.ToLocalChecked();
+      if (!cft_js->Has(fe_lstr)) {
+        Nan::ThrowError("filter_expression is required in "
+                        "ContentFilteredTopic.");
+        fci.GetReturnValue().SetUndefined();
+        return;
       }
-      const String::Utf8Value filt(cft_js->Get(fe_str));
+      const String::Utf8Value filt(cft_js->Get(fe_lstr));
       DDS::StringSeq params;
-      if (cft_js->Has(ep_str)) {
-        const Local<Object> params_js = cft_js->Get(ep_str)->ToObject();
-        const Local<Number> params_len =
-          params_js->Get(String::NewSymbol("length"))->ToNumber();
-        const uint32_t len = static_cast<uint32_t>(params_len->Value());
-        params.length(len);
-        for (uint32_t i = 0; i < len; ++i) {
+      const Local<String> ep_lstr = ep_str.ToLocalChecked();
+      if (cft_js->Has(ep_lstr)) {
+        const Local<Object> params_js = cft_js->Get(ep_lstr)->ToObject();
+        const Nan::Maybe<uint32_t> len =
+          Nan::To<uint32_t>(params_js->Get(Nan::New<String>("length")
+                                           .ToLocalChecked()));
+        params.length(len.FromMaybe(0));
+        for (uint32_t i = 0; i < params.length(); ++i) {
           const String::Utf8Value pstr(params_js->Get(i));
           params[i] = *pstr;
         }
@@ -205,60 +207,62 @@ namespace {
 
     DDS::SubscriberQos sub_qos;
     dp->get_default_subscriber_qos(sub_qos);
-    const Handle<String> subqos_str = String::NewSymbol("SubscriberQos");
-    if (*qos_js && qos_js->Has(subqos_str)) {
-      convertQos(sub_qos, qos_js->Get(subqos_str)->ToObject());
+    Nan::MaybeLocal<String> subqos_str = Nan::New<String>("SubscriberQos");
+    const Local<String> subqos_lstr = subqos_str.ToLocalChecked();
+    if (*qos_js && qos_js->Has(subqos_lstr)) {
+      convertQos(sub_qos, qos_js->Get(subqos_lstr)->ToObject());
     }
 
     const DDS::Subscriber_var sub = dp->create_subscriber(sub_qos, 0, 0);
     if (!sub) {
-      ThrowException(Exception::Error(String::New("couldn't create "
-                                                  "Subscriber")));
-      return scope.Close(Undefined());
+      Nan::ThrowError("couldn't create Subscriber");
+      fci.GetReturnValue().SetUndefined();
+      return;
     }
 
-    Local<Value> cb = args[args.Length() - 1];
+    Local<Value> cb = fci[fci.Length() - 1];
     NodeDRListener* const ndrl = new NodeDRListener(cb.As<Function>(), *tc);
     const DDS::DataReaderListener_var listen(ndrl);
 
     DDS::DataReaderQos dr_qos;
     sub->get_default_datareader_qos(dr_qos);
-    const Handle<String> drqos_str = String::NewSymbol("DataReaderQos");
-    if (*qos_js && qos_js->Has(drqos_str)) {
-      convertQos(dr_qos, qos_js->Get(drqos_str)->ToObject());
+    Nan::MaybeLocal<String> drqos_str = Nan::New<String>("DataReaderQos");
+    const Local<String> drqos_lstr = drqos_str.ToLocalChecked();
+    if (*qos_js && qos_js->Has(drqos_lstr)) {
+      convertQos(dr_qos, qos_js->Get(drqos_lstr)->ToObject());
     }
 
     DDS::DataReader_var dr = sub->create_datareader(topic, dr_qos, listen,
                                                     DDS::DATA_AVAILABLE_STATUS);
     if (!dr) {
-      ThrowException(Exception::Error(String::New("couldn't create "
-                                                  "DataReader")));
-      return scope.Close(Undefined());
+      Nan::ThrowError("couldn't create DataReader");
+      fci.GetReturnValue().SetUndefined();
+      return;
     }
 
-    const Handle<ObjectTemplate> ot = ObjectTemplate::New();
+    const Local<ObjectTemplate> ot = Nan::New<ObjectTemplate>();
     ot->SetInternalFieldCount(1);
     const Local<Object> obj = ot->NewInstance();
-    obj->SetPointerInInternalField(0, dr._retn());
+    Nan::SetInternalFieldPointer(obj, 0, dr._retn());
     ndrl->set_javascript_datareader(obj);
-    return scope.Close(obj);
+    fci.GetReturnValue().Set(obj);
   }
 
-  Handle<Value> unsubscribe(const Arguments& args)
+  void unsubscribe(const Nan::FunctionCallbackInfo<Value>& fci)
   {
-    HandleScope scope;
-    if (args.Length() < 1 || !args[0]->IsObject()) {
-      ThrowException(Exception::TypeError(String::New("1 argument required")));
-      return scope.Close(Undefined());
+    if (fci.Length() < 1 || !fci[0]->IsObject()) {
+      Nan::ThrowTypeError("1 argument required");
+      fci.GetReturnValue().SetUndefined();
+      return;
     }
-    void* const internal = args.This()->GetPointerFromInternalField(0);
+    void* const internal = Nan::GetInternalFieldPointer(fci.This(), 0);
     DDS::DomainParticipant* const dp =
       static_cast<DDS::DomainParticipant*>(internal);
 
-    const Local<Object> dr_js = args[0]->ToObject();
-    void* const dr_obj = dr_js->GetPointerFromInternalField(0);
+    const Local<Object> dr_js = fci[0]->ToObject();
+    void* const dr_obj = Nan::GetInternalFieldPointer(dr_js, 0);
     DDS::DataReader_var dr = static_cast<DDS::DataReader*>(dr_obj);
-    dr_js->SetPointerInInternalField(0, 0);
+    Nan::SetInternalFieldPointer(dr_js, 0, 0);
     const DDS::DataReaderListener_var drl = dr->get_listener();
     NodeDRListener* const ndrl = dynamic_cast<NodeDRListener*>(drl.in());
     ndrl->shutdown();
@@ -280,21 +284,21 @@ namespace {
       dp->delete_topic(topic);
     }
 
-    return scope.Close(Undefined());
+    fci.GetReturnValue().SetUndefined();
   }
 
-  Handle<Value> finalize(const Arguments& args)
+  void finalize(const Nan::FunctionCallbackInfo<Value>& fci)
   {
-    HandleScope scope;
-    if (args.Length() < 1) {
-      ThrowException(Exception::TypeError(String::New("1 argument required")));
-      return scope.Close(Undefined());
+    if (fci.Length() < 1) {
+      Nan::ThrowTypeError("1 argument required");
+      fci.GetReturnValue().SetUndefined();
+      return;
     }
-    const Local<Object> dpf_js = args[0]->ToObject();
-    void* const internal = dpf_js->GetPointerFromInternalField(0);
+    const Local<Object> dpf_js = fci[0]->ToObject();
+    void* const internal = Nan::GetInternalFieldPointer(dpf_js, 0);
     const DDS::DomainParticipantFactory_var dpf =
       static_cast<DDS::DomainParticipantFactory*>(internal);
-    dpf_js->SetPointerInInternalField(0, 0);
+    Nan::SetInternalFieldPointer(dpf_js, 0, 0);
 
     for (size_t i = 0; i < participants_.size(); ++i) {
       DDS::DomainParticipant_var& part = participants_[i];
@@ -304,29 +308,29 @@ namespace {
     participants_.clear();
     TheServiceParticipant->shutdown();
     ACE::fini();
-    return scope.Close(Undefined());
+    fci.GetReturnValue().SetUndefined();
   }
 
-  Handle<Value> load(const Arguments& args)
+  void load(const Nan::FunctionCallbackInfo<Value>& fci)
   {
-    HandleScope scope;
-    if (args.Length() == 0 || !args[0]->IsString()) {
-      ThrowException(Exception::TypeError(String::New("1 argument required")));
-      return scope.Close(Undefined());
+    if (fci.Length() == 0 || !fci[0]->IsString()) {
+      Nan::ThrowTypeError("1 argument required");
+      fci.GetReturnValue().SetUndefined();
+      return;
     }
-    const String::Utf8Value lib_js(args[0]);
+    const String::Utf8Value lib_js(fci[0]);
     const ACE_TString lib(ACE_TEXT_CHAR_TO_TCHAR(*lib_js));
     const bool ok =
       ACE_DLL_Manager::instance()->open_dll(lib.c_str(),
                                             ACE_DEFAULT_SHLIB_MODE, 0);
-    return scope.Close(Boolean::New(ok));
+    fci.GetReturnValue().Set(ok);
   }
 
-  void init_node_opendds(Handle<Object> target)
+  void init_node_opendds(Local<Object> target)
   {
-    node::SetMethod(target, "initialize", initialize);
-    node::SetMethod(target, "finalize", finalize);
-    node::SetMethod(target, "load", load);
+    Nan::SetMethod(target, "initialize", initialize);
+    Nan::SetMethod(target, "finalize", finalize);
+    Nan::SetMethod(target, "load", load);
   }
 }
 

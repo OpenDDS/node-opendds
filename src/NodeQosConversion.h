@@ -1,7 +1,7 @@
 #ifndef OPENDDS_NODEQOSCONVERSION_H
 #define OPENDDS_NODEQOSCONVERSION_H
 
-#include <v8.h>
+#include <nan.h>
 
 #include <dds/DdsDcpsInfrastructureC.h>
 

@@ -1,13 +1,12 @@
 {
   "name": "opendds",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "OpenDDS module for Node.js",
   "main": "lib/node-opendds.js",
   "directories": {
     "test": "test"
   },
   "scripts": {
-    "test": "cd test; ./test.sh",
     "install": "node-gyp rebuild"
   },
   "repository": {
@@ -21,5 +20,8 @@
   ],
   "author": "Adam Mitz (Object Computing, Inc.)",
   "license": "BSD",
-  "gypfile": true
+  "gypfile": true,
+  "dependencies": {
+    "nan": "^2.5.1"
+  }
 }

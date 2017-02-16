@@ -4,6 +4,8 @@
 
 #include "idl/NodeJSTestTypeSupportImpl.h"
 
+#include <iostream>
+
 void wait_for_match(const DDS::DataWriter_var& writer)
 {
   DDS::StatusCondition_var condition = writer->get_statuscondition();

@@ -22,7 +22,21 @@ if (PerlACE::waitforfile_timed($dcpsrepo_ior, 30) == -1) {
     exit 1;
 }
 
-my $NODE = PerlDDS::create_process("node", "test.js");
+sub which {
+  my $file = shift;
+  my $exeext = ($^O eq 'MSWin32') ? '.exe' : '';
+  for my $p (File::Spec->path()) {
+    if (-x "$p/$file") {
+      return "$p/$file";
+    }
+    elsif ($exeext ne '' && -x "$p/$file$exeext") {
+      return "$p/$file$exeext";
+    }
+  }
+  return undef;
+}
+
+my $NODE = PerlDDS::create_process(which("nodejs"), "test.js");
 $NODE->IgnoreExeSubDir(1);
 $NODE->Spawn();
 
