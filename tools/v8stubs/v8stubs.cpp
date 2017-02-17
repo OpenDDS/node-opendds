@@ -1,4 +1,5 @@
 #define BUILDING_V8_SHARED
+#define V8_SHARED
 #include <v8.h>
 
 namespace v8 {
