@@ -1,5 +1,7 @@
 # OpenDDS module for Node.js
 
+Travis CI: [![Build Status](https://travis-ci.org/oci-labs/node-opendds.svg?branch=master)](https://travis-ci.org/oci-labs/node-opendds)
+
 ## Version 0.0.5
 
 Updated for Node.js version 6.9.5 and V8 version 5.8.1.

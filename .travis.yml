@@ -13,7 +13,7 @@ env:
 before_install:
   - git clone --depth 1 git://github.com/DOCGroup/MPC.git
   - git clone --depth 1 -b Latest_Micro git://github.com/DOCGroup/ACE_TAO.git
-  - git clone --depth 1 -b v8 git://github.com/mitza-oci/OpenDDS.git
+  - git clone --depth 1 git://github.com/objectcomputing/OpenDDS.git
 branches:
   only: master
 before_script:
@@ -25,7 +25,10 @@ before_script:
 script:
   - make -C OpenDDS -sj6 DCPSInfoRepo_Main
   - npm install
+  - export V8_ROOT=~/.node-gyp/$(node-gyp list)
+  - export NAN_ROOT=$TRAVIS_BUILD_DIR/node_modules/nan
   - $ACE_ROOT/bin/mwc.pl -type gnuace -exclude ACE_TAO,OpenDDS
+  - export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$TRAVIS_BUILD_DIR/tools/v8stubs
   - make
 after_script:
   - cd test; ./run_test.pl
