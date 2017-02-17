@@ -11,3 +11,6 @@ test/test.log
 *.so.*
 node_modules
 setenv.sh
+node_opendds.sln
+.vs/
+node_opendds.VC.*

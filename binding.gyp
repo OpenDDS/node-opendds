@@ -7,8 +7,6 @@
                       'ACE_HAS_EXCEPTIONS', '__ACE_INLINE__' ],
       }],
       ['OS=="win"', {
-        'include_dirs+': [ '$(V8_ROOT)/include' ],
-        'libraries': [ 'v8.lib' ],
         'msvs_settings': {
           'VCCLCompilerTool': {
             'RuntimeTypeInfo': 'true',
@@ -19,10 +17,7 @@
             'msvs_settings': {
               'VCCLCompilerTool': {
                 'RuntimeLibrary': '3',
-              },
-              'VCLinkerTool': {
-                'AdditionalLibraryDirectories':
-                  [ '$(V8_ROOT)/build/Debug/lib' ],
+                'ExceptionHandling': '1',  
               },
             },
           },
@@ -30,10 +25,7 @@
             'msvs_settings': {
               'VCCLCompilerTool': {
                 'RuntimeLibrary': '2',
-              },
-              'VCLinkerTool': {
-                'AdditionalLibraryDirectories':
-                  [ '$(V8_ROOT)/build/Release/lib' ],
+                'ExceptionHandling': '1',  
               },
             },
           },
