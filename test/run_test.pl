@@ -36,7 +36,7 @@ sub which {
   return undef;
 }
 
-my $NODE = PerlDDS::create_process(which("nodejs"), "test.js");
+my $NODE = PerlDDS::create_process(which("node"), "test.js");
 $NODE->IgnoreExeSubDir(1);
 $NODE->Spawn();
 
