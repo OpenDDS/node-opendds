@@ -33,5 +33,4 @@ script:
   - $ACE_ROOT/bin/mwc.pl -type gnuace -exclude ACE_TAO,OpenDDS
   - export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$TRAVIS_BUILD_DIR/tools/v8stubs
   - make
-after_script:
   - cd test; ./run_test.pl
