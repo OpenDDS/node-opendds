@@ -73,6 +73,11 @@ try {
       console.log("Error in callback: " + e);
     }
   });
+
+  participant.subscribe_participant_topic(function(info, participant) {
+    log('Received Participant', participant);
+    log('Received info', info);
+  });
 } catch (e) {
   console.log(e);
 }
