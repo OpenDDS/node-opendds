@@ -43,6 +43,7 @@ namespace {
   void delete_participant(const Nan::FunctionCallbackInfo<Value>& fci);
   void subscribe(const Nan::FunctionCallbackInfo<Value>& fci);
   void unsubscribe(const Nan::FunctionCallbackInfo<Value>& fci);
+  void subscribe_participant_topic(const Nan::FunctionCallbackInfo<Value>& fci);
 
   void initialize(const Nan::FunctionCallbackInfo<Value>& fci)
   {
@@ -96,6 +97,7 @@ namespace {
     ot->SetInternalFieldCount(1);
     Nan::SetMethod(ot, "subscribe", subscribe);
     Nan::SetMethod(ot, "unsubscribe", unsubscribe);
+    Nan::SetMethod(ot, "subscribe_participant_topic", subscribe_participant_topic);
     const Local<Object> obj = ot->NewInstance();
     Nan::SetInternalFieldPointer(obj, 0, dp._retn());
     fci.GetReturnValue().Set(obj);
@@ -246,6 +248,37 @@ namespace {
     Nan::SetInternalFieldPointer(obj, 0, dr._retn());
     ndrl->set_javascript_datareader(obj);
     fci.GetReturnValue().Set(obj);
+  }
+
+  void subscribe_participant_topic(const Nan::FunctionCallbackInfo<Value>& fci) {
+    if (fci.Length() < 1) {
+      Nan::ThrowTypeError("At least 1 argument required");
+      fci.GetReturnValue().SetUndefined();
+      return;
+    }
+    if (!fci[fci.Length() - 1]->IsFunction()) {
+      Nan::ThrowTypeError("Last argument must be a function");
+      fci.GetReturnValue().SetUndefined();
+      return;
+    }
+    void* const internal = Nan::GetInternalFieldPointer(fci.This(), 0);
+    DDS::DomainParticipant* const dp =
+      static_cast<DDS::DomainParticipant*>(internal);
+
+    DDS::Subscriber_var bit_subscriber = dp->get_builtin_subscriber() ;
+    DDS::DataReader_var dr =
+        bit_subscriber->lookup_datareader(OpenDDS::DCPS::BUILT_IN_PARTICIPANT_TOPIC);
+
+    DDS::ParticipantBuiltinTopicDataSeq part_data;
+    DDS::SampleInfoSeq infos;
+
+    Local<Value> cb = fci[fci.Length() - 1];
+    NodePBITListener* const npbitl = new NodePBITListener(cb.As<Function>(), part_data, infos, dr);
+    const DDS::DataReaderListener_var listen(npbitl);
+
+    dr->set_listener(listen.in(), OpenDDS::DCPS::DEFAULT_STATUS_MASK);
+    
+    fci.GetReturnValue().SetUndefined();
   }
 
   void unsubscribe(const Nan::FunctionCallbackInfo<Value>& fci)
