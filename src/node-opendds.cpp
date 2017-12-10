@@ -1,5 +1,6 @@
 #include "NodeDRListener.h"
 #include "NodeValueReader.h"
+#include "NodePBITListener.h"
 
 #include <nan.h>
 
@@ -18,6 +19,7 @@ using namespace v8;
 using OpenDDS::DCPS::Data_Types_Register;
 using NodeOpenDDS::NodeDRListener;
 using NodeOpenDDS::NodeValueReader;
+using NodeOpenDDS::NodePBITListener;
 
 namespace {
   std::vector<DDS::DomainParticipant_var> participants_;
