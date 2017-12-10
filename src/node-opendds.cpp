@@ -1,4 +1,5 @@
 #include "NodeDRListener.h"
+#include "NodePBITListener.h"
 #include "NodeQosConversion.h"
 
 #include <nan.h>
@@ -18,6 +19,7 @@
 using namespace v8;
 using OpenDDS::DCPS::Data_Types_Register;
 using NodeOpenDDS::NodeDRListener;
+using NodeOpenDDS::NodePBITListener;
 using NodeOpenDDS::convertQos;
 
 namespace {
