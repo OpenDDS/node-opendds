@@ -68,6 +68,7 @@ try {
       log('Sample Info', sinfo);
       if (sinfo.valid_data && sample.id === last_sample_id) {
         participant.unsubscribe(reader);
+        participant.unsubscribe_participant_topic();
       }
     } catch (e) {
       console.log("Error in callback: " + e);
