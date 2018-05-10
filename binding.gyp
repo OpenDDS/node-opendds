@@ -49,6 +49,12 @@
             'ldflags': [ '-L$(ACE_ROOT)/lib', '-L$(DDS_ROOT)/lib' ],
           },
         }],
+        ['OS=="mac"', {
+          'xcode_settings': {
+            'GCC_ENABLE_CPP_RTTI': 'YES',
+            'GCC_ENABLE_CPP_EXCEPTIONS': 'YES'
+          }
+        }],
         ['OS=="win"', {
           'msvs_settings' : {
             'VCLinkerTool': {
