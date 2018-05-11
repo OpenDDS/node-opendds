@@ -11,15 +11,17 @@ env:
     - MPC_ROOT=$TRAVIS_BUILD_DIR/MPC
     - LD_LIBRARY_PATH=$ACE_ROOT/lib:$DDS_ROOT/lib:$LD_LIBRARY_PATH
 matrix:
-  env:
-    - OPENDDS_BRANCH=master
-    - OPENDDS_BRANCH=latest-release
   include:
     - os: osx
       osx_image: xcode9.1
       compiler: clang
-      env: COMPILER=clang++ NO_INLINE=1
+      env: 
+	- COMPILER=clang++ NO_INLINE=1 OPENDDS_BRANCH=master
+	- COMPILER=clang++ NO_INLINE=1 OPENDDS_BRANCH=latest-release
     - os: linux
+      env:
+        - OPENDDS_BRANCH=master
+        - OPENDDS_BRANCH=latest-release
 before_install:
   - git clone --depth 1 git://github.com/DOCGroup/MPC.git
   - git clone --depth 1 -b Latest_Micro git://github.com/DOCGroup/ACE_TAO.git
