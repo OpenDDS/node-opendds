@@ -114,7 +114,6 @@ int ACE_TMAIN(int argc, ACE_TCHAR* argv[])
     ACE_CDR_LONG_DOUBLE_ASSIGNMENT(sample.bt.ld, 1.4142136l);
     sample.bt.b = true;
     sample.bt.c = 'x';
-    sample.bt.wc = L'y';
     sample.bt.str = "z012";
     sample.bt.wstr = L"abcde";
     sample.seq1.length(5);

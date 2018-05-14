@@ -19,7 +19,8 @@ module Mod {
     long double ld;
     boolean b;
     char c;
-    wchar wc;
+    // Not all supported C++ compilers handle the code generated from this type.
+    // wchar wc;
     string str;
     wstring wstr;
   };
