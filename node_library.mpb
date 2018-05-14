@@ -1,0 +1,13 @@
+// Build settings for libraries that will be loaded into the Node.js
+// process and have dependencies on v8.
+
+// On macOS we need to let the linker know that we are OK with
+// undefined symbols (v8's) that will be resolved at runtime.
+
+project {
+  verbatim(gnuace, local, 1) {
+    ifeq ($(shell uname -s), Darwin)
+      LDFLAGS += -undefined dynamic_lookup
+    endif
+  }
+}

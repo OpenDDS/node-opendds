@@ -38,6 +38,11 @@ sub which {
 
 my $NODE = PerlDDS::create_process(which("node"), "test.js");
 $NODE->IgnoreExeSubDir(1);
+
+if ($^O eq 'darwin') {
+  $ENV{DYLD_LIBRARY_PATH} = "$DDS_ROOT/lib:$ACE_ROOT/lib";
+}
+
 $NODE->Spawn();
 
 PerlDDS::add_lib_path("idl");

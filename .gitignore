@@ -9,6 +9,7 @@ test/test.log
 *~
 *.so
 *.so.*
+*.dylib
 node_modules
 setenv.sh
 node_opendds.sln
