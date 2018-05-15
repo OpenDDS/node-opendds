@@ -24,7 +24,6 @@ void convertQos(DDS::DomainParticipantQos& qos,
   // If it exists, get the PropertyQosPolicy that enables security features:
   const Local<String> prop_str = Nan::New<String>("property").ToLocalChecked();
   if (qos_js->Has(prop_str)) {
-    std::cout << "HAS Props" << std::endl;
     const Local<Object> props_policy_js = qos_js->Get(prop_str)->ToObject();
     const Local<String> name_str = Nan::New<String>("name").ToLocalChecked(),
       value_str = Nan::New<String>("value").ToLocalChecked();
