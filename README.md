@@ -2,6 +2,11 @@
 
 Travis CI: [![Build Status](https://travis-ci.org/oci-labs/node-opendds.svg?branch=master)](https://travis-ci.org/oci-labs/node-opendds)
 
+## Version 0.0.7
+
+Added Apple macOS support.
+Works with Node.js version 8.
+
 ## Version 0.0.6
 
 Added Microsoft Visual C++ support.
@@ -36,6 +41,7 @@ the older versions of OpenDDS.
 ## Tested platforms:
 * Linux (Ubuntu16.04) x86_64 using the distro-supplied GCC and c++11=1
 * Windows 10 x86_64 using Visual Studio 2015
+* macOS using Xcode 9.x clang C++ compiler
 * Other OpenDDS-supported platforms should work, but may required changes to binding.gyp
 
 ## To build the module (for development of this module, users can simply use npm)
