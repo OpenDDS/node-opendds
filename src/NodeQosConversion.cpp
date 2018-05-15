@@ -20,6 +20,32 @@ void convertQos(DDS::DomainParticipantQos& qos,
     convert(qos.user_data.value, qos_js->Get(user_data)->ToString());
   }
   // entity_factory QoS is not supported since there is no enable() method
+
+  // If it exists, get the PropertyQosPolicy that enables security features:
+  const Local<String> prop_str = Nan::New<String>("property").ToLocalChecked();
+  if (qos_js->Has(prop_str)) {
+    std::cout << "HAS Props" << std::endl;
+    const Local<Object> props_policy_js = qos_js->Get(prop_str)->ToObject();
+    const Local<String> name_str = Nan::New<String>("name").ToLocalChecked(),
+      value_str = Nan::New<String>("value").ToLocalChecked();
+    if (props_policy_js->Has(value_str)) {
+      const Local<Object> props_array_js = props_policy_js->Get(value_str)->ToObject();
+      const Local<String> len_str = Nan::New<String>("length").ToLocalChecked();
+
+      // Iterate over the properties in the policy and add them to the native QoS
+      const Nan::Maybe<uint32_t> props_array_len = Nan::To<uint32_t>(props_array_js->Get(len_str));
+      const uint32_t len = props_array_len.FromMaybe(0);
+      for (uint32_t i = 0; i < len; ++i) {
+        const Local<Object> property_js = props_array_js->Get(i)->ToObject();
+        if (property_js->Has(name_str) && property_js->Has(value_str)) {
+          const String::Utf8Value name(property_js->Get(name_str));
+          qos.property.value[i].name = *name;
+          const String::Utf8Value value(property_js->Get(value_str));
+          qos.property.value[i].value = *value;
+        }
+      }
+    }
+  }
 }
 
 void convertQos(DDS::SubscriberQos& qos, const Local<Object>& sqos_js)

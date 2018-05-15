@@ -5,7 +5,11 @@ var opendds_addon = require('../lib/node-opendds'),
                                           '-ORBLogFile', 'test.log',
                                           '-ORBVerboseLogging', 1),*/
   library = opendds_addon.load('idl/NodeJSTest'),
-  participant = factory.create_participant(32, {user_data: 'foo'}),
+  participant = factory.create_participant(32, {user_data: 'foo', property: {value: [
+    {name: "nameA", value: "valueA" },
+    {name: "nameB", value: "valueB" },
+    {name: "nameC", value: "valueC" }
+  ]}}),
   reader,
   last_sample_id = 24,
   dds_inf = 0x7fffffff,
