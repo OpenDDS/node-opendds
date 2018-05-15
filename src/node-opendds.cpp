@@ -83,7 +83,13 @@ namespace {
     dpf->get_default_participant_qos(qos);
     if (fci.Length() > 1) {
       const Local<Object> qos_js = fci[1]->ToObject();
-      convertQos(qos, qos_js);
+      try {
+        convertQos(qos, qos_js);
+      } catch (const std::runtime_error& e) {
+        Nan::ThrowError(e.what());
+        fci.GetReturnValue().SetUndefined();
+        return;
+      }
     }
     DDS::DomainParticipant_var dp = dpf->create_participant(domain, qos, 0, 0);
     if (!dp) {
@@ -210,7 +216,13 @@ namespace {
     Nan::MaybeLocal<String> subqos_str = Nan::New<String>("SubscriberQos");
     const Local<String> subqos_lstr = subqos_str.ToLocalChecked();
     if (*qos_js && qos_js->Has(subqos_lstr)) {
-      convertQos(sub_qos, qos_js->Get(subqos_lstr)->ToObject());
+      try {
+        convertQos(sub_qos, qos_js->Get(subqos_lstr)->ToObject());
+      } catch (const std::runtime_error& e) {
+        Nan::ThrowError(e.what());
+        fci.GetReturnValue().SetUndefined();
+        return;
+      }
     }
 
     const DDS::Subscriber_var sub = dp->create_subscriber(sub_qos, 0, 0);
@@ -229,7 +241,13 @@ namespace {
     Nan::MaybeLocal<String> drqos_str = Nan::New<String>("DataReaderQos");
     const Local<String> drqos_lstr = drqos_str.ToLocalChecked();
     if (*qos_js && qos_js->Has(drqos_lstr)) {
-      convertQos(dr_qos, qos_js->Get(drqos_lstr)->ToObject());
+      try {
+        convertQos(dr_qos, qos_js->Get(drqos_lstr)->ToObject());
+      } catch (const std::runtime_error& e) {
+        Nan::ThrowError(e.what());
+        fci.GetReturnValue().SetUndefined();
+        return;
+      }
     }
 
     DDS::DataReader_var dr = sub->create_datareader(topic, dr_qos, listen,

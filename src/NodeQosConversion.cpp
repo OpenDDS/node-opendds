@@ -1,5 +1,6 @@
 #include "NodeQosConversion.h"
 
+#include <stdexcept>
 #include <cstring>
 
 using namespace v8;
@@ -34,6 +35,7 @@ void convertQos(DDS::DomainParticipantQos& qos,
       // Iterate over the properties in the policy and add them to the native QoS
       const Nan::Maybe<uint32_t> props_array_len = Nan::To<uint32_t>(props_array_js->Get(len_str));
       const uint32_t len = props_array_len.FromMaybe(0);
+      qos.property.value.length(len);
       for (uint32_t i = 0; i < len; ++i) {
         const Local<Object> property_js = props_array_js->Get(i)->ToObject();
         if (property_js->Has(name_str) && property_js->Has(value_str)) {
@@ -41,6 +43,9 @@ void convertQos(DDS::DomainParticipantQos& qos,
           qos.property.value[i].name = *name;
           const String::Utf8Value value(property_js->Get(value_str));
           qos.property.value[i].value = *value;
+        } else {
+          throw std::runtime_error(
+            "All properties must be objects with name and value attributes");
         }
       }
     }
