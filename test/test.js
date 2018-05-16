@@ -1,15 +1,49 @@
 "use strict";
 
+var DOMAIN_ID = 32;
+var ddsCerts = process.env.DDS_ROOT + "/tests/security/certs";
+
+var qos = {user_data: 'foo'};
+var secure = process.argv.includes('--secure');
+if (secure) {
+  qos.property = { value: [
+
+    {name: "dds.sec.auth.identity_ca", value: "file:" +
+      ddsCerts + "/opendds_identity_ca_cert.pem"},
+
+    {name: "dds.sec.access.permissions_ca", value: "file:" +
+      ddsCerts + "/opendds_identity_ca_cert.pem"},
+
+    {name: "dds.sec.access.governance", value: "file:" +
+      "security/governance_signed.p7s"},
+
+    {name: "dds.sec.auth.identity_certificate", value: "file:" +
+      ddsCerts + "/mock_participant_2/opendds_participant_cert.pem"},
+
+    {name: "dds.sec.auth.private_key", value: "file:" +
+      ddsCerts + "/mock_participant_2/opendds_participant_private_key.pem"},
+
+    {name: "dds.sec.access.permissions", value: "file:" +
+      "security/sub_permissions_signed.p7s"},
+
+  ]};
+  qos.property.value.forEach(function(prop) {
+    console.log(prop.name + ": " + prop.value);
+  });
+}
+
+
+function init_opendds(opendds_addon) {
+  if (secure) {
+    return opendds_addon.initialize('-DCPSConfigFile', 'rtps_disc.ini');
+  } else {
+    return opendds_addon.initialize();
+  }
+}
 var opendds_addon = require('../lib/node-opendds'),
-  factory = opendds_addon.initialize(), /*'-DCPSDebugLevel', 10,
-                                          '-ORBLogFile', 'test.log',
-                                          '-ORBVerboseLogging', 1),*/
+  factory = init_opendds(opendds_addon),
   library = opendds_addon.load('idl/NodeJSTest'),
-  participant = factory.create_participant(32, {user_data: 'foo', property: {value: [
-    {name: "nameA", value: "valueA" },
-    {name: "nameB", value: "valueB" },
-    {name: "nameC", value: "valueC" }
-  ]}}),
+  participant = factory.create_participant(DOMAIN_ID, qos),
   reader,
   last_sample_id = 24,
   dds_inf = 0x7fffffff,

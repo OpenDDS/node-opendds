@@ -50,11 +50,13 @@ namespace {
     std::vector<std::string> arg_storage;
     arg_storage.reserve(fci.Length());
     ACE_ARGV_T<char> argv(false /*substitute env vars*/);
+    std::cout << "Args " << fci.Length() << ":" << std::endl;
     for (int i = 0; i < fci.Length(); ++i) {
       const Local<String> js_str = fci[i]->ToString();
       arg_storage.push_back(std::string(js_str->Utf8Length(), '\0'));
       std::string& str = arg_storage.back();
       js_str->WriteUtf8(&str[0]);
+      std::cout << "    " << str << std::endl;
       argv.add(str.c_str());
     }
     int argc = argv.argc();

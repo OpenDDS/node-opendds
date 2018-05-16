@@ -6,6 +6,26 @@
 
 #include <iostream>
 
+const int DOMAIN_ID = 32;
+
+#ifdef SECURE
+const char DDSSEC_PROP_IDENTITY_CA[] = "dds.sec.auth.identity_ca";
+const char DDSSEC_PROP_IDENTITY_CERT[] = "dds.sec.auth.identity_certificate";
+const char DDSSEC_PROP_IDENTITY_PRIVKEY[] = "dds.sec.auth.private_key";
+const char DDSSEC_PROP_PERM_CA[] = "dds.sec.access.permissions_ca";
+const char DDSSEC_PROP_PERM_GOV_DOC[] = "dds.sec.access.governance";
+const char DDSSEC_PROP_PERM_DOC[] = "dds.sec.access.permissions";
+
+void append(DDS::PropertySeq& props, const char* name, const std::string& value)
+{
+  const DDS::Property_t prop = {
+    name, (std::string("file:") + value).c_str(), false /*propagate*/};
+  const unsigned int len = props.length();
+  props.length(len + 1);
+  props[len] = prop;
+}
+#endif
+
 void wait_for_match(const DDS::DataWriter_var& writer)
 {
   DDS::StatusCondition_var condition = writer->get_statuscondition();
@@ -47,8 +67,37 @@ int ACE_TMAIN(int argc, ACE_TCHAR* argv[])
     DDS::DomainParticipantFactory_var dpf =
       TheParticipantFactoryWithArgs(argc, argv);
 
+    DDS::DomainParticipantQos qos;
+    dpf->get_default_participant_qos(qos);
+
+#ifdef SECURE
+    // Enable Security
+    const std::string dds_root(getenv("DDS_ROOT"));
+    const std::string dds_certs(dds_root + "/tests/security/certs");
+    if (TheServiceParticipant->get_security()) {
+      std::cout << "Security Enabled" << std::endl;
+      DDS::PropertySeq& props = qos.property.value;
+      append(props, DDSSEC_PROP_IDENTITY_CA,
+        dds_certs + "/opendds_identity_ca_cert.pem");
+      append(props, DDSSEC_PROP_PERM_CA,
+        dds_certs + "/opendds_identity_ca_cert.pem");
+      append(props, DDSSEC_PROP_PERM_GOV_DOC,
+				"security/governance_signed.p7s");
+      append(props, DDSSEC_PROP_IDENTITY_CERT,
+        dds_certs + "/mock_participant_1/opendds_participant_cert.pem");
+      append(props, DDSSEC_PROP_IDENTITY_PRIVKEY,
+        dds_certs + "/mock_participant_1/opendds_participant_private_key.pem");
+      append(props, DDSSEC_PROP_PERM_DOC,
+				"security/pub_permissions_signed.p7s");
+    } else {
+      ACE_ERROR_RETURN((LM_ERROR, ACE_TEXT(
+        "%N:%l: main() ERROR: This is the secure publisher, but security is not enabled.\n"
+        )), 1);
+    }
+#endif
+
     DDS::DomainParticipant_var participant =
-      dpf->create_participant(32, PARTICIPANT_QOS_DEFAULT, 0, 0);
+      dpf->create_participant(DOMAIN_ID, qos, 0, 0);
 
     if (!participant) {
       ACE_ERROR_RETURN((LM_ERROR,
