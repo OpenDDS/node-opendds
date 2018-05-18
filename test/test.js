@@ -40,6 +40,7 @@ function init_opendds(opendds_addon) {
     return opendds_addon.initialize();
   }
 }
+
 var opendds_addon = require('../lib/node-opendds'),
   factory = init_opendds(opendds_addon),
   library = opendds_addon.load('idl/NodeJSTest'),

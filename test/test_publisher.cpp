@@ -75,7 +75,6 @@ int ACE_TMAIN(int argc, ACE_TCHAR* argv[])
     const std::string dds_root(getenv("DDS_ROOT"));
     const std::string dds_certs(dds_root + "/tests/security/certs");
     if (TheServiceParticipant->get_security()) {
-      std::cout << "Security Enabled" << std::endl;
       DDS::PropertySeq& props = qos.property.value;
       append(props, DDSSEC_PROP_IDENTITY_CA,
         dds_certs + "/opendds_identity_ca_cert.pem");
