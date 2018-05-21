@@ -27,9 +27,6 @@ if (secure) {
       "security/sub_permissions_signed.p7s"},
 
   ]};
-  qos.property.value.forEach(function(prop) {
-    console.log(prop.name + ": " + prop.value);
-  });
 }
 
 
