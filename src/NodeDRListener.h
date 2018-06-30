@@ -19,6 +19,7 @@ namespace NodeOpenDDS {
                    const OpenDDS::DCPS::V8TypeConverter& conv);
     ~NodeDRListener();
     void set_javascript_datareader(const v8::Local<v8::Object>& js_dr);
+    void unsubscribing();
     void shutdown();
 
   private:
@@ -53,8 +54,10 @@ namespace NodeOpenDDS {
     NodeDRListener(const NodeDRListener&);
     NodeDRListener& operator=(const NodeDRListener&);
 
-   void reserve(CORBA::ULong);
-   void push_back(const DDS::SampleInfo& src, const void* sample);
+    void reserve(CORBA::ULong);
+    void push_back(const DDS::SampleInfo& src, const void* sample);
+
+    bool unsubscribing_;
 
   };
 

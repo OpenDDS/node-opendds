@@ -42,6 +42,7 @@ NodeDRListener::NodeDRListener(const Local<Function>& callback,
   : callback_(callback)
   , conv_(conv)
   , async_uv_(this)
+  , unsubscribing_(false)
 {
   uv_async_init(uv_default_loop(), &async_uv_, async_cb);
 }
@@ -68,6 +69,10 @@ void NodeDRListener::shutdown()
 
 void NodeDRListener::on_data_available(DDS::DataReader*)
 {
+  if (unsubscribing_) {
+    return;
+  }
+
   uv_async_send(&async_uv_);
 }
 
@@ -99,6 +104,10 @@ void NodeDRListener::reserve(CORBA::ULong)
 
 void NodeDRListener::push_back(const DDS::SampleInfo& src, const void* sample)
 {
+  if (unsubscribing_) {
+    return;
+  }
+
   Local<Value> argv[] = {Nan::New(js_dr_), Handle<Value>(copyToV8(src)),
                          src.valid_data ? conv_.toV8(sample).As<Value>()
                          : Nan::Undefined().As<Value>()};
@@ -111,6 +120,10 @@ void NodeDRListener::push_back(const DDS::SampleInfo& src, const void* sample)
   if (!Nan::GetInternalFieldPointer(argv[0].As<v8::Object>(), 0)) {
     throw std::runtime_error("invalid Javascript Data Reader callback object");
   }
+}
+
+void NodeDRListener::unsubscribing() {
+  unsubscribing_ = true;
 }
 
 }
