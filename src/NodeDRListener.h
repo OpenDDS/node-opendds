@@ -15,12 +15,20 @@ namespace NodeOpenDDS {
     : public virtual OpenDDS::DCPS::LocalObject<DDS::DataReaderListener>
     , private OpenDDS::DCPS::AbstractSamples {
   public:
-    NodeDRListener(const v8::Local<v8::Function>& callback,
+    NodeDRListener(DDS::DomainParticipant* dp,
+                   const v8::Local<v8::Function>& callback,
                    const OpenDDS::DCPS::V8TypeConverter& conv);
     ~NodeDRListener();
     void set_javascript_datareader(const v8::Local<v8::Object>& js_dr);
-    void unsubscribing();
-    void shutdown();
+
+    /**
+     * If receiving samples, ignore any more samples and unsubscribe
+     * afterwards, else unsubscribe now.
+     */
+    void unsubscribe();
+
+    /// Unsubscribe immediately
+    void unsubscribe_now();
 
   private:
     static void async_cb(uv_async_t* async_uv);
@@ -42,6 +50,7 @@ namespace NodeOpenDDS {
 
     void async(); // called from libuv event loop
 
+    DDS::DomainParticipant* dp_;
     Nan::Persistent<v8::Function> callback_;
     Nan::Persistent<v8::Object> js_dr_;
     const OpenDDS::DCPS::V8TypeConverter& conv_;
@@ -57,8 +66,28 @@ namespace NodeOpenDDS {
     void reserve(CORBA::ULong);
     void push_back(const DDS::SampleInfo& src, const void* sample);
 
+    /// True if Datareader Listener is going to unsubscribe itself soon.
     bool unsubscribing_;
 
+    /// True if Datareader Listener taking samples.
+    bool receiving_samples_;
+  };
+
+  /// Wrapper object to call unsubscribe at a better time using Node Event
+  /// Loop.
+  class UnsubscribeWorker : public Nan::AsyncWorker {
+  public:
+    UnsubscribeWorker(NodeDRListener* ndrl);
+    ~UnsubscribeWorker();
+
+    void Execute();
+    void Destroy();
+
+  protected:
+    NodeDRListener* ndrl_;
+
+    void HandleOKCallback();
+    void HandleErrorCallback();
   };
 
 }

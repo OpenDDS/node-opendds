@@ -47,7 +47,6 @@ namespace {
   void delete_participant(const Nan::FunctionCallbackInfo<Value>& fci);
   void subscribe(const Nan::FunctionCallbackInfo<Value>& fci);
   void unsubscribe(const Nan::FunctionCallbackInfo<Value>& fci);
-  void unsubscribe_now(const Nan::FunctionCallbackInfo<Value>& fci);
 
   void initialize(const Nan::FunctionCallbackInfo<Value>& fci)
   {
@@ -101,7 +100,6 @@ namespace {
     ot->SetInternalFieldCount(1);
     Nan::SetMethod(ot, "subscribe", subscribe);
     Nan::SetMethod(ot, "unsubscribe", unsubscribe);
-    Nan::SetMethod(ot, "unsubscribe_now", unsubscribe_now);
     const Local<Object> obj = ot->NewInstance();
     Nan::SetInternalFieldPointer(obj, 0, dp._retn());
     fci.GetReturnValue().Set(obj);
@@ -227,7 +225,7 @@ namespace {
     }
 
     Local<Value> cb = fci[fci.Length() - 1];
-    NodeDRListener* const ndrl = new NodeDRListener(cb.As<Function>(), *tc);
+    NodeDRListener* const ndrl = new NodeDRListener(dp, cb.As<Function>(), *tc);
     const DDS::DataReaderListener_var listen(ndrl);
 
     DDS::DataReaderQos dr_qos;
@@ -268,56 +266,7 @@ namespace {
     DDS::DataReader* dr = static_cast<DDS::DataReader*>(dr_obj);
     NodeDRListener* const ndrl = dynamic_cast<NodeDRListener*>(dr->get_listener());
 
-    // Inform the Listener to skip any remaining takes
-    ndrl->unsubscribing();
-
-    // Schedule a call to unsubscribe_now right after this event
-    Nan::HandleScope scope;
-    Local<Object> globals = fci.GetIsolate()->GetCurrentContext()->Global();
-    globals->Set(V8STR("_cb_obj"), fci.This());
-    globals->Set(V8STR("_cb_arg"), fci[0]);
-    RUN(
-      "setImmediate(function(){_cb_obj.unsubscribe_now(_cb_arg);});"
-    );
-
-    fci.GetReturnValue().SetUndefined();
-  }
-
-  void unsubscribe_now(const Nan::FunctionCallbackInfo<Value>& fci)
-  {
-    if (fci.Length() < 1 || !fci[0]->IsObject()) {
-      Nan::ThrowTypeError("1 argument required");
-      fci.GetReturnValue().SetUndefined();
-      return;
-    }
-    void* const internal = Nan::GetInternalFieldPointer(fci.This(), 0);
-    DDS::DomainParticipant* const dp =
-      static_cast<DDS::DomainParticipant*>(internal);
-
-    const Local<Object> dr_js = fci[0]->ToObject();
-    void* const dr_obj = Nan::GetInternalFieldPointer(dr_js, 0);
-    DDS::DataReader_var dr = static_cast<DDS::DataReader*>(dr_obj);
-    Nan::SetInternalFieldPointer(dr_js, 0, 0);
-    const DDS::DataReaderListener_var drl = dr->get_listener();
-    NodeDRListener* const ndrl = dynamic_cast<NodeDRListener*>(drl.in());
-    ndrl->shutdown();
-
-    const DDS::Subscriber_var sub = dr->get_subscriber();
-    const DDS::TopicDescription_var td = dr->get_topicdescription();
-    dr = 0;
-    sub->delete_contained_entities();
-    dp->delete_subscriber(sub);
-
-    const DDS::ContentFilteredTopic_var cft =
-      DDS::ContentFilteredTopic::_narrow(td);
-    if (cft) {
-      const DDS::Topic_var topic = cft->get_related_topic();
-      dp->delete_contentfilteredtopic(cft);
-      dp->delete_topic(topic);
-    } else {
-      const DDS::Topic_var topic = DDS::Topic::_narrow(td);
-      dp->delete_topic(topic);
-    }
+    ndrl->unsubscribe();
 
     fci.GetReturnValue().SetUndefined();
   }
