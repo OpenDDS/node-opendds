@@ -176,11 +176,13 @@ int ACE_TMAIN(int argc, ACE_TCHAR* argv[])
     sample.ns[0][3] = "string4";
     sample.ns[1].length(1);
     sample.ns[1][0] = "string5";
+    sample.mu.a(6);
 
     writer->write(sample, DDS::HANDLE_NIL);
     ACE_OS::sleep(1);
 
     ++sample.id;
+    sample.mu.d(9.23);
     writer->write(sample, DDS::HANDLE_NIL);
     ACE_OS::sleep(1);
 
