@@ -264,7 +264,8 @@ namespace {
     const Local<Object> dr_js = fci[0]->ToObject();
     void* const dr_obj = Nan::GetInternalFieldPointer(dr_js, 0);
     DDS::DataReader* dr = static_cast<DDS::DataReader*>(dr_obj);
-    NodeDRListener* const ndrl = dynamic_cast<NodeDRListener*>(dr->get_listener());
+    const DDS::DataReaderListener_var drl = dr->get_listener();
+    NodeDRListener* const ndrl = dynamic_cast<NodeDRListener*>(drl.in());
 
     ndrl->unsubscribe();
 

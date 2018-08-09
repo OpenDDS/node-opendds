@@ -93,6 +93,7 @@ void NodeDRListener::async() // called from libuv event loop
 
   receiving_samples_ = false;
   if (unsubscribing_) {
+    // In a new event after this, we can safely unsubscribe
     Nan::AsyncQueueWorker(new UnsubscribeWorker(this));
   }
 }
@@ -121,9 +122,10 @@ void NodeDRListener::push_back(const DDS::SampleInfo& src, const void* sample)
   cb.Call(sizeof(argv) / sizeof(argv[0]), argv);
 }
 
-void NodeDRListener::unsubscribe() {
+void NodeDRListener::unsubscribe()
+{
   if (receiving_samples_) {
-    // Inform the Listener to skip any remaining takes and use
+    // Inform the Listener to skip any remaining samples and use
     // UnsubscibeWorker to unsubscribe at the next opportunity.
     unsubscribing_ = true;
   } else { // Unsubscribe Now
@@ -131,12 +133,14 @@ void NodeDRListener::unsubscribe() {
   }
 }
 
-void NodeDRListener::unsubscribe_now() {
+void NodeDRListener::unsubscribe_now()
+{
   Local<v8::Object> dr_js = Nan::New(js_dr_);
   void* const dr_obj = Nan::GetInternalFieldPointer(dr_js, 0);
   DDS::DataReader_var dr = static_cast<DDS::DataReader*>(dr_obj);
   Nan::SetInternalFieldPointer(dr_js, 0, 0);
 
+  // Keep alive at least until after this method
   _add_ref();
   uv_close((uv_handle_t*)&async_uv_, close_cb);
 
