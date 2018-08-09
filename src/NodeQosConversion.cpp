@@ -34,7 +34,7 @@ void convertQos(DDS::SubscriberQos& qos, const Local<Object>& sqos_js)
       coher_str = Nan::New<String>("coherent_access").ToLocalChecked(),
       order_str = Nan::New<String>("ordered_access").ToLocalChecked();
     if (pres_js->Has(scope_str)) {
-      const String::Utf8Value scope(pres_js->Get(scope_str));
+      const Nan::Utf8String scope(pres_js->Get(scope_str));
       if (0 == std::strcmp(*scope, "INSTANCE_PRESENTATION_QOS")) {
         qos.presentation.access_scope = DDS::INSTANCE_PRESENTATION_QOS;
       } else if (0 == std::strcmp(*scope, "TOPIC_PRESENTATION_QOS")) {
@@ -60,7 +60,7 @@ void convertQos(DDS::SubscriberQos& qos, const Local<Object>& sqos_js)
     const uint32_t len = parti_len.FromMaybe(0);
     qos.partition.name.length(len);
     for (uint32_t i = 0; i < len; ++i) {
-      const String::Utf8Value elt(parti_js->Get(i));
+      const Nan::Utf8String elt(parti_js->Get(i));
       qos.partition.name[i] = *elt;
     }
   }
@@ -99,7 +99,7 @@ void convertQos(DDS::DataReaderQos& qos, const Local<Object>& drqos_js)
     kind_str = Nan::New<String>("kind").ToLocalChecked();
 
   if (drqos_js->Has(durab_str)) {
-    const String::Utf8Value dur(drqos_js->Get(durab_str));
+    const Nan::Utf8String dur(drqos_js->Get(durab_str));
     if (0 == std::strcmp(*dur, "VOLATILE_DURABILITY_QOS")) {
       qos.durability.kind = DDS::VOLATILE_DURABILITY_QOS;
     } else if (0 == std::strcmp(*dur, "TRANSIENT_LOCAL_DURABILITY_QOS")) {
@@ -122,7 +122,7 @@ void convertQos(DDS::DataReaderQos& qos, const Local<Object>& drqos_js)
   if (drqos_js->Has(liveli_str)) {
     const Local<Object> liveliness = drqos_js->Get(liveli_str)->ToObject();
     if (liveliness->Has(kind_str)) {
-      const String::Utf8Value lv(liveliness->Get(kind_str));
+      const Nan::Utf8String lv(liveliness->Get(kind_str));
       if (0 == std::strcmp(*lv, "AUTOMATIC_LIVELINESS_QOS")) {
         qos.liveliness.kind = DDS::AUTOMATIC_LIVELINESS_QOS;
       } else if (0 == std::strcmp(*lv,
@@ -143,7 +143,7 @@ void convertQos(DDS::DataReaderQos& qos, const Local<Object>& drqos_js)
   if (drqos_js->Has(reliab_str)) {
     const Local<Object> reliability = drqos_js->Get(reliab_str)->ToObject();
     if (reliability->Has(kind_str)) {
-      const String::Utf8Value rl(reliability->Get(kind_str));
+      const Nan::Utf8String rl(reliability->Get(kind_str));
       if (0 == std::strcmp(*rl, "BEST_EFFORT_RELIABILITY_QOS")) {
         qos.reliability.kind = DDS::BEST_EFFORT_RELIABILITY_QOS;
       } else if (0 == std::strcmp(*rl, "RELIABLE_RELIABILITY_QOS")) {
@@ -158,7 +158,7 @@ void convertQos(DDS::DataReaderQos& qos, const Local<Object>& drqos_js)
   }
 
   if (drqos_js->Has(destord_str)) {
-    const String::Utf8Value ord(drqos_js->Get(destord_str));
+    const Nan::Utf8String ord(drqos_js->Get(destord_str));
     if (0 == std::strcmp(*ord, "BY_RECEPTION_TIMESTAMP_DESTINATIONORDER_QOS")) {
       qos.destination_order.kind =
         DDS::BY_RECEPTION_TIMESTAMP_DESTINATIONORDER_QOS;
@@ -172,7 +172,7 @@ void convertQos(DDS::DataReaderQos& qos, const Local<Object>& drqos_js)
   if (drqos_js->Has(history_str)) {
     const Local<Object> history = drqos_js->Get(history_str)->ToObject();
     if (history->Has(kind_str)) {
-      const String::Utf8Value hk(history->Get(kind_str));
+      const Nan::Utf8String hk(history->Get(kind_str));
       if (0 == std::strcmp(*hk, "KEEP_LAST_HISTORY_QOS")) {
         qos.history.kind = DDS::KEEP_LAST_HISTORY_QOS;
       } else if (0 == std::strcmp(*hk, "KEEP_ALL_HISTORY_QOS")) {
@@ -207,7 +207,7 @@ void convertQos(DDS::DataReaderQos& qos, const Local<Object>& drqos_js)
   }
 
   if (drqos_js->Has(ownership_str)) {
-    const String::Utf8Value own(drqos_js->Get(ownership_str));
+    const Nan::Utf8String own(drqos_js->Get(ownership_str));
     if (0 == std::strcmp(*own, "SHARED_OWNERSHIP_QOS")) {
       qos.ownership.kind = DDS::SHARED_OWNERSHIP_QOS;
     } else if (0 == std::strcmp(*own, "EXCLUSIVE_OWNERSHIP_QOS")) {

@@ -119,7 +119,7 @@ void NodeDRListener::push_back(const DDS::SampleInfo& src, const void* sample)
 
   Local<Function> callback = Nan::New(callback_);
   Nan::Callback cb(callback);
-  cb.Call(sizeof(argv) / sizeof(argv[0]), argv);
+  Nan::Call(cb, sizeof(argv) / sizeof(argv[0]), argv);
 }
 
 void NodeDRListener::unsubscribe()

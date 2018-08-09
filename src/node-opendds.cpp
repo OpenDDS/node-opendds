@@ -142,8 +142,8 @@ namespace {
     DDS::DomainParticipant* const dp =
       static_cast<DDS::DomainParticipant*>(internal);
 
-    const String::Utf8Value topic_name(fci[0]);
-    const String::Utf8Value topic_type(fci[1]);
+    const Nan::Utf8String topic_name(fci[0]);
+    const Nan::Utf8String topic_type(fci[1]);
     OpenDDS::DCPS::TypeSupport* ts =
       Registered_Data_Types->lookup(dp, *topic_type);
     if (!ts) {
@@ -190,7 +190,7 @@ namespace {
         fci.GetReturnValue().SetUndefined();
         return;
       }
-      const String::Utf8Value filt(cft_js->Get(fe_lstr));
+      const Nan::Utf8String filt(cft_js->Get(fe_lstr));
       DDS::StringSeq params;
       const Local<String> ep_lstr = ep_str.ToLocalChecked();
       if (cft_js->Has(ep_lstr)) {
@@ -200,7 +200,7 @@ namespace {
                                            .ToLocalChecked()));
         params.length(len.FromMaybe(0));
         for (uint32_t i = 0; i < params.length(); ++i) {
-          const String::Utf8Value pstr(params_js->Get(i));
+          const Nan::Utf8String pstr(params_js->Get(i));
           params[i] = *pstr;
         }
       }
@@ -303,7 +303,7 @@ namespace {
       fci.GetReturnValue().SetUndefined();
       return;
     }
-    const String::Utf8Value lib_js(fci[0]);
+    const Nan::Utf8String lib_js(fci[0]);
     const ACE_TString lib(ACE_TEXT_CHAR_TO_TCHAR(*lib_js));
     const bool ok =
       ACE_DLL_Manager::instance()->open_dll(lib.c_str(),
