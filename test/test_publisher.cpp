@@ -98,6 +98,7 @@ int ACE_TMAIN(int argc, ACE_TCHAR* argv[])
     dpf->get_default_participant_qos(qos);
 
     if (secure) {
+#ifdef SECURE
       // Try to Setup Security
       const std::string dds_root(getenv("DDS_ROOT"));
       const std::string dds_certs(dds_root + "/tests/security/certs/identity");
@@ -116,10 +117,17 @@ int ACE_TMAIN(int argc, ACE_TCHAR* argv[])
         append(props, DDSSEC_PROP_PERM_DOC,
           "security/pub_permissions_signed.p7s");
       } else {
-        ACE_ERROR_RETURN((LM_ERROR, ACE_TEXT(
-          "%N:%l: main() ERROR: Publisher is trying to use security, but security is not enabled in OpenDDS.\n"
-          )), 1);
+        ACE_ERROR_RETURN((LM_ERROR,
+          ACE_TEXT("%N:%l: main() ERROR: Publisher is trying to use security (--secure flag passed)\n")
+          ACE_TEXT(", but security is not enabled in OpenDDS.\n")
+          ), 1);
       }
+#else
+      ACE_ERROR_RETURN((LM_ERROR,
+        ACE_TEXT("%N:%l: main() ERROR: Publisher is trying to use security (--secure flag passed)\n")
+        ACE_TEXT(", but OpenDDS wasn't built with security.\n")
+        ), 1);
+#endif
     }
 
     DDS::DomainParticipant_var participant =
