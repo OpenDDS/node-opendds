@@ -20,6 +20,10 @@ using OpenDDS::DCPS::Data_Types_Register;
 using NodeOpenDDS::NodeDRListener;
 using NodeOpenDDS::convertQos;
 
+#define V8STR(str) Nan::New<String>((str)).ToLocalChecked()
+#define RUN(str) \
+  Nan::RunScript(Nan::CompileScript(V8STR((str))).ToLocalChecked())
+
 namespace {
   std::vector<DDS::DomainParticipant_var> participants_;
   std::string cft_name("CFT000001"); // unique names for ContentFilteredTopic
@@ -144,8 +148,8 @@ namespace {
     DDS::DomainParticipant* const dp =
       static_cast<DDS::DomainParticipant*>(internal);
 
-    const String::Utf8Value topic_name(fci[0]);
-    const String::Utf8Value topic_type(fci[1]);
+    const Nan::Utf8String topic_name(fci[0]);
+    const Nan::Utf8String topic_type(fci[1]);
     OpenDDS::DCPS::TypeSupport* ts =
       Registered_Data_Types->lookup(dp, *topic_type);
     if (!ts) {
@@ -192,7 +196,7 @@ namespace {
         fci.GetReturnValue().SetUndefined();
         return;
       }
-      const String::Utf8Value filt(cft_js->Get(fe_lstr));
+      const Nan::Utf8String filt(cft_js->Get(fe_lstr));
       DDS::StringSeq params;
       const Local<String> ep_lstr = ep_str.ToLocalChecked();
       if (cft_js->Has(ep_lstr)) {
@@ -202,7 +206,7 @@ namespace {
                                            .ToLocalChecked()));
         params.length(len.FromMaybe(0));
         for (uint32_t i = 0; i < params.length(); ++i) {
-          const String::Utf8Value pstr(params_js->Get(i));
+          const Nan::Utf8String pstr(params_js->Get(i));
           params[i] = *pstr;
         }
       }
@@ -233,7 +237,7 @@ namespace {
     }
 
     Local<Value> cb = fci[fci.Length() - 1];
-    NodeDRListener* const ndrl = new NodeDRListener(cb.As<Function>(), *tc);
+    NodeDRListener* const ndrl = new NodeDRListener(dp, cb.As<Function>(), *tc);
     const DDS::DataReaderListener_var listen(ndrl);
 
     DDS::DataReaderQos dr_qos;
@@ -273,34 +277,15 @@ namespace {
       fci.GetReturnValue().SetUndefined();
       return;
     }
-    void* const internal = Nan::GetInternalFieldPointer(fci.This(), 0);
-    DDS::DomainParticipant* const dp =
-      static_cast<DDS::DomainParticipant*>(internal);
 
+    // Get the NodeDRListener
     const Local<Object> dr_js = fci[0]->ToObject();
     void* const dr_obj = Nan::GetInternalFieldPointer(dr_js, 0);
-    DDS::DataReader_var dr = static_cast<DDS::DataReader*>(dr_obj);
-    Nan::SetInternalFieldPointer(dr_js, 0, 0);
+    DDS::DataReader* dr = static_cast<DDS::DataReader*>(dr_obj);
     const DDS::DataReaderListener_var drl = dr->get_listener();
     NodeDRListener* const ndrl = dynamic_cast<NodeDRListener*>(drl.in());
-    ndrl->shutdown();
 
-    const DDS::Subscriber_var sub = dr->get_subscriber();
-    const DDS::TopicDescription_var td = dr->get_topicdescription();
-    dr = 0;
-    sub->delete_contained_entities();
-    dp->delete_subscriber(sub);
-
-    const DDS::ContentFilteredTopic_var cft =
-      DDS::ContentFilteredTopic::_narrow(td);
-    if (cft) {
-      const DDS::Topic_var topic = cft->get_related_topic();
-      dp->delete_contentfilteredtopic(cft);
-      dp->delete_topic(topic);
-    } else {
-      const DDS::Topic_var topic = DDS::Topic::_narrow(td);
-      dp->delete_topic(topic);
-    }
+    ndrl->unsubscribe();
 
     fci.GetReturnValue().SetUndefined();
   }
@@ -336,7 +321,7 @@ namespace {
       fci.GetReturnValue().SetUndefined();
       return;
     }
-    const String::Utf8Value lib_js(fci[0]);
+    const Nan::Utf8String lib_js(fci[0]);
     const ACE_TString lib(ACE_TEXT_CHAR_TO_TCHAR(*lib_js));
     const bool ok =
       ACE_DLL_Manager::instance()->open_dll(lib.c_str(),

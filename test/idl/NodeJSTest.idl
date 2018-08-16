@@ -25,6 +25,15 @@ module Mod {
     wstring wstr;
   };
 
+  union MyUnion switch (MyEnum) {
+  case one:
+    long a;
+  case two:
+    boolean b;
+  case three:
+    double d;
+  };
+
   typedef sequence<short> MySeq;
   typedef sequence<CORBA::StringSeq> NestedSeq;
 
@@ -39,5 +48,6 @@ module Mod {
     MySeq seq1;
     CORBA::LongSeq seq2;
     NestedSeq ns;
+    MyUnion mu;
   };
 };
