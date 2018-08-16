@@ -57,13 +57,11 @@ $NODE->Spawn();
 
 PerlDDS::add_lib_path("idl");
 
-my $publisher_name = "test_publisher";
 my $publisher_args = "";
 if ($secure) {
-  $publisher_name .= "_secure";
-  $publisher_args .= "-DCPSConfigFile rtps_disc.ini";
+  $publisher_args .= "--secure -DCPSConfigFile rtps_disc.ini";
 }
-my $PUB = PerlDDS::create_process($publisher_name, $publisher_args);
+my $PUB = PerlDDS::create_process("test_publisher", $publisher_args);
 my $PubResult = $PUB->SpawnWaitKill(60);
 if ($PubResult != 0) {
     print STDERR "ERROR: test_publisher returned $PubResult\n";

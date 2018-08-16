@@ -1,7 +1,7 @@
 "use strict";
 
 var DOMAIN_ID = 32;
-var ddsCerts = process.env.DDS_ROOT + "/tests/security/certs";
+var ddsCerts = process.env.DDS_ROOT + "/tests/security/certs/identity";
 
 var qos = {user_data: 'foo'};
 var secure = process.argv.includes('--secure');
@@ -9,26 +9,25 @@ if (secure) {
   qos.property = { value: [
 
     {name: "dds.sec.auth.identity_ca", value: "file:" +
-      ddsCerts + "/opendds_identity_ca_cert.pem"},
+      ddsCerts + "/identity_ca_cert.pem"},
 
     {name: "dds.sec.access.permissions_ca", value: "file:" +
-      ddsCerts + "/opendds_identity_ca_cert.pem"},
+      ddsCerts + "/identity_ca_cert.pem"},
 
     {name: "dds.sec.access.governance", value: "file:" +
       "security/governance_signed.p7s"},
 
     {name: "dds.sec.auth.identity_certificate", value: "file:" +
-      ddsCerts + "/mock_participant_2/opendds_participant_cert.pem"},
+      ddsCerts + "/test_participant_02_cert.pem"}, 
 
     {name: "dds.sec.auth.private_key", value: "file:" +
-      ddsCerts + "/mock_participant_2/opendds_participant_private_key.pem"},
+      ddsCerts + "/test_participant_02_private_key.pem"}, 
 
     {name: "dds.sec.access.permissions", value: "file:" +
       "security/sub_permissions_signed.p7s"},
 
   ]};
 }
-
 
 function init_opendds(opendds_addon) {
   if (secure) {
