@@ -39,9 +39,9 @@ void convertQos(DDS::DomainParticipantQos& qos,
       for (uint32_t i = 0; i < len; ++i) {
         const Local<Object> property_js = props_array_js->Get(i)->ToObject();
         if (property_js->Has(name_str) && property_js->Has(value_str)) {
-          const String::Utf8Value name(property_js->Get(name_str));
+          const Nan::Utf8String name(property_js->Get(name_str));
           qos.property.value[i].name = *name;
-          const String::Utf8Value value(property_js->Get(value_str));
+          const Nan::Utf8String value(property_js->Get(value_str));
           qos.property.value[i].value = *value;
         } else {
           throw std::runtime_error(
