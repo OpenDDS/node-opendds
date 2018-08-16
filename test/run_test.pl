@@ -13,13 +13,19 @@ my $status = 0;
 my $dcpsrepo_ior = "repo.ior";
 unlink $dcpsrepo_ior;
 
-my $DCPSREPO = PerlDDS::create_process("$DDS_ROOT/bin/DCPSInfoRepo");
+my %args = map { $_ => 1 } @ARGV;
+my $secure = exists($args{"--secure"});
 
-$DCPSREPO->Spawn();
-if (PerlACE::waitforfile_timed($dcpsrepo_ior, 30) == -1) {
-    print STDERR "ERROR: waiting for Info Repo IOR file\n";
-    $DCPSREPO->Kill();
-    exit 1;
+my $DCPSREPO;
+if (not $secure) {
+  $DCPSREPO = PerlDDS::create_process("$DDS_ROOT/bin/DCPSInfoRepo");
+
+  $DCPSREPO->Spawn();
+  if (PerlACE::waitforfile_timed($dcpsrepo_ior, 30) == -1) {
+      print STDERR "ERROR: waiting for Info Repo IOR file\n";
+      $DCPSREPO->Kill();
+      exit 1;
+  }
 }
 
 sub which {
@@ -36,7 +42,11 @@ sub which {
   return undef;
 }
 
-my $NODE = PerlDDS::create_process(which("node"), "test.js");
+my $node_args = "test.js";
+if ($secure) {
+  $node_args .= " --secure";
+}
+my $NODE = PerlDDS::create_process(which("node"), $node_args);
 $NODE->IgnoreExeSubDir(1);
 
 if ($^O eq 'darwin') {
@@ -47,7 +57,11 @@ $NODE->Spawn();
 
 PerlDDS::add_lib_path("idl");
 
-my $PUB = PerlDDS::create_process("test_publisher");
+my $publisher_args = "";
+if ($secure) {
+  $publisher_args .= "--secure -DCPSConfigFile rtps_disc.ini";
+}
+my $PUB = PerlDDS::create_process("test_publisher", $publisher_args);
 my $PubResult = $PUB->SpawnWaitKill(60);
 if ($PubResult != 0) {
     print STDERR "ERROR: test_publisher returned $PubResult\n";
@@ -60,12 +74,14 @@ if ($NodeResult != 0) {
     $status = 1;
 }
 
-my $ir = $DCPSREPO->TerminateWaitKill(5);
-if ($ir != 0) {
-    print STDERR "ERROR: DCPSInfoRepo returned $ir\n";
-    $status = 1;
-}
+if (not $secure) {
+  my $ir = $DCPSREPO->TerminateWaitKill(5);
+  if ($ir != 0) {
+      print STDERR "ERROR: DCPSInfoRepo returned $ir\n";
+      $status = 1;
+  }
 
-unlink $dcpsrepo_ior;
+  unlink $dcpsrepo_ior;
+}
 
 exit $status;

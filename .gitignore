@@ -4,6 +4,7 @@ build
 .shobj
 GNUmakefile*
 test/test_publisher
+test/test_publisher_secure
 test/repo.ior
 test/test.log
 *~

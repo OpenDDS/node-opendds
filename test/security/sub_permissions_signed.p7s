@@ -1,0 +1,85 @@
+MIME-Version: 1.0
+Content-Type: multipart/signed; protocol="application/x-pkcs7-signature"; micalg="sha-256"; boundary="----397E3E837B8546A000015B5FE9020CE6"
+
+This is an S/MIME signed message
+
+------397E3E837B8546A000015B5FE9020CE6
+Content-Type: text/plain
+
+<?xml version="1.0" encoding="utf-8"?>
+<dds xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="http://www.omg.org/spec/DDS-SECURITY/20160303/omg_shared_ca_permissions.xsd">
+    <permissions>
+        <grant name="ShapesPermissionTOC">
+            <subject_name>C=US, ST=California, O=Super Swanky Ski and Snow Shop, CN=Tahoe Joe</subject_name>
+            <validity>
+                <!-- Format is CCYY-MM-DDThh:mm:ss[Z|(+|-)hh:mm] in GMT -->
+                <not_before>2015-09-15T01:00:00</not_before>
+                <not_after>2025-09-15T01:00:00</not_after>
+            </validity>
+            <allow_rule>
+                <domains>
+                    <id>32</id>
+                </domains>
+                <publish>
+                    <topics>
+                        <topic>*</topic>
+                    </topics>
+                </publish>
+                <subscribe>
+                    <topics>
+                        <topic>*</topic>
+                    </topics>
+                </subscribe>
+            </allow_rule>
+            <default>DENY</default>
+        </grant>
+    </permissions>
+</dds>
+
+------397E3E837B8546A000015B5FE9020CE6
+Content-Type: application/x-pkcs7-signature; name="smime.p7s"
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="smime.p7s"
+
+MIIG/gYJKoZIhvcNAQcCoIIG7zCCBusCAQExDzANBglghkgBZQMEAgEFADALBgkq
+hkiG9w0BBwGgggPsMIID6DCCAtACCQCSMMZ5KQ7ffTANBgkqhkiG9w0BAQsFADCB
+tTELMAkGA1UEBhMCVVMxCzAJBgNVBAgMAk1PMRQwEgYDVQQHDAtTYWludCBMb3Vp
+czEsMCoGA1UECgwjT2JqZWN0IENvbXB1dGluZyAoVGVzdCBJZGVudGl0eSBDQSkx
+LDAqBgNVBAMMI09iamVjdCBDb21wdXRpbmcgKFRlc3QgSWRlbnRpdHkgQ0EpMScw
+JQYJKoZIhvcNAQkBFhhpbmZvQG9iamVjdGNvbXB1dGluZy5jb20wHhcNMTgwNjEz
+MDQxMTAzWhcNMjgwNjEwMDQxMTAzWjCBtTELMAkGA1UEBhMCVVMxCzAJBgNVBAgM
+Ak1PMRQwEgYDVQQHDAtTYWludCBMb3VpczEsMCoGA1UECgwjT2JqZWN0IENvbXB1
+dGluZyAoVGVzdCBJZGVudGl0eSBDQSkxLDAqBgNVBAMMI09iamVjdCBDb21wdXRp
+bmcgKFRlc3QgSWRlbnRpdHkgQ0EpMScwJQYJKoZIhvcNAQkBFhhpbmZvQG9iamVj
+dGNvbXB1dGluZy5jb20wggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQDR
+3CBzI5ch2hTdvpFDU3bsa90po9VqyHdT3GTvk0njWD6WUcA2YUptG+i1MX9vwEtj
+sxHlwxpMp41J/TNn8kWe770zBW8lhnKfzJfAENnqWso3j01v/CUPERqxms6NYHJQ
+ucGZW11Y4vthGURdXGDxeiRyDVrk87G+cv5rFmPDtLEqkgSoOpJkLMOUXfWFzO/v
+/ZP66vhNtNu7iwc8kyTQPHoWS8P7+gUu3dwr0sHUrpRffssBaPrSKxPxlXrtll1x
+4vPoMHDTddHweJWy1tq5MMTve7slG44YoMbQcAYSE5m6YMHx0Ht81jWF+v/OMW7i
+ZY2Pvv9n9A4wS3p9kkFZAgMBAAEwDQYJKoZIhvcNAQELBQADggEBADM5PKagItR5
+cStb99lqukz8uOx23rexro5FITdLSEgANu4uaB4rosdL2/L8Mft6TD2HVh5Wl5uw
+hDxjnLTGeVGQd1HNbvEzWyFjAfwzoRptTZiqsZhuQgSbtEcdUotdx7GbIc/xWNMA
+Q6t+ruRbzFDDdq4f7Ob7iAVWXUV0Sm4R7bgVCIiIKztSiYoQOwiLjV4DmNGcCFs4
+jbLXFPQWrqzTpAPBcPsocF+pCa71fQnlW8L9cyn2E/6zJkzj4aYZWwc2KVJm5JBu
+aIIcu1oeI5IdZ5slw5GeIeP0nXVHuhQf4mWrMi+KvQhorQEGftxnDhS0TWWEFVOU
+igRao7blBXYxggLWMIIC0gIBATCBwzCBtTELMAkGA1UEBhMCVVMxCzAJBgNVBAgM
+Ak1PMRQwEgYDVQQHDAtTYWludCBMb3VpczEsMCoGA1UECgwjT2JqZWN0IENvbXB1
+dGluZyAoVGVzdCBJZGVudGl0eSBDQSkxLDAqBgNVBAMMI09iamVjdCBDb21wdXRp
+bmcgKFRlc3QgSWRlbnRpdHkgQ0EpMScwJQYJKoZIhvcNAQkBFhhpbmZvQG9iamVj
+dGNvbXB1dGluZy5jb20CCQCSMMZ5KQ7ffTANBglghkgBZQMEAgEFAKCB5DAYBgkq
+hkiG9w0BCQMxCwYJKoZIhvcNAQcBMBwGCSqGSIb3DQEJBTEPFw0xODA4MTYxNzA2
+MDhaMC8GCSqGSIb3DQEJBDEiBCC5XQzW9+cDHKSAmZc+rAiJwJR9XNZSTOwtqa7J
+O6OfpTB5BgkqhkiG9w0BCQ8xbDBqMAsGCWCGSAFlAwQBKjALBglghkgBZQMEARYw
+CwYJYIZIAWUDBAECMAoGCCqGSIb3DQMHMA4GCCqGSIb3DQMCAgIAgDANBggqhkiG
+9w0DAgIBQDAHBgUrDgMCBzANBggqhkiG9w0DAgIBKDANBgkqhkiG9w0BAQEFAASC
+AQClFUiI/wiUVJq6M6fNOUzp5ngdngUp83CNFsEWR9QQLqFG1/aPaB01o+Uw9O0x
+UduewhQwoxpIi+LFYj1nJDHcVtkra9HaYmDMVbt2wABydigr7mXMo5585Ju6ES8R
+Gx0Zxvu3xvc8dzGVAXSGFwiiZXSxD1MeXBE7aNKQEOEihkO7xjRiabMYjooKOlkG
+uoj2tMnYc/0/JR8FjifQhjQMVbkpyP11GGHtVU6DQ+aMwtSyZ3bTgU95YPw9FYDU
+rbITeJCcT2EV4ChqO87WdZUWc2LGF+HOX/paxaeruK6QNoSA/7WGABG4EWGqrW6J
+lmKVKQYzmNLqMxJxsHEnETdS
+
+------397E3E837B8546A000015B5FE9020CE6--
+

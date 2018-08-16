@@ -3,8 +3,27 @@
 #include "dds/DCPS/WaitSet.h"
 
 #include "idl/NodeJSTestTypeSupportImpl.h"
+#include <ace/Get_Opt.h>
 
 #include <iostream>
+
+const int DOMAIN_ID = 32;
+
+const char DDSSEC_PROP_IDENTITY_CA[] = "dds.sec.auth.identity_ca";
+const char DDSSEC_PROP_IDENTITY_CERT[] = "dds.sec.auth.identity_certificate";
+const char DDSSEC_PROP_IDENTITY_PRIVKEY[] = "dds.sec.auth.private_key";
+const char DDSSEC_PROP_PERM_CA[] = "dds.sec.access.permissions_ca";
+const char DDSSEC_PROP_PERM_GOV_DOC[] = "dds.sec.access.governance";
+const char DDSSEC_PROP_PERM_DOC[] = "dds.sec.access.permissions";
+
+void append(DDS::PropertySeq& props, const char* name, const std::string& value)
+{
+  const DDS::Property_t prop = {
+    name, (std::string("file:") + value).c_str(), false /*propagate*/};
+  const unsigned int len = props.length();
+  props.length(len + 1);
+  props[len] = prop;
+}
 
 void wait_for_match(const DDS::DataWriter_var& writer)
 {
@@ -47,8 +66,72 @@ int ACE_TMAIN(int argc, ACE_TCHAR* argv[])
     DDS::DomainParticipantFactory_var dpf =
       TheParticipantFactoryWithArgs(argc, argv);
 
+    bool secure = false;
+
+    const std::string help_message =
+      "test_publisher\n"
+      "  -s | --secure\n"
+      "    Try to run with security enabled.\n"
+      "  -h | --help\n"
+      "    Print this message.\n"
+    ;
+    static const ACE_TCHAR opts_string[] = ACE_TEXT("sh");
+    ACE_Get_Opt opts(argc, argv, opts_string);
+    opts.long_option(ACE_TEXT("secure"), 's');
+    opts.long_option(ACE_TEXT("help"), 'h');
+    int opt;
+    while ((opt = opts()) != EOF) {
+      switch (opt) {
+      case 's':
+        secure = true;
+        break;
+      case 'h':
+        std::cout << help_message;
+        return 0;
+      default:
+        std::cerr << "Invalid Arguments:\n" << help_message;
+        return 1;
+      }
+    }
+
+    DDS::DomainParticipantQos qos;
+    dpf->get_default_participant_qos(qos);
+
+    if (secure) {
+#ifdef SECURE
+      // Try to Setup Security
+      const std::string dds_root(getenv("DDS_ROOT"));
+      const std::string dds_certs(dds_root + "/tests/security/certs/identity");
+      if (TheServiceParticipant->get_security()) {
+        DDS::PropertySeq& props = qos.property.value;
+        append(props, DDSSEC_PROP_IDENTITY_CA,
+          dds_certs + "/identity_ca_cert.pem");
+        append(props, DDSSEC_PROP_PERM_CA,
+          dds_certs + "/identity_ca_cert.pem");
+        append(props, DDSSEC_PROP_PERM_GOV_DOC,
+          "security/governance_signed.p7s");
+        append(props, DDSSEC_PROP_IDENTITY_CERT,
+          dds_certs + "/test_participant_01_cert.pem");
+        append(props, DDSSEC_PROP_IDENTITY_PRIVKEY,
+          dds_certs + "/test_participant_01_private_key.pem");
+        append(props, DDSSEC_PROP_PERM_DOC,
+          "security/pub_permissions_signed.p7s");
+      } else {
+        ACE_ERROR_RETURN((LM_ERROR,
+          ACE_TEXT("%N:%l: main() ERROR: Publisher is trying to use security (--secure flag passed)\n")
+          ACE_TEXT(", but security is not enabled in OpenDDS.\n")
+          ), 1);
+      }
+#else
+      ACE_ERROR_RETURN((LM_ERROR,
+        ACE_TEXT("%N:%l: main() ERROR: Publisher is trying to use security (--secure flag passed)\n")
+        ACE_TEXT(", but OpenDDS wasn't built with security.\n")
+        ), 1);
+#endif
+    }
+
     DDS::DomainParticipant_var participant =
-      dpf->create_participant(32, PARTICIPANT_QOS_DEFAULT, 0, 0);
+      dpf->create_participant(DOMAIN_ID, qos, 0, 0);
 
     if (!participant) {
       ACE_ERROR_RETURN((LM_ERROR,
