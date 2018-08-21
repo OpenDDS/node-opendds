@@ -23,7 +23,7 @@ $ node-gyp configure build
 
 * Requires at least OpenDDS 3.13. It will not build with older versions of OpenDDS.
 * Added support for Security-enabled versions of OpenDDS.
-* Combatibility with Node.js version 10 and NAN 2.10.
+* Compatibility with Node.js version 10 and NAN 2.10.
 
 ### Version 0.0.7
 
