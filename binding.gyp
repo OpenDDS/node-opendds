@@ -65,10 +65,10 @@
             },
           },
           'link_settings': {
-            'libraries': [ 'OpenDDS_Dcps<(lib_suffix)',
-                           'TAO_PortableServer<(lib_suffix)',
-                           'TAO_AnyTypeCode<(lib_suffix)',
-                           'TAO<(lib_suffix)', 'ACE<(lib_suffix)' ],
+            'libraries': [ 'OpenDDS_Dcps.lib',
+                           'TAO_PortableServer.lib',
+                           'TAO_AnyTypeCode.lib',
+                           'TAO.lib', 'ACE.lib' ],
           },
         }]
       ],
