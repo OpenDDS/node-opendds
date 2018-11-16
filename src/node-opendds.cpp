@@ -1,4 +1,5 @@
 #include "NodeDRListener.h"
+#include "NodePBITListener.h"
 #include "NodeQosConversion.h"
 
 #include <nan.h>
@@ -18,6 +19,7 @@
 using namespace v8;
 using OpenDDS::DCPS::Data_Types_Register;
 using NodeOpenDDS::NodeDRListener;
+using NodeOpenDDS::NodePBITListener;
 using NodeOpenDDS::convertQos;
 
 #define V8STR(str) Nan::New<String>((str)).ToLocalChecked()
@@ -47,6 +49,8 @@ namespace {
   void delete_participant(const Nan::FunctionCallbackInfo<Value>& fci);
   void subscribe(const Nan::FunctionCallbackInfo<Value>& fci);
   void unsubscribe(const Nan::FunctionCallbackInfo<Value>& fci);
+  void subscribe_participant_topic(const Nan::FunctionCallbackInfo<Value>& fci);
+  void unsubscribe_participant_topic(const Nan::FunctionCallbackInfo<Value>& fci);
 
   void initialize(const Nan::FunctionCallbackInfo<Value>& fci)
   {
@@ -106,6 +110,8 @@ namespace {
     ot->SetInternalFieldCount(1);
     Nan::SetMethod(ot, "subscribe", subscribe);
     Nan::SetMethod(ot, "unsubscribe", unsubscribe);
+    Nan::SetMethod(ot, "subscribe_participant_topic", subscribe_participant_topic);
+    Nan::SetMethod(ot, "unsubscribe_participant_topic", unsubscribe_participant_topic);
     const Local<Object> obj = ot->NewInstance();
     Nan::SetInternalFieldPointer(obj, 0, dp._retn());
     fci.GetReturnValue().Set(obj);
@@ -270,6 +276,37 @@ namespace {
     fci.GetReturnValue().Set(obj);
   }
 
+  void subscribe_participant_topic(const Nan::FunctionCallbackInfo<Value>& fci) {
+    if (fci.Length() < 1) {
+      Nan::ThrowTypeError("At least 1 argument required");
+      fci.GetReturnValue().SetUndefined();
+      return;
+    }
+    if (!fci[fci.Length() - 1]->IsFunction()) {
+      Nan::ThrowTypeError("Last argument must be a function");
+      fci.GetReturnValue().SetUndefined();
+      return;
+    }
+    void* const internal = Nan::GetInternalFieldPointer(fci.This(), 0);
+    DDS::DomainParticipant* const dp =
+      static_cast<DDS::DomainParticipant*>(internal);
+
+    DDS::Subscriber_var bit_subscriber = dp->get_builtin_subscriber() ;
+    DDS::DataReader_var dr =
+        bit_subscriber->lookup_datareader(OpenDDS::DCPS::BUILT_IN_PARTICIPANT_TOPIC);
+
+    DDS::ParticipantBuiltinTopicDataSeq part_data;
+    DDS::SampleInfoSeq infos;
+
+    Local<Value> cb = fci[fci.Length() - 1];
+    NodePBITListener* const npbitl = new NodePBITListener(cb.As<Function>(), part_data, infos, dr);
+    const DDS::DataReaderListener_var listen(npbitl);
+
+    dr->set_listener(listen.in(), OpenDDS::DCPS::DEFAULT_STATUS_MASK);
+    
+    fci.GetReturnValue().SetUndefined();
+  }
+
   void unsubscribe(const Nan::FunctionCallbackInfo<Value>& fci)
   {
     if (fci.Length() < 1 || !fci[0]->IsObject()) {
@@ -286,6 +323,27 @@ namespace {
     NodeDRListener* const ndrl = dynamic_cast<NodeDRListener*>(drl.in());
 
     ndrl->unsubscribe();
+
+    fci.GetReturnValue().SetUndefined();
+  }
+
+  void unsubscribe_participant_topic(const Nan::FunctionCallbackInfo<Value>& fci)
+  {
+    void* const internal = Nan::GetInternalFieldPointer(fci.This(), 0);
+    DDS::DomainParticipant* const dp =
+      static_cast<DDS::DomainParticipant*>(internal);
+
+    DDS::Subscriber_var bit_subscriber = dp->get_builtin_subscriber() ;
+    DDS::DataReader_var dr =
+        bit_subscriber->lookup_datareader(OpenDDS::DCPS::BUILT_IN_PARTICIPANT_TOPIC);
+        
+    const DDS::DataReaderListener_var drl = dr->get_listener();
+    NodePBITListener* const ndrl = dynamic_cast<NodePBITListener*>(drl.in());
+    ndrl->shutdown();
+
+    dr = 0;
+    bit_subscriber->delete_contained_entities();
+    dp->delete_subscriber(bit_subscriber);
 
     fci.GetReturnValue().SetUndefined();
   }
