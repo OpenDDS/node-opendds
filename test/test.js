@@ -103,6 +103,19 @@ try {
       log('Sample Info', sinfo);
       if (sinfo.valid_data && sample.id === last_sample_id) {
         participant.unsubscribe(reader);
+        if (sample.bt.o != 254 ||
+            sample.bt.us != 65500 ||
+            sample.bt.us != 65500 ||
+            sample.bt.s != 32700 ||
+            sample.bt.ul != 3000000000 ||
+            sample.bt.l != 100000 ||
+            JSON.stringify(sample.bt.ull) != "12379813738877118000" || // This is a truncation error due to double, output should be 12379813738877118345 (0xABCDEF0123456789). Needs to be fixed eventually.
+            sample.bt.ll != 5000000000 ||
+            sample.bt.f != 2.1700000762939453 || // double's closest approximation of 2.17f
+            sample.bt.d != 3.14) {
+          console.log("Error in data!");
+          process.exitCode = 1;
+        }
       }
     } catch (e) {
       console.log("Error in callback: " + e);
