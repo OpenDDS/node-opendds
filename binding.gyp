@@ -40,13 +40,15 @@
                    'src/NodeDRListener.cpp',
                    'src/NodeQosConversion.cpp' ],
       'include_dirs': [ "<!(node -e \"require('nan')\")",
-                      '$(ACE_ROOT)', '$(TAO_ROOT)', '$(DDS_ROOT)' ],
+                        '$(ACE_ROOT)', '$(TAO_ROOT)', '$(DDS_ROOT)',
+                        "<!(node build.js includes)" ],
       'conditions': [
         ['OS in "linux mac"', {
           'link_settings': {
             'libraries': [ '-lOpenDDS_Dcps', '-lTAO_PortableServer',
                            '-lTAO_AnyTypeCode', '-lTAO', '-lACE' ],
-            'ldflags': [ '-L$(ACE_ROOT)/lib', '-L$(DDS_ROOT)/lib' ],
+            'ldflags': [ '-L$(ACE_ROOT)/lib', '-L$(DDS_ROOT)/lib',
+                         "<!(node build.js libpaths)" ],
           },
         }],
         ['OS=="mac"', {
