@@ -5,9 +5,11 @@ Travis CI: [![Build Status](https://travis-ci.org/oci-labs/node-opendds.svg?bran
 ## Requirements:
 * OpenDDS (http://www.opendds.org) and its dependencies must be installed.
 * Make sure all of the OpenDDS development environment variables are set before running npm to install this module.  If you use the OpenDDS configure script, these variables can be set using "setenv.sh" or "setenv.cmd" depending on your platform.
+** The OpenDDS development environment can use either the source tree or the installed tree (the one created by "make install").
+** If using the installed tree, set the DDS_ROOT environment variable using the installed dds-devel.sh script.
 
 ## Tested platforms:
-* Linux (Ubuntu16.04) x86_64 using the distro-supplied GCC and c++11=1
+* Linux (Ubuntu18.04, CentOS7) x86_64 using the distro-supplied GCC and c++11=1
 * Windows 10 x86_64 using Visual Studio 2015
 * macOS using Xcode 9.x clang C++ compiler
 * Other OpenDDS-supported platforms should work, but may required changes to binding.gyp
@@ -18,6 +20,10 @@ $ node-gyp configure build
 ```
 
 ## Changelog
+
+### Version 0.0.9
+
+* Support building this module using an installed OpenDDS
 
 ### Version 0.0.8
 
