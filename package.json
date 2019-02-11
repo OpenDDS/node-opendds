@@ -19,7 +19,7 @@
     "addon"
   ],
   "author": "Adam Mitz (Object Computing, Inc.)",
-  "license": "BSD",
+  "license": "BSD-3-Clause",
   "gypfile": true,
   "dependencies": {
     "nan": "^2.5.1"
