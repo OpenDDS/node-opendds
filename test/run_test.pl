@@ -16,6 +16,23 @@ unlink $dcpsrepo_ior;
 my %args = map { $_ => 1 } @ARGV;
 my $secure = exists($args{"--secure"});
 
+my $scenario = "cpp2node";
+my $pub_node = 0;
+my $sub_node = 1;
+if (exists($args{"node2cpp"})) {
+  $scenario = "node2cpp";
+  $pub_node = 1;
+  $sub_node = 0;
+} elsif (exists($args{"node2node"})) {
+  $scenario = "node2node";
+  $pub_node = 1;
+  $sub_node = 1;
+} elsif (exists($args{"cpp2cpp"})) {
+  $scenario = "cpp2cpp";
+  $pub_node = 0;
+  $sub_node = 0;
+}
+
 my $DCPSREPO;
 if (not $secure) {
   $DCPSREPO = PerlDDS::create_process("$DDS_ROOT/bin/DCPSInfoRepo");
@@ -42,40 +59,61 @@ sub which {
   return undef;
 }
 
-my $node_args = "test.js";
-if ($secure) {
-  $node_args .= " --secure";
-}
-my $NODE = PerlDDS::create_process(which("node"), $node_args);
-$NODE->IgnoreExeSubDir(1);
-
 if ($^O eq 'darwin') {
   $ENV{DYLD_LIBRARY_PATH} = "$DDS_ROOT/lib:$ACE_ROOT/lib";
 }
 
-$NODE->Spawn();
-
 PerlDDS::add_lib_path("idl");
 
-my $publisher_exec_name = "test_publisher";
-if ($secure) {
-  $publisher_exec_name = "test_publisher_secure";
-}
+my $sub_exec_name = "";
+my $sub_args = "";
+if ($sub_node) {
+  $sub_exec_name .= which("node");
+  $sub_args .= "test_subscriber.js";
+  if ($secure) {
+    $sub_args .= " --secure";
+  }
+} else {
+  $sub_exec_name .= "test_subscriber";
+  if ($secure) {
+    $sub_args .= " --secure -DCPSConfigFile rtps_disc.ini";
+  }
+} 
 
-my $publisher_args = "";
-if ($secure) {
-  $publisher_args .= "--secure -DCPSConfigFile rtps_disc.ini";
+my $SUB = PerlDDS::create_process($sub_exec_name, $sub_args);
+if ($sub_node) {
+  $SUB->IgnoreExeSubDir(1);
 }
-my $PUB = PerlDDS::create_process($publisher_exec_name, $publisher_args);
+$SUB->Spawn();
+
+my $pub_exec_name = "";
+my $pub_args = "";
+if ($pub_node) {
+  $pub_exec_name .= which("node");
+  $pub_args .= "test_publisher.js";
+  if ($secure) {
+    $pub_args .= " --secure";
+  }
+} else {
+  $pub_exec_name .= "test_publisher";
+  if ($secure) {
+    $pub_args .= " --secure -DCPSConfigFile rtps_disc.ini";
+  }
+} 
+
+my $PUB = PerlDDS::create_process($pub_exec_name, $pub_args);
+if ($pub_node) {
+  $PUB->IgnoreExeSubDir(1);
+}
 my $PubResult = $PUB->SpawnWaitKill(60);
 if ($PubResult != 0) {
-    print STDERR "ERROR: test_publisher returned $PubResult\n";
+    print STDERR "ERROR: " . $pub_exec_name . " returned $PubResult\n";
     $status = 1;
 }
 
-my $NodeResult = $NODE->WaitKill(10);
-if ($NodeResult != 0) {
-    print STDERR "ERROR: node.js returned $NodeResult\n";
+my $SubResult = $SUB->WaitKill(10);
+if ($SubResult != 0) {
+    print STDERR "ERROR: " . $sub_exec_name . " returned $SubResult\n";
     $status = 1;
 }
 

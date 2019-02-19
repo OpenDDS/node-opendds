@@ -1,4 +1,6 @@
 project: dcpsexe, dcps_v8 {
+  exename = test_publisher
+
   libs += v8stubs
   after += v8stubs
   libpaths += ../tools/v8stubs
@@ -8,4 +10,8 @@ project: dcpsexe, dcps_v8 {
   libpaths += idl
 
   requires += no_opendds_security
+
+  Source_Files {
+    test_publisher.cpp
+  }
 }

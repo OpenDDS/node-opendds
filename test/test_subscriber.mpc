@@ -1,5 +1,5 @@
 project: dcpsexe, dcps_v8 {
-  exename = test_publisher
+  exename = test_subscriber
 
   libs += v8stubs
   after += v8stubs
@@ -9,10 +9,9 @@ project: dcpsexe, dcps_v8 {
   after += NodeJSTest
   libpaths += idl
 
-  avoids += no_opendds_security
-  macros += SECURE
+  requires += no_opendds_security
 
   Source_Files {
-    test_publisher.cpp
+    test_subscriber.cpp
   }
 }

@@ -2,6 +2,7 @@
 
 #include <stdexcept>
 #include <cstring>
+#include <iostream>
 
 using namespace v8;
 
@@ -24,12 +25,12 @@ void convertQos(DDS::DomainParticipantQos& qos,
 
   // If it exists, get the PropertyQosPolicy that enables security features:
   const Local<String> prop_str = Nan::New<String>("property").ToLocalChecked();
-  if (qos_js->Has(prop_str)) {
-    const Local<Object> props_policy_js = qos_js->Get(prop_str)->ToObject();
+  if (qos_js->Has(prop_str) && qos_js->Get(prop_str)->IsObject()) {
+    const Local<Object> props_policy_js = qos_js->Get(prop_str)->ToObject(Nan::GetCurrentContext()).ToLocalChecked();
     const Local<String> name_str = Nan::New<String>("name").ToLocalChecked(),
       value_str = Nan::New<String>("value").ToLocalChecked();
-    if (props_policy_js->Has(value_str)) {
-      const Local<Object> props_array_js = props_policy_js->Get(value_str)->ToObject();
+    if (props_policy_js->Has(value_str) && props_policy_js->Get(value_str)->IsObject()) {
+      const Local<Object> props_array_js = props_policy_js->Get(value_str)->ToObject(Nan::GetCurrentContext()).ToLocalChecked();
       const Local<String> len_str = Nan::New<String>("length").ToLocalChecked();
 
       // Iterate over the properties in the policy and add them to the native QoS
@@ -37,15 +38,17 @@ void convertQos(DDS::DomainParticipantQos& qos,
       const uint32_t len = props_array_len.FromMaybe(0);
       qos.property.value.length(len);
       for (uint32_t i = 0; i < len; ++i) {
-        const Local<Object> property_js = props_array_js->Get(i)->ToObject();
-        if (property_js->Has(name_str) && property_js->Has(value_str)) {
-          const Nan::Utf8String name(property_js->Get(name_str));
-          qos.property.value[i].name = *name;
-          const Nan::Utf8String value(property_js->Get(value_str));
-          qos.property.value[i].value = *value;
-        } else {
-          throw std::runtime_error(
-            "All properties must be objects with name and value attributes");
+        if (props_array_js->Get(i)->IsObject()) {
+          const Local<Object> property_js = props_array_js->Get(i)->ToObject(Nan::GetCurrentContext()).ToLocalChecked();
+          if (property_js->Has(name_str) && property_js->Has(value_str)) {
+            const Nan::Utf8String name(property_js->Get(name_str));
+            qos.property.value[i].name = *name;
+            const Nan::Utf8String value(property_js->Get(value_str));
+            qos.property.value[i].value = *value;
+          } else {
+            throw std::runtime_error(
+              "All properties must be objects with name and value attributes");
+          }
         }
       }
     }
@@ -58,8 +61,8 @@ void convertQos(DDS::PublisherQos& qos, const Local<Object>& pqos_js)
     parti_str = Nan::New<String>("partition").ToLocalChecked(),
     grpd_str = Nan::New<String>("group_data").ToLocalChecked();
 
-  if (pqos_js->Has(pres_str)) {
-    const Local<Object> pres_js = pqos_js->Get(pres_str)->ToObject();
+  if (pqos_js->Has(pres_str) && pqos_js->Get(pres_str)->IsObject()) {
+    const Local<Object> pres_js = pqos_js->Get(pres_str)->ToObject(Nan::GetCurrentContext()).ToLocalChecked();
     const Local<String> scope_str = Nan::New<String>("access_scope").ToLocalChecked(),
       coher_str = Nan::New<String>("coherent_access").ToLocalChecked(),
       order_str = Nan::New<String>("ordered_access").ToLocalChecked();
@@ -82,8 +85,8 @@ void convertQos(DDS::PublisherQos& qos, const Local<Object>& pqos_js)
     }
   }
 
-  if (pqos_js->Has(parti_str)) {
-    const Local<Object> parti_js = pqos_js->Get(parti_str)->ToObject();
+  if (pqos_js->Has(parti_str) && pqos_js->Get(parti_str)->IsObject()) {
+    const Local<Object> parti_js = pqos_js->Get(parti_str)->ToObject(Nan::GetCurrentContext()).ToLocalChecked();
     const Local<String> len_str = Nan::New<String>("length").ToLocalChecked();
     const Nan::Maybe<uint32_t> parti_len =
       Nan::To<uint32_t>(parti_js->Get(len_str));
@@ -106,8 +109,8 @@ void convertQos(DDS::SubscriberQos& qos, const Local<Object>& sqos_js)
     parti_str = Nan::New<String>("partition").ToLocalChecked(),
     grpd_str = Nan::New<String>("group_data").ToLocalChecked();
 
-  if (sqos_js->Has(pres_str)) {
-    const Local<Object> pres_js = sqos_js->Get(pres_str)->ToObject();
+  if (sqos_js->Has(pres_str) && sqos_js->Get(pres_str)->IsObject()) {
+    const Local<Object> pres_js = sqos_js->Get(pres_str)->ToObject(Nan::GetCurrentContext()).ToLocalChecked();
     const Local<String> scope_str = Nan::New<String>("access_scope").ToLocalChecked(),
       coher_str = Nan::New<String>("coherent_access").ToLocalChecked(),
       order_str = Nan::New<String>("ordered_access").ToLocalChecked();
@@ -130,8 +133,8 @@ void convertQos(DDS::SubscriberQos& qos, const Local<Object>& sqos_js)
     }
   }
 
-  if (sqos_js->Has(parti_str)) {
-    const Local<Object> parti_js = sqos_js->Get(parti_str)->ToObject();
+  if (sqos_js->Has(parti_str) && sqos_js->Get(parti_str)->IsObject()) {
+    const Local<Object> parti_js = sqos_js->Get(parti_str)->ToObject(Nan::GetCurrentContext()).ToLocalChecked();
     const Local<String> len_str = Nan::New<String>("length").ToLocalChecked();
     const Nan::Maybe<uint32_t> parti_len =
       Nan::To<uint32_t>(parti_js->Get(len_str));
@@ -152,11 +155,11 @@ void convert(DDS::Duration_t& dur, const Local<Object>& dur_js)
 {
   const Local<String> sec_str = Nan::New<String>("sec").ToLocalChecked(),
     nanosec_str = Nan::New<String>("nanosec").ToLocalChecked();
-  if (dur_js->Has(sec_str)) {
-    dur.sec = dur_js->Get(sec_str)->Int32Value();
+  if (dur_js->Has(sec_str) && dur_js->Get(sec_str)->IsInt32()) {
+    dur.sec = dur_js->Get(sec_str)->Int32Value(Nan::GetCurrentContext()).ToChecked();
   }
-  if (dur_js->Has(nanosec_str)) {
-    dur.nanosec = dur_js->Get(nanosec_str)->Uint32Value();
+  if (dur_js->Has(nanosec_str) && dur_js->Get(nanosec_str)->IsUint32()) {
+    dur.nanosec = dur_js->Get(nanosec_str)->Uint32Value(Nan::GetCurrentContext()).ToChecked();
   }
 }
 
@@ -192,16 +195,16 @@ void convertQos(DDS::DataWriterQos& qos, const Local<Object>& dwqos_js)
     }
   }
 
-  if (dwqos_js->Has(durabsvc_str)) {
-    const Local<Object> ds_qos = dwqos_js->Get(durabsvc_str)->ToObject();
+  if (dwqos_js->Has(durabsvc_str) && dwqos_js->Get(durabsvc_str)->IsObject()) {
+    const Local<Object> ds_qos = dwqos_js->Get(durabsvc_str)->ToObject(Nan::GetCurrentContext()).ToLocalChecked();
     const Local<String> scd_str = Nan::New<String>("service_cleanup_delay").ToLocalChecked(),
       hk_str = Nan::New<String>("history_kind").ToLocalChecked(),
       hd_str = Nan::New<String>("history_depth").ToLocalChecked(),
       ms_str = Nan::New<String>("max_samples").ToLocalChecked(),
       mi_str = Nan::New<String>("max_instances").ToLocalChecked(),
       mspi_str = Nan::New<String>("max_samples_per_instance").ToLocalChecked();
-    if (ds_qos->Has(scd_str)) {
-      convert(qos.durability_service.service_cleanup_delay, ds_qos->Get(scd_str)->ToObject());
+    if (ds_qos->Has(scd_str) && ds_qos->Get(scd_str)->IsObject()) {
+      convert(qos.durability_service.service_cleanup_delay, ds_qos->Get(scd_str)->ToObject(Nan::GetCurrentContext()).ToLocalChecked());
     }
     if (ds_qos->Has(hk_str)) {
       const Nan::Utf8String dur(dwqos_js->Get(hk_str));
@@ -211,27 +214,30 @@ void convertQos(DDS::DataWriterQos& qos, const Local<Object>& dwqos_js)
         qos.durability_service.history_kind = DDS::KEEP_ALL_HISTORY_QOS;
       }
     }
-    if (ds_qos->Has(ms_str)) {
-      qos.durability_service.max_samples = ds_qos->Get(ms_str)->Int32Value();
+    if (ds_qos->Has(hd_str) && ds_qos->Get(hd_str)->IsInt32()) {
+      qos.durability_service.history_depth = ds_qos->Get(hd_str)->Int32Value(Nan::GetCurrentContext()).ToChecked();
     }
-    if (ds_qos->Has(mi_str)) {
-      qos.durability_service.max_instances = ds_qos->Get(mi_str)->Int32Value();
+    if (ds_qos->Has(ms_str) && ds_qos->Get(ms_str)->IsInt32()) {
+      qos.durability_service.max_samples = ds_qos->Get(ms_str)->Int32Value(Nan::GetCurrentContext()).ToChecked();
     }
-    if (ds_qos->Has(mspi_str)) {
-      qos.durability_service.max_samples_per_instance = ds_qos->Get(mspi_str)->Int32Value();
+    if (ds_qos->Has(mi_str) && ds_qos->Get(mi_str)->IsInt32()) {
+      qos.durability_service.max_instances = ds_qos->Get(mi_str)->Int32Value(Nan::GetCurrentContext()).ToChecked();
+    }
+    if (ds_qos->Has(mspi_str) && ds_qos->Get(mspi_str)->IsInt32()) {
+      qos.durability_service.max_samples_per_instance = ds_qos->Get(mspi_str)->Int32Value(Nan::GetCurrentContext()).ToChecked();
     }
   }
 
-  if (dwqos_js->Has(deadln_str)) {
-    convert(qos.deadline.period, dwqos_js->Get(deadln_str)->ToObject());
+  if (dwqos_js->Has(deadln_str) && dwqos_js->Get(deadln_str)->IsObject()) {
+    convert(qos.deadline.period, dwqos_js->Get(deadln_str)->ToObject(Nan::GetCurrentContext()).ToLocalChecked());
   }
 
-  if (dwqos_js->Has(latbud_str)) {
-    convert(qos.latency_budget.duration, dwqos_js->Get(latbud_str)->ToObject());
+  if (dwqos_js->Has(latbud_str) && dwqos_js->Get(latbud_str)->IsObject()) {
+    convert(qos.latency_budget.duration, dwqos_js->Get(latbud_str)->ToObject(Nan::GetCurrentContext()).ToLocalChecked());
   }
 
-  if (dwqos_js->Has(liveli_str)) {
-    const Local<Object> liveliness = dwqos_js->Get(liveli_str)->ToObject();
+  if (dwqos_js->Has(liveli_str) && dwqos_js->Get(liveli_str)->IsObject()) {
+    const Local<Object> liveliness = dwqos_js->Get(liveli_str)->ToObject(Nan::GetCurrentContext()).ToLocalChecked();
     if (liveliness->Has(kind_str)) {
       const Nan::Utf8String lv(liveliness->Get(kind_str));
       if (0 == std::strcmp(*lv, "AUTOMATIC_LIVELINESS_QOS")) {
@@ -245,14 +251,14 @@ void convertQos(DDS::DataWriterQos& qos, const Local<Object>& dwqos_js)
     }
     const Local<String> lease_duration_str =
       Nan::New<String>("lease_duration").ToLocalChecked();
-    if (liveliness->Has(lease_duration_str)) {
+    if (liveliness->Has(lease_duration_str) && liveliness->Get(lease_duration_str)->IsObject()) {
       convert(qos.liveliness.lease_duration,
-              liveliness->Get(lease_duration_str)->ToObject());
+              liveliness->Get(lease_duration_str)->ToObject(Nan::GetCurrentContext()).ToLocalChecked());
     }
   }
 
-  if (dwqos_js->Has(reliab_str)) {
-    const Local<Object> reliability = dwqos_js->Get(reliab_str)->ToObject();
+  if (dwqos_js->Has(reliab_str) && dwqos_js->Get(reliab_str)->IsObject()) {
+    const Local<Object> reliability = dwqos_js->Get(reliab_str)->ToObject(Nan::GetCurrentContext()).ToLocalChecked();
     if (reliability->Has(kind_str)) {
       const Nan::Utf8String rl(reliability->Get(kind_str));
       if (0 == std::strcmp(*rl, "BEST_EFFORT_RELIABILITY_QOS")) {
@@ -262,9 +268,9 @@ void convertQos(DDS::DataWriterQos& qos, const Local<Object>& dwqos_js)
       }
     }
     const Local<String> mbt_str = Nan::New<String>("max_blocking_time").ToLocalChecked();
-    if (reliability->Has(mbt_str)) {
+    if (reliability->Has(mbt_str) && reliability->Get(mbt_str)->IsObject()) {
       convert(qos.reliability.max_blocking_time,
-              reliability->Get(mbt_str)->ToObject());
+              reliability->Get(mbt_str)->ToObject(Nan::GetCurrentContext()).ToLocalChecked());
     }
   }
 
@@ -280,8 +286,8 @@ void convertQos(DDS::DataWriterQos& qos, const Local<Object>& dwqos_js)
     }
   }
 
-  if (dwqos_js->Has(history_str)) {
-    const Local<Object> history = dwqos_js->Get(history_str)->ToObject();
+  if (dwqos_js->Has(history_str) && dwqos_js->Get(history_str)->IsObject()) {
+    const Local<Object> history = dwqos_js->Get(history_str)->ToObject(Nan::GetCurrentContext()).ToLocalChecked();
     if (history->Has(kind_str)) {
       const Nan::Utf8String hk(history->Get(kind_str));
       if (0 == std::strcmp(*hk, "KEEP_LAST_HISTORY_QOS")) {
@@ -291,33 +297,41 @@ void convertQos(DDS::DataWriterQos& qos, const Local<Object>& dwqos_js)
       }
     }
     const Local<String> depth_str = Nan::New<String>("depth").ToLocalChecked();
-    if (history->Has(depth_str)) {
-      qos.history.depth = history->Get(depth_str)->Int32Value();
+    if (history->Has(depth_str) && history->Get(depth_str)->IsInt32()) {
+      qos.history.depth = history->Get(depth_str)->Int32Value(Nan::GetCurrentContext()).ToChecked();
     }
   }
 
-  if (dwqos_js->Has(reslim_str)) {
-    const Local<Object> reslim = dwqos_js->Get(reslim_str)->ToObject();
+  if (dwqos_js->Has(reslim_str) && dwqos_js->Get(reslim_str)->IsObject()) {
+    const Local<Object> reslim = dwqos_js->Get(reslim_str)->ToObject(Nan::GetCurrentContext()).ToLocalChecked();
     const Local<String> ms_str = Nan::New<String>("max_samples").ToLocalChecked(),
       mi_str = Nan::New<String>("max_instances").ToLocalChecked(),
       mspi_str = Nan::New<String>("max_samples_per_instance").ToLocalChecked();
-    if (reslim->Has(ms_str)) {
-      qos.resource_limits.max_samples = reslim->Get(ms_str)->Int32Value();
+    if (reslim->Has(ms_str) && reslim->Get(ms_str)->IsInt32()) {
+      qos.resource_limits.max_samples = reslim->Get(ms_str)->Int32Value(Nan::GetCurrentContext()).ToChecked();
     }
-    if (reslim->Has(mi_str)) {
-      qos.resource_limits.max_instances = reslim->Get(mi_str)->Int32Value();
+    if (reslim->Has(mi_str) && reslim->Get(mi_str)->IsInt32()) {
+      qos.resource_limits.max_instances = reslim->Get(mi_str)->Int32Value(Nan::GetCurrentContext()).ToChecked();
     }
-    if (reslim->Has(mspi_str)) {
+    if (reslim->Has(mspi_str) && reslim->Get(mspi_str)->IsInt32()) {
       qos.resource_limits.max_samples_per_instance =
-        reslim->Get(mspi_str)->Int32Value();
+        reslim->Get(mspi_str)->Int32Value(Nan::GetCurrentContext()).ToChecked();
     }
   }
 
-  if (dwqos_js->Has(userdata_str)) {
-    convert(qos.user_data.value, dwqos_js->Get(userdata_str)->ToString());
+  if (dwqos_js->Has(tranpri_str) && dwqos_js->Get(tranpri_str)->IsInt32()) {
+    qos.transport_priority.value = dwqos_js->Get(tranpri_str)->Int32Value(Nan::GetCurrentContext()).ToChecked();
   }
 
-  if (dwqos_js->Has(ownership_str)) {
+  if (dwqos_js->Has(lifespan_str) && dwqos_js->Get(lifespan_str)->IsObject()) {
+    convert(qos.lifespan.duration, dwqos_js->Get(lifespan_str)->ToObject(Nan::GetCurrentContext()).ToLocalChecked());
+  }
+
+  if (dwqos_js->Has(userdata_str) && dwqos_js->Get(userdata_str)->IsString()) {
+    convert(qos.user_data.value, dwqos_js->Get(userdata_str)->ToString(Nan::GetCurrentContext()).ToLocalChecked());
+  }
+
+  if (dwqos_js->Has(ownership_str) && dwqos_js->Get(ownership_str)->IsString()) {
     const Nan::Utf8String own(dwqos_js->Get(ownership_str));
     if (0 == std::strcmp(*own, "SHARED_OWNERSHIP_QOS")) {
       qos.ownership.kind = DDS::SHARED_OWNERSHIP_QOS;
@@ -326,19 +340,19 @@ void convertQos(DDS::DataWriterQos& qos, const Local<Object>& dwqos_js)
     }
   }
 
-  if (dwqos_js->Has(ostrength_str)) {
-    const Local<Object> ostrength = dwqos_js->Get(ostrength_str)->ToObject();
+  if (dwqos_js->Has(ostrength_str) && dwqos_js->Get(ostrength_str)->IsObject()) {
+    const Local<Object> ostrength = dwqos_js->Get(ostrength_str)->ToObject(Nan::GetCurrentContext()).ToLocalChecked();
     const Local<String> v_str = Nan::New<String>("value").ToLocalChecked();
-    if (ostrength->Has(v_str)) {
-      qos.ownership_strength.value = ostrength->Get(v_str)->Int32Value();
+    if (ostrength->Has(v_str) && ostrength->Get(v_str)->IsInt32()) {
+      qos.ownership_strength.value = ostrength->Get(v_str)->Int32Value(Nan::GetCurrentContext()).ToChecked();
     }
   }
 
-  if (dwqos_js->Has(wdlife_str)) {
-    const Local<Object> wdlife = dwqos_js->Get(wdlife_str)->ToObject();
+  if (dwqos_js->Has(wdlife_str) && dwqos_js->Get(wdlife_str)->IsObject()) {
+    const Local<Object> wdlife = dwqos_js->Get(wdlife_str)->ToObject(Nan::GetCurrentContext()).ToLocalChecked();
     const Local<String> adui_str = Nan::New<String>("autodispose_unregistered_instances").ToLocalChecked();
-    if (wdlife->Has(adui_str)) {
-      qos.writer_data_lifecycle.autodispose_unregistered_instances = wdlife->Get(adui_str)->BooleanValue();
+    if (wdlife->Has(adui_str) && wdlife->Get(adui_str)->IsBoolean()) {
+      qos.writer_data_lifecycle.autodispose_unregistered_instances = wdlife->Get(adui_str)->BooleanValue(Nan::GetCurrentContext()).ToChecked();
     }
   }
 }
@@ -359,7 +373,7 @@ void convertQos(DDS::DataReaderQos& qos, const Local<Object>& drqos_js)
     rdlife_str = Nan::New<String>("reader_data_lifecycle").ToLocalChecked(),
     kind_str = Nan::New<String>("kind").ToLocalChecked();
 
-  if (drqos_js->Has(durab_str)) {
+  if (drqos_js->Has(durab_str) && drqos_js->Get(durab_str)->IsString()) {
     const Nan::Utf8String dur(drqos_js->Get(durab_str));
     if (0 == std::strcmp(*dur, "VOLATILE_DURABILITY_QOS")) {
       qos.durability.kind = DDS::VOLATILE_DURABILITY_QOS;
@@ -372,17 +386,17 @@ void convertQos(DDS::DataReaderQos& qos, const Local<Object>& drqos_js)
     }
   }
 
-  if (drqos_js->Has(deadln_str)) {
-    convert(qos.deadline.period, drqos_js->Get(deadln_str)->ToObject());
+  if (drqos_js->Has(deadln_str) && drqos_js->Get(deadln_str)->IsObject()) {
+    convert(qos.deadline.period, drqos_js->Get(deadln_str)->ToObject(Nan::GetCurrentContext()).ToLocalChecked());
   }
 
-  if (drqos_js->Has(latbud_str)) {
-    convert(qos.latency_budget.duration, drqos_js->Get(latbud_str)->ToObject());
+  if (drqos_js->Has(latbud_str) && drqos_js->Get(latbud_str)->IsObject()) {
+    convert(qos.latency_budget.duration, drqos_js->Get(latbud_str)->ToObject(Nan::GetCurrentContext()).ToLocalChecked());
   }
 
-  if (drqos_js->Has(liveli_str)) {
-    const Local<Object> liveliness = drqos_js->Get(liveli_str)->ToObject();
-    if (liveliness->Has(kind_str)) {
+  if (drqos_js->Has(liveli_str) && drqos_js->Get(liveli_str)->IsObject()) {
+    const Local<Object> liveliness = drqos_js->Get(liveli_str)->ToObject(Nan::GetCurrentContext()).ToLocalChecked();
+    if (liveliness->Has(kind_str) && liveliness->Get(kind_str)->IsString()) {
       const Nan::Utf8String lv(liveliness->Get(kind_str));
       if (0 == std::strcmp(*lv, "AUTOMATIC_LIVELINESS_QOS")) {
         qos.liveliness.kind = DDS::AUTOMATIC_LIVELINESS_QOS;
@@ -395,14 +409,14 @@ void convertQos(DDS::DataReaderQos& qos, const Local<Object>& drqos_js)
     }
     const Local<String> lease_duration_str =
       Nan::New<String>("lease_duration").ToLocalChecked();
-    if (liveliness->Has(lease_duration_str)) {
+    if (liveliness->Has(lease_duration_str) && liveliness->Get(lease_duration_str)->IsObject()) {
       convert(qos.liveliness.lease_duration,
-              liveliness->Get(lease_duration_str)->ToObject());
+              liveliness->Get(lease_duration_str)->ToObject(Nan::GetCurrentContext()).ToLocalChecked());
     }
   }
 
-  if (drqos_js->Has(reliab_str)) {
-    const Local<Object> reliability = drqos_js->Get(reliab_str)->ToObject();
+  if (drqos_js->Has(reliab_str) && drqos_js->Get(reliab_str)->IsObject()) {
+    const Local<Object> reliability = drqos_js->Get(reliab_str)->ToObject(Nan::GetCurrentContext()).ToLocalChecked();
     if (reliability->Has(kind_str)) {
       const Nan::Utf8String rl(reliability->Get(kind_str));
       if (0 == std::strcmp(*rl, "BEST_EFFORT_RELIABILITY_QOS")) {
@@ -412,9 +426,9 @@ void convertQos(DDS::DataReaderQos& qos, const Local<Object>& drqos_js)
       }
     }
     const Local<String> mbt_str = Nan::New<String>("max_blocking_time").ToLocalChecked();
-    if (reliability->Has(mbt_str)) {
+    if (reliability->Has(mbt_str) && reliability->Get(mbt_str)->IsObject()) {
       convert(qos.reliability.max_blocking_time,
-              reliability->Get(mbt_str)->ToObject());
+              reliability->Get(mbt_str)->ToObject(Nan::GetCurrentContext()).ToLocalChecked());
     }
   }
 
@@ -430,8 +444,8 @@ void convertQos(DDS::DataReaderQos& qos, const Local<Object>& drqos_js)
     }
   }
 
-  if (drqos_js->Has(history_str)) {
-    const Local<Object> history = drqos_js->Get(history_str)->ToObject();
+  if (drqos_js->Has(history_str) && drqos_js->Get(history_str)->IsObject()) {
+    const Local<Object> history = drqos_js->Get(history_str)->ToObject(Nan::GetCurrentContext()).ToLocalChecked();
     if (history->Has(kind_str)) {
       const Nan::Utf8String hk(history->Get(kind_str));
       if (0 == std::strcmp(*hk, "KEEP_LAST_HISTORY_QOS")) {
@@ -441,25 +455,25 @@ void convertQos(DDS::DataReaderQos& qos, const Local<Object>& drqos_js)
       }
     }
     const Local<String> depth_str = Nan::New<String>("depth").ToLocalChecked();
-    if (history->Has(depth_str)) {
-      qos.history.depth = history->Get(depth_str)->Int32Value();
+    if (history->Has(depth_str) && history->Get(depth_str)->IsInt32()) {
+      qos.history.depth = history->Get(depth_str)->Int32Value(Nan::GetCurrentContext()).ToChecked();
     }
   }
 
-  if (drqos_js->Has(reslim_str)) {
-    const Local<Object> reslim = drqos_js->Get(reslim_str)->ToObject();
+  if (drqos_js->Has(reslim_str) && drqos_js->Get(reslim_str)->IsObject()) {
+    const Local<Object> reslim = drqos_js->Get(reslim_str)->ToObject(Nan::GetCurrentContext()).ToLocalChecked();
     const Local<String> ms_str = Nan::New<String>("max_samples").ToLocalChecked(),
       mi_str = Nan::New<String>("max_instances").ToLocalChecked(),
       mspi_str = Nan::New<String>("max_samples_per_instance").ToLocalChecked();
-    if (reslim->Has(ms_str)) {
-      qos.resource_limits.max_samples = reslim->Get(ms_str)->Int32Value();
+    if (reslim->Has(ms_str) && reslim->Get(ms_str)->IsInt32()) {
+      qos.resource_limits.max_samples = reslim->Get(ms_str)->Int32Value(Nan::GetCurrentContext()).ToChecked();
     }
-    if (reslim->Has(mi_str)) {
-      qos.resource_limits.max_instances = reslim->Get(mi_str)->Int32Value();
+    if (reslim->Has(mi_str) && reslim->Get(mi_str)->IsInt32()) {
+      qos.resource_limits.max_instances = reslim->Get(mi_str)->Int32Value(Nan::GetCurrentContext()).ToChecked();
     }
-    if (reslim->Has(mspi_str)) {
+    if (reslim->Has(mspi_str) && reslim->Get(mspi_str)->IsInt32()) {
       qos.resource_limits.max_samples_per_instance =
-        reslim->Get(mspi_str)->Int32Value();
+        reslim->Get(mspi_str)->Int32Value(Nan::GetCurrentContext()).ToChecked();
     }
   }
 
@@ -476,23 +490,23 @@ void convertQos(DDS::DataReaderQos& qos, const Local<Object>& drqos_js)
     }
   }
 
-  if (drqos_js->Has(tbfilter_str)) {
+  if (drqos_js->Has(tbfilter_str) && drqos_js->Get(tbfilter_str)->IsObject()) {
     convert(qos.time_based_filter.minimum_separation,
-            drqos_js->Get(tbfilter_str)->ToObject());
+            drqos_js->Get(tbfilter_str)->ToObject(Nan::GetCurrentContext()).ToLocalChecked());
   }
 
-  if (drqos_js->Has(rdlife_str)) {
-    const Local<Object> rdlife = drqos_js->Get(rdlife_str)->ToObject();
+  if (drqos_js->Has(rdlife_str) && drqos_js->Get(rdlife_str)->IsObject()) {
+    const Local<Object> rdlife = drqos_js->Get(rdlife_str)->ToObject(Nan::GetCurrentContext()).ToLocalChecked();
     const Local<String> ansd_str =
       Nan::New<String>("autopurge_nowriter_samples_delay").ToLocalChecked(),
       adsd_str = Nan::New<String>("autopurge_disposed_samples_delay").ToLocalChecked();
-    if (rdlife->Has(ansd_str)) {
+    if (rdlife->Has(ansd_str) && rdlife->Get(ansd_str)->IsObject()) {
       convert(qos.reader_data_lifecycle.autopurge_nowriter_samples_delay,
-              rdlife->Get(ansd_str)->ToObject());
+              rdlife->Get(ansd_str)->ToObject(Nan::GetCurrentContext()).ToLocalChecked());
     }
-    if (rdlife->Has(adsd_str)) {
+    if (rdlife->Has(adsd_str) && rdlife->Get(adsd_str)->IsObject()) {
       convert(qos.reader_data_lifecycle.autopurge_disposed_samples_delay,
-              rdlife->Get(adsd_str)->ToObject());
+              rdlife->Get(adsd_str)->ToObject(Nan::GetCurrentContext()).ToLocalChecked());
     }
   }
 }

@@ -51,6 +51,7 @@ namespace {
   void register_instance(const Nan::FunctionCallbackInfo<Value>& fci);
   void write(const Nan::FunctionCallbackInfo<Value>& fci);
   void unregister_instance(const Nan::FunctionCallbackInfo<Value>& fci);
+  void dispose(const Nan::FunctionCallbackInfo<Value>& fci);
 
   void initialize(const Nan::FunctionCallbackInfo<Value>& fci)
   {
@@ -118,8 +119,12 @@ namespace {
 
   void delete_participant(const Nan::FunctionCallbackInfo<Value>& fci)
   {
-    if (fci.Length() == 0 || !fci[0]->IsObject()) {
+    if (fci.Length() == 0) {
       Nan::ThrowTypeError("1 argument required");
+      fci.GetReturnValue().SetUndefined();
+      return;
+    } else if (!fci[0]->IsObject()) {
+      Nan::ThrowTypeError("Argument must be of object type");
       fci.GetReturnValue().SetUndefined();
       return;
     }
@@ -185,52 +190,61 @@ namespace {
     }
 
     Local<Object> qos_js;
-    if (fci.Length() > 3 && fci[2]->IsObject()) {
+    if (fci.Length() > 2 && fci[2]->IsObject()) {
       qos_js = fci[2]->ToObject(Nan::GetCurrentContext()).ToLocalChecked();
     }
     Nan::MaybeLocal<String> cft_str = Nan::New<String>("ContentFilteredTopic");
     const Local<String> cft_lstr = cft_str.ToLocalChecked();
-    if (*qos_js && qos_js->Has(cft_lstr) && qos_js->Get(cft_lstr)->IsObject()) {
-      const Local<Object> cft_js = qos_js->Get(cft_lstr)->ToObject(Nan::GetCurrentContext()).ToLocalChecked();
-      Nan::MaybeLocal<String> fe_str = Nan::New<String>("filter_expression"),
-        ep_str = Nan::New<String>("expression_parameters");
-      const Local<String> fe_lstr = fe_str.ToLocalChecked();
-      if (!cft_js->Has(fe_lstr)) {
-        Nan::ThrowError("filter_expression is required in "
-                        "ContentFilteredTopic.");
-        fci.GetReturnValue().SetUndefined();
-        return;
-      }
-      const Nan::Utf8String filt(cft_js->Get(fe_lstr));
-      DDS::StringSeq params;
-      const Local<String> ep_lstr = ep_str.ToLocalChecked();
-      if (cft_js->Has(ep_lstr) && cft_js->Get(ep_lstr)->IsObject()) {
-        const Local<Object> params_js = cft_js->Get(ep_lstr)->ToObject(Nan::GetCurrentContext()).ToLocalChecked();
-        const Nan::Maybe<uint32_t> len =
-          Nan::To<uint32_t>(params_js->Get(Nan::New<String>("length")
-                                           .ToLocalChecked()));
-        params.length(len.FromMaybe(0));
-        for (uint32_t i = 0; i < params.length(); ++i) {
-          const Nan::Utf8String pstr(params_js->Get(i));
-          params[i] = *pstr;
+    if (*qos_js && qos_js->Has(cft_lstr)) {
+      const Local<Value> cft_js_lv = qos_js->Get(cft_lstr);
+      if (cft_js_lv->IsObject()) {
+        const Local<Object> cft_js = cft_js_lv->ToObject(Nan::GetCurrentContext()).ToLocalChecked();
+        Nan::MaybeLocal<String> fe_str = Nan::New<String>("filter_expression"),
+          ep_str = Nan::New<String>("expression_parameters");
+        const Local<String> fe_lstr = fe_str.ToLocalChecked();
+        if (!cft_js->Has(fe_lstr)) {
+          Nan::ThrowError("filter_expression is required in "
+                          "ContentFilteredTopic.");
+          fci.GetReturnValue().SetUndefined();
+          return;
         }
+        const Nan::Utf8String filt(cft_js->Get(fe_lstr));
+        DDS::StringSeq params;
+        const Local<String> ep_lstr = ep_str.ToLocalChecked();
+        if (cft_js->Has(ep_lstr)) {
+          const Local<Value> params_js_lv = cft_js->Get(ep_lstr);
+          if (params_js_lv->IsObject()) {
+            const Local<Object> params_js = params_js_lv->ToObject(Nan::GetCurrentContext()).ToLocalChecked();
+            const Nan::Maybe<uint32_t> len =
+              Nan::To<uint32_t>(params_js->Get(Nan::New<String>("length")
+                                               .ToLocalChecked()));
+            params.length(len.FromMaybe(0));
+            for (uint32_t i = 0; i < params.length(); ++i) {
+              const Nan::Utf8String pstr(params_js->Get(i));
+              params[i] = *pstr;
+            }
+          }
+        }
+        topic = dp->create_contentfilteredtopic(cft_name.c_str(), real_topic,
+                                                *filt, params);
+        increment(cft_name);
       }
-      topic = dp->create_contentfilteredtopic(cft_name.c_str(), real_topic,
-                                              *filt, params);
-      increment(cft_name);
     }
 
     DDS::SubscriberQos sub_qos;
     dp->get_default_subscriber_qos(sub_qos);
     Nan::MaybeLocal<String> subqos_str = Nan::New<String>("SubscriberQos");
     const Local<String> subqos_lstr = subqos_str.ToLocalChecked();
-    if (*qos_js && qos_js->Has(subqos_lstr) && qos_js->Get(subqos_lstr)->IsObject()) {
-      try {
-        convertQos(sub_qos, qos_js->Get(subqos_lstr)->ToObject(Nan::GetCurrentContext()).ToLocalChecked());
-      } catch (const std::runtime_error& e) {
-        Nan::ThrowError(e.what());
-        fci.GetReturnValue().SetUndefined();
-        return;
+    if (*qos_js && qos_js->Has(subqos_lstr)) {
+      const Local<Value> subqos_lv = qos_js->Get(subqos_lstr);
+      if (subqos_lv->IsObject()) {
+        try {
+          convertQos(sub_qos, subqos_lv->ToObject(Nan::GetCurrentContext()).ToLocalChecked());
+        } catch (const std::runtime_error& e) {
+          Nan::ThrowError(e.what());
+          fci.GetReturnValue().SetUndefined();
+          return;
+        }
       }
     }
 
@@ -249,13 +263,16 @@ namespace {
     sub->get_default_datareader_qos(dr_qos);
     Nan::MaybeLocal<String> drqos_str = Nan::New<String>("DataReaderQos");
     const Local<String> drqos_lstr = drqos_str.ToLocalChecked();
-    if (*qos_js && qos_js->Has(drqos_lstr) && qos_js->Get(drqos_lstr)->IsObject()) {
-      try {
-        convertQos(dr_qos, qos_js->Get(drqos_lstr)->ToObject(Nan::GetCurrentContext()).ToLocalChecked());
-      } catch (const std::runtime_error& e) {
-        Nan::ThrowError(e.what());
-        fci.GetReturnValue().SetUndefined();
-        return;
+    if (*qos_js && qos_js->Has(drqos_lstr)) {
+      Local<Value> drqos_lv = qos_js->Get(drqos_lstr);
+      if (drqos_lv->IsObject()) {
+        try {
+          convertQos(dr_qos, drqos_lv->ToObject(Nan::GetCurrentContext()).ToLocalChecked());
+        } catch (const std::runtime_error& e) {
+          Nan::ThrowError(e.what());
+          fci.GetReturnValue().SetUndefined();
+          return;
+        }
       }
     }
 
@@ -277,22 +294,24 @@ namespace {
 
   void unsubscribe(const Nan::FunctionCallbackInfo<Value>& fci)
   {
-    if (fci.Length() < 1 || !fci[0]->IsObject()) {
+    if (fci.Length() < 1) {
       Nan::ThrowTypeError("1 argument required");
+      fci.GetReturnValue().SetUndefined();
+      return;
+    } else if (!fci[0]->IsObject()) {
+      Nan::ThrowTypeError("Argument must be of object type");
       fci.GetReturnValue().SetUndefined();
       return;
     }
 
-    if (fci[0]->IsObject()) {
-      // Get the NodeDRListener
-      const Local<Object> dr_js = fci[0]->ToObject(Nan::GetCurrentContext()).ToLocalChecked();
-      void* const dr_obj = Nan::GetInternalFieldPointer(dr_js, 0);
-      DDS::DataReader* dr = static_cast<DDS::DataReader*>(dr_obj);
-      const DDS::DataReaderListener_var drl = dr->get_listener();
-      NodeDRListener* const ndrl = dynamic_cast<NodeDRListener*>(drl.in());
+    // Get the NodeDRListener
+    const Local<Object> dr_js = fci[0]->ToObject(Nan::GetCurrentContext()).ToLocalChecked();
+    void* const dr_obj = Nan::GetInternalFieldPointer(dr_js, 0);
+    DDS::DataReader* dr = static_cast<DDS::DataReader*>(dr_obj);
+    const DDS::DataReaderListener_var drl = dr->get_listener();
+    NodeDRListener* const ndrl = dynamic_cast<NodeDRListener*>(drl.in());
 
-      ndrl->unsubscribe();
-    }
+    ndrl->unsubscribe();
 
     fci.GetReturnValue().SetUndefined();
   }
@@ -334,7 +353,7 @@ namespace {
       dp->create_topic(*topic_name, *topic_type, TOPIC_QOS_DEFAULT, 0, 0);
 
     Local<Object> qos_js;
-    if (fci.Length() > 3 && fci[2]->IsObject()) {
+    if (fci.Length() > 2 && fci[2]->IsObject()) {
       qos_js = fci[2]->ToObject(Nan::GetCurrentContext()).ToLocalChecked();
     }
 
@@ -342,13 +361,16 @@ namespace {
     dp->get_default_publisher_qos(pub_qos);
     Nan::MaybeLocal<String> pubqos_str = Nan::New<String>("PublisherQos");
     const Local<String> pubqos_lstr = pubqos_str.ToLocalChecked();
-    if (*qos_js && qos_js->Has(pubqos_lstr) && qos_js->Get(pubqos_lstr)->IsObject()) {
-      try {
-        convertQos(pub_qos, qos_js->Get(pubqos_lstr)->ToObject(Nan::GetCurrentContext()).ToLocalChecked());
-      } catch (const std::runtime_error& e) {
-        Nan::ThrowError(e.what());
-        fci.GetReturnValue().SetUndefined();
-        return;
+    if (*qos_js && qos_js->Has(pubqos_lstr)) {
+      const Local<Value> pubqos_lv = qos_js->Get(pubqos_lstr);
+      if (pubqos_lv->IsObject()) {
+        try {
+          convertQos(pub_qos, pubqos_lv->ToObject(Nan::GetCurrentContext()).ToLocalChecked());
+        } catch (const std::runtime_error& e) {
+          Nan::ThrowError(e.what());
+          fci.GetReturnValue().SetUndefined();
+          return;
+        }
       }
     }
 
@@ -361,15 +383,17 @@ namespace {
 
     DDS::DataWriterQos dw_qos;
     pub->get_default_datawriter_qos(dw_qos);
-    Nan::MaybeLocal<String> dwqos_str = Nan::New<String>("DataWriterQos");
-    const Local<String> dwqos_lstr = dwqos_str.ToLocalChecked();
-    if (*qos_js && qos_js->Has(dwqos_lstr) && qos_js->Get(dwqos_lstr)->IsObject()) {
-      try {
-        convertQos(dw_qos, qos_js->Get(dwqos_lstr)->ToObject(Nan::GetCurrentContext()).ToLocalChecked());
-      } catch (const std::runtime_error& e) {
-        Nan::ThrowError(e.what());
-        fci.GetReturnValue().SetUndefined();
-        return;
+    const Local<String> dwqos_lstr = Nan::New<String>("DataWriterQos").ToLocalChecked();
+    if (*qos_js && qos_js->Has(dwqos_lstr)) {
+      const Local<Value> dwqos_lv = qos_js->Get(dwqos_lstr);
+      if (dwqos_lv->IsObject()) {
+        try {
+          convertQos(dw_qos, dwqos_lv->ToObject(Nan::GetCurrentContext()).ToLocalChecked());
+        } catch (const std::runtime_error& e) {
+          Nan::ThrowError(e.what());
+          fci.GetReturnValue().SetUndefined();
+          return;
+        }
       }
     }
 
@@ -381,12 +405,14 @@ namespace {
     }
 
     const Local<ObjectTemplate> ot = Nan::New<ObjectTemplate>();
-    ot->SetInternalFieldCount(1);
+    ot->SetInternalFieldCount(2);
     Nan::SetMethod(ot, "register_instance", register_instance);
     Nan::SetMethod(ot, "write", write);
     Nan::SetMethod(ot, "unregister_instance", unregister_instance);
+    Nan::SetMethod(ot, "dispose", dispose);
     const Local<Object> obj = ot->NewInstance();
     Nan::SetInternalFieldPointer(obj, 0, dw._retn());
+    Nan::SetInternalFieldPointer(obj, 1, const_cast<OpenDDS::DCPS::V8TypeConverter*>(reinterpret_cast<const OpenDDS::DCPS::V8TypeConverter*>(tc)));
     fci.GetReturnValue().Set(obj);
   }
 
@@ -397,30 +423,156 @@ namespace {
       fci.GetReturnValue().SetUndefined();
       return;
     }
+    if (!fci[0]->IsObject()) {
+      Nan::ThrowTypeError("Argument must be an object");
+      fci.GetReturnValue().SetUndefined();
+      return;
+    }
+    void* const dw_i = Nan::GetInternalFieldPointer(fci.This(), 0);
+    const void* const tc_i = Nan::GetInternalFieldPointer(fci.This(), 1);
+    DDS::DataWriter* const dw = static_cast<DDS::DataWriter*>(dw_i);
+    const OpenDDS::DCPS::V8TypeConverter* const tc = reinterpret_cast<const OpenDDS::DCPS::V8TypeConverter*>(tc_i);
+    
+    const Local<Object> sample_obj = fci[0]->ToObject(Nan::GetCurrentContext()).ToLocalChecked();
+    void* sample_vp = tc->fromV8(sample_obj);
+    DDS::InstanceHandle_t handle = tc->register_instance_helper(dw, sample_vp);
+
+    if (handle == DDS::HANDLE_NIL) {
+      Nan::ThrowError("couldn't register instance");
+      fci.GetReturnValue().SetUndefined();
+      return;
+    }
+    fci.GetReturnValue().Set(handle);
   }
 
   void write(const Nan::FunctionCallbackInfo<Value>& fci)
   {
-    if (fci.Length() < 2) {
-      Nan::ThrowTypeError("2 arguments required");
+    if (fci.Length() < 1) {
+      Nan::ThrowTypeError("1 argument required");
       fci.GetReturnValue().SetUndefined();
       return;
     }
+    if (!fci[0]->IsObject()) {
+      Nan::ThrowTypeError("Sample argument must be an object");
+      fci.GetReturnValue().SetUndefined();
+      return;
+    }
+
+    void* const dw_i = Nan::GetInternalFieldPointer(fci.This(), 0);
+    const void* const tc_i = Nan::GetInternalFieldPointer(fci.This(), 1);
+    DDS::DataWriter* const dw = static_cast<DDS::DataWriter*>(dw_i);
+    const OpenDDS::DCPS::V8TypeConverter* const tc = reinterpret_cast<const OpenDDS::DCPS::V8TypeConverter*>(tc_i);
+
+    const Local<Object> sample_obj = fci[0]->ToObject(Nan::GetCurrentContext()).ToLocalChecked();
+    void* sample_vp = tc->fromV8(sample_obj);
+
+    DDS::InstanceHandle_t handle = DDS::HANDLE_NIL;
+    if (fci.Length() > 1) {
+      if (!fci[1]->IsNumber()) {
+        Nan::ThrowTypeError("Instance handle argument must be an Integer");
+        fci.GetReturnValue().SetUndefined();
+        return;
+      }
+      handle = fci[1]->ToInteger(Nan::GetCurrentContext()).ToLocalChecked()->Value();
+    }
+    
+    DDS::ReturnCode_t return_code = tc->write_helper(dw, sample_vp, handle);
+    if (return_code != DDS::RETCODE_OK) {
+      Nan::ThrowError("couldn't write sample");
+      fci.GetReturnValue().SetUndefined();
+      return;
+    }
+    fci.GetReturnValue().Set(return_code);
   }
 
   void unregister_instance(const Nan::FunctionCallbackInfo<Value>& fci)
   {
-    if (fci.Length() < 2) {
-      Nan::ThrowTypeError("2 argument required");
+    if (fci.Length() < 1) {
+      Nan::ThrowTypeError("1 argument required");
       fci.GetReturnValue().SetUndefined();
       return;
     }
+    if (!fci[0]->IsObject()) {
+      Nan::ThrowTypeError("Sample argument must be an object");
+      fci.GetReturnValue().SetUndefined();
+      return;
+    }
+
+    void* const dw_i = Nan::GetInternalFieldPointer(fci.This(), 0);
+    const void* const tc_i = Nan::GetInternalFieldPointer(fci.This(), 1);
+    DDS::DataWriter* const dw = static_cast<DDS::DataWriter*>(dw_i);
+    const OpenDDS::DCPS::V8TypeConverter* const tc = reinterpret_cast<const OpenDDS::DCPS::V8TypeConverter*>(tc_i);
+
+    const Local<Object> sample_obj = fci[0]->ToObject(Nan::GetCurrentContext()).ToLocalChecked();
+    void* sample_vp = tc->fromV8(sample_obj);
+
+    DDS::InstanceHandle_t handle = DDS::HANDLE_NIL;
+    if (fci.Length() > 1) {
+      if (!fci[1]->IsNumber()) {
+        Nan::ThrowTypeError("Instance handle argument must be an Integer");
+        fci.GetReturnValue().SetUndefined();
+        return;
+      }
+      handle = fci[1]->ToInteger(Nan::GetCurrentContext()).ToLocalChecked()->Value();
+    }
+    
+    DDS::ReturnCode_t return_code = tc->unregister_instance_helper(dw, sample_vp, handle);
+    if (return_code != DDS::RETCODE_OK) {
+      Nan::ThrowError("couldn't unregister instance");
+      fci.GetReturnValue().SetUndefined();
+      return;
+    }
+    fci.GetReturnValue().Set(return_code);
+  }
+
+  void dispose(const Nan::FunctionCallbackInfo<Value>& fci)
+  {
+    if (fci.Length() < 1) {
+      Nan::ThrowTypeError("1 argument required");
+      fci.GetReturnValue().SetUndefined();
+      return;
+    }
+    if (!fci[0]->IsObject()) {
+      Nan::ThrowTypeError("Sample argument must be an object");
+      fci.GetReturnValue().SetUndefined();
+      return;
+    }
+
+    void* const dw_i = Nan::GetInternalFieldPointer(fci.This(), 0);
+    const void* const tc_i = Nan::GetInternalFieldPointer(fci.This(), 1);
+    DDS::DataWriter* const dw = static_cast<DDS::DataWriter*>(dw_i);
+    const OpenDDS::DCPS::V8TypeConverter* const tc = reinterpret_cast<const OpenDDS::DCPS::V8TypeConverter*>(tc_i);
+
+    const Local<Object> sample_obj = fci[0]->ToObject(Nan::GetCurrentContext()).ToLocalChecked();
+    void* sample_vp = tc->fromV8(sample_obj);
+
+    DDS::InstanceHandle_t handle = DDS::HANDLE_NIL;
+    if (fci.Length() > 1) {
+      if (!fci[1]->IsNumber()) {
+        Nan::ThrowTypeError("Instance handle argument must be an Integer");
+        fci.GetReturnValue().SetUndefined();
+        return;
+      }
+      handle = fci[1]->ToInteger(Nan::GetCurrentContext()).ToLocalChecked()->Value();
+    }
+    
+    DDS::ReturnCode_t return_code = tc->dispose_helper(dw, sample_vp, handle);
+    if (return_code != DDS::RETCODE_OK) {
+      Nan::ThrowError("couldn't dispose instance");
+      fci.GetReturnValue().SetUndefined();
+      return;
+    }
+    fci.GetReturnValue().Set(return_code);
   }
 
   void finalize(const Nan::FunctionCallbackInfo<Value>& fci)
   {
-    if (fci.Length() < 1 || !fci[0]->IsObject()) {
-      Nan::ThrowTypeError("1 object argument required");
+    if (fci.Length() < 1) {
+      Nan::ThrowTypeError("1 argument required");
+      fci.GetReturnValue().SetUndefined();
+      return;
+    } else if (!fci[0]->IsObject()) {
+      Nan::ThrowTypeError("Argument must be of object type");
       fci.GetReturnValue().SetUndefined();
       return;
     }

@@ -5,6 +5,8 @@ build
 GNUmakefile*
 test/test_publisher
 test/test_publisher_secure
+test/test_subscriber
+test/test_subscriber_secure
 test/repo.ior
 test/test.log
 *~

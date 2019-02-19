@@ -213,13 +213,34 @@ int ACE_TMAIN(int argc, ACE_TCHAR* argv[])
     sample.ns[1][0] = "string5";
     sample.mu.a(6);
 
-    writer->write(sample, DDS::HANDLE_NIL);
-    ACE_OS::sleep(1);
+    DDS::InstanceHandle_t handle = DDS::HANDLE_NIL;
+    DDS::ReturnCode_t return_code = DDS::RETCODE_OK;
 
-    ++sample.id;
-    sample.mu.d(9.23);
-    writer->write(sample, DDS::HANDLE_NIL);
-    ACE_OS::sleep(1);
+    handle = writer->register_instance(sample);
+
+    return_code = writer->write(sample, handle);
+    if (return_code != DDS::RETCODE_OK) {
+      throw return_code;
+    }
+
+    Mod::Sample sample2 = sample;
+    sample2.id = 24;
+    sample2.mu.d(9.23);
+
+    return_code = writer->write(sample2, DDS::HANDLE_NIL);
+    if (return_code != DDS::RETCODE_OK) {
+      throw return_code;
+    }
+
+    return_code = writer->unregister_instance(sample, handle);  
+    if (return_code != DDS::RETCODE_OK) {
+      throw return_code;
+    }
+
+    return_code = writer->unregister_instance(sample2, DDS::HANDLE_NIL);  
+    if (return_code != DDS::RETCODE_OK) {
+      throw return_code;
+    }
 
     participant->delete_contained_entities();
     dpf->delete_participant(participant);

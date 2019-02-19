@@ -36,4 +36,23 @@ namespace v8 {
   void V8::ToLocalEmpty() {}
   MaybeLocal<Int32> Value::ToInt32(Local<Context>) const { return {}; }
   MaybeLocal<Uint32> Value::ToUint32(Local<Context>) const { return {}; }
+  int String::WriteUtf8(char*, int, int*, int) const { return 0; }
+  bool Value::IsArray() const { return false; }
+  MaybeLocal<Number> Value::ToNumber(v8::Local<v8::Context>) const { return {}; }
+  Local<Value> Object::Get(Handle<v8::Value>) { return {}; }
+  bool Value::IsBoolean() const { return false; }
+  bool Value::IsNumber() const { return false; }
+  int String::Length() const { return 0; }
+  int64_t Value::IntegerValue() const { return 0; }
+  double Number::Value() const { return 0.0; }
+  bool Boolean::Value() const { return false; }
+  int64_t Integer::Value() const { return false; }
+  bool Object::Has(v8::Local<v8::Value>) { return false; }
+  MaybeLocal<String> Value::ToString(v8::Local<v8::Context>) const { return {}; }
+  int v8::String::Write(unsigned short*, int, int, int) const { return 0; }
+  MaybeLocal<Object> Value::ToObject(v8::Local<v8::Context>) const { return {}; }
+  MaybeLocal<Boolean> Value::ToBoolean(v8::Local<v8::Context>) const { return {}; }
+  MaybeLocal<Integer> Value::ToInteger(v8::Local<v8::Context>) const { return {}; }
+  Local<Value> Object::Get(unsigned int) { return {}; }
+  uint32_t Value::Uint32Value() const { return 0; }
 }
