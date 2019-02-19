@@ -139,7 +139,9 @@ try {
             sample.ns[0][2] != "string3" ||
             sample.ns[0][3] != "string4" ||
             sample.ns[1].length != 1 ||
-            sample.ns[1][0] != "string5") {
+            sample.ns[1][0] != "string5" ||
+            (sample.id == 23 && sample.mu._d != "one" && sample.mu.a != 6) ||
+            (sample.id == 24 && sample.mu._d != "three" && sample.mu.d != 9.23)) {
           console.log("Error in data!");
           process.exitCode = 1;
         }

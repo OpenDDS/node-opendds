@@ -331,7 +331,9 @@ int ACE_TMAIN(int argc, ACE_TCHAR* argv[])
       std::string(sample.ns[0][2].in()) != "string3" ||
       std::string(sample.ns[0][3].in()) != "string4" ||
       sample.ns[1].length() != 1 ||
-      std::string(sample.ns[1][0].in()) != "string5")
+      std::string(sample.ns[1][0].in()) != "string5" ||
+      sample.mu._d() != Mod::one ||
+      sample.mu.a() != 6)
     {
       std::cerr << "ERROR: Data does not match expected results:" << std::endl << std::endl;
       sample_to_cerr(sample);
@@ -376,7 +378,9 @@ int ACE_TMAIN(int argc, ACE_TCHAR* argv[])
       std::string(sample.ns[0][2].in()) != "string3" ||
       std::string(sample.ns[0][3].in()) != "string4" ||
       sample.ns[1].length() != 1 ||
-      std::string(sample.ns[1][0].in()) != "string5")
+      std::string(sample.ns[1][0].in()) != "string5" ||
+      sample.mu._d() != Mod::three ||
+      sample.mu.d() < 9.23 - 1e-6 || sample.mu.d() > 9.23 + 1e-6)
     {
       std::cerr << "ERROR: Data does not match expected results:" << std::endl << std::endl;
       sample_to_cerr(sample);

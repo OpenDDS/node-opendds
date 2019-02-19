@@ -81,7 +81,10 @@ function doStuff(writer) {
   }
 
   var sample2 = JSON.parse(JSON.stringify(sample1));
+  sample1.mu = { _d: "one", a: 6 };
+
   sample2.id = 24;
+  sample2.mu = { _d: "three", d: 9.23 };
 
   var handle = 0, retcode = 0;
 
