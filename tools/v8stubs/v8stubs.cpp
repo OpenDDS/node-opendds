@@ -43,6 +43,7 @@ namespace v8 {
   bool Value::IsBoolean() const { return false; }
   bool Value::IsNumber() const { return false; }
   int String::Length() const { return 0; }
+  int String::Utf8Length() const { return 0; }
   int64_t Value::IntegerValue() const { return 0; }
   double Number::Value() const { return 0.0; }
   bool Boolean::Value() const { return false; }
