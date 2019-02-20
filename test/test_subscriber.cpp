@@ -170,6 +170,7 @@ void sample_to_cerr(const Mod::Sample& sample) {
 
 int ACE_TMAIN(int argc, ACE_TCHAR* argv[])
 {
+  int result = 0;
   try {
     DDS::DomainParticipantFactory_var dpf =
       TheParticipantFactoryWithArgs(argc, argv);
@@ -337,6 +338,7 @@ int ACE_TMAIN(int argc, ACE_TCHAR* argv[])
     {
       std::cerr << "ERROR: Data does not match expected results:" << std::endl << std::endl;
       sample_to_cerr(sample);
+      result = 1;
     }
 
     wait_for_data(reader, sample);
@@ -384,6 +386,7 @@ int ACE_TMAIN(int argc, ACE_TCHAR* argv[])
     {
       std::cerr << "ERROR: Data does not match expected results:" << std::endl << std::endl;
       sample_to_cerr(sample);
+      result = 1;
     }
 
     participant->delete_contained_entities();
@@ -394,5 +397,5 @@ int ACE_TMAIN(int argc, ACE_TCHAR* argv[])
     std::cerr << "ERROR!\n";
     return 1;
   }
-  return 0;
+  return result;
 }
