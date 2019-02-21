@@ -93,9 +93,11 @@ function doStuff(writer) {
 
   retcode = writer.write(sample2);
 
+  retcode = writer.dispose(sample1, handle);
+
   retcode = writer.unregister_instance(sample1, handle);
 
-  //retcode = writer.unregister_instance(sample2);
+  retcode = writer.unregister_instance(sample2);
 }
 
 try {
