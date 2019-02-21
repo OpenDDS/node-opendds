@@ -412,7 +412,7 @@ namespace {
     Nan::SetMethod(ot, "dispose", dispose);
     const Local<Object> obj = ot->NewInstance();
     Nan::SetInternalFieldPointer(obj, 0, dw._retn());
-    Nan::SetInternalFieldPointer(obj, 1, const_cast<OpenDDS::DCPS::V8TypeConverter*>(reinterpret_cast<const OpenDDS::DCPS::V8TypeConverter*>(tc)));
+    Nan::SetInternalFieldPointer(obj, 1, const_cast<OpenDDS::DCPS::V8TypeConverter*>(tc));
     fci.GetReturnValue().Set(obj);
   }
 
