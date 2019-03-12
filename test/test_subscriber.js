@@ -101,9 +101,13 @@ try {
     try {
       log('Received callback', sample);
       log('Sample Info', sinfo);
-      if (sinfo.valid_data && sample.id === last_sample_id) {
+      if (sinfo.valid_data && sample.id == last_sample_id) {
         participant.unsubscribe(reader);
-        if (sample.bt.o != 254 ||
+        if (!(sample.id == 23 || sample.id == 24) ||
+            sample.data != "Hello, world\n" ||
+            sample.enu != "two" ||
+            sample.enu2 != "<<invalid>>" ||
+            sample.bt.o != 254 ||
             sample.bt.us != 65500 ||
             sample.bt.us != 65500 ||
             sample.bt.s != 32700 ||
@@ -112,7 +116,32 @@ try {
             //sample.bt.ull != "12379813738877118345" || // This currently fails due to a truncation error from JS "number". Solution will write 64-bit integers (signed & unsigned) as decimal strings. Uncomment this line once truncation issue is resolved in latest release branch.
             sample.bt.ll != 5000000000 ||
             sample.bt.f > (2.17 + 1e-3) || sample.bt.f < (2.17 - 1e-3) || // avoid direct floating point comparisons by testing epsilon ranges
-            sample.bt.d > (3.14 + 1e-6) || sample.bt.d < (3.14 - 1e-6)) {
+            sample.bt.d > (3.14 + 1e-6) || sample.bt.d < (3.14 - 1e-6) ||
+            sample.bt.ld > (1.4142136 + 1e-9) || sample.bt.ld < (1.4142136 - 1e-9) ||
+            sample.bt.b != true ||
+            sample.bt.c != "x" ||
+            sample.bt.str != "z012" ||
+            sample.bt.wstr != "abcde" ||
+            sample.seq1.length != 5 ||
+            sample.seq1[0] != 0 ||
+            sample.seq1[1] != 45 ||
+            sample.seq1[2] != 90 ||
+            sample.seq1[3] != 135 ||
+            sample.seq1[4] != 180 ||
+            sample.seq2.length != 3 ||
+            sample.seq2[0] != 32 ||
+            sample.seq2[1] != 33 ||
+            sample.seq2[2] != 34 ||
+            sample.ns.length != 2 ||
+            sample.ns[0].length != 4 ||
+            sample.ns[0][0] != "string1" ||
+            sample.ns[0][1] != "string2" ||
+            sample.ns[0][2] != "string3" ||
+            sample.ns[0][3] != "string4" ||
+            sample.ns[1].length != 1 ||
+            sample.ns[1][0] != "string5" ||
+            (sample.id == 23 && sample.mu._d != "one" && sample.mu.a != 6) ||
+            (sample.id == 24 && sample.mu._d != "three" && sample.mu.d != 9.23)) {
           console.log("Error in data!");
           process.exitCode = 1;
         }

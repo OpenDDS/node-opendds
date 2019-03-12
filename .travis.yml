@@ -49,4 +49,7 @@ script:
   - export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$TRAVIS_BUILD_DIR/tools/v8stubs
   - make
   - if [ "$DDS_SECURITY" == 1 ]; then TEST_OPTIONS+="--secure"; fi
-  - cd test; ./run_test.pl $TEST_OPTIONS
+  - cd test;
+  - ./run_test.pl cpp2node $TEST_OPTIONS
+  - ./run_test.pl node2cpp $TEST_OPTIONS
+  - ./run_test.pl node2node $TEST_OPTIONS

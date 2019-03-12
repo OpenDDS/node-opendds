@@ -1,5 +1,5 @@
 project: dcpsexe, dcps_v8 {
-  exename = test_publisher
+  exename = test_subscriber
 
   libs += v8stubs
   after += v8stubs
@@ -13,6 +13,6 @@ project: dcpsexe, dcps_v8 {
   macros += SECURE
 
   Source_Files {
-    test_publisher.cpp
+    test_subscriber.cpp
   }
 }
