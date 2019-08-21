@@ -334,7 +334,17 @@ int ACE_TMAIN(int argc, ACE_TCHAR* argv[])
       sample.ns[1].length() != 1 ||
       std::string(sample.ns[1][0].in()) != "string5" ||
       sample.mu._d() != Mod::one ||
-      sample.mu.a() != 6)
+      sample.mu.a() != 6 ||
+      sample.ca[0] != 'n' ||
+      sample.ca[1] != 'i' ||
+      sample.ca[2] != 'n' ||
+      sample.ca[3] != 'j' ||
+      sample.ca[4] != 'a' ||
+      sample.ca[5] != 's' ||
+      std::string(sample.sa[0].in()) != "north" ||
+      std::string(sample.sa[1].in()) != "east" ||
+      std::string(sample.sa[2].in()) != "south" ||
+      std::string(sample.sa[3].in()) != "west")
     {
       std::cerr << "ERROR: Data does not match expected results:" << std::endl << std::endl;
       sample_to_cerr(sample);
@@ -381,8 +391,25 @@ int ACE_TMAIN(int argc, ACE_TCHAR* argv[])
       std::string(sample.ns[0][3].in()) != "string4" ||
       sample.ns[1].length() != 1 ||
       std::string(sample.ns[1][0].in()) != "string5" ||
-      sample.mu._d() != Mod::three ||
-      sample.mu.d() < 9.23 - 1e-6 || sample.mu.d() > 9.23 + 1e-6)
+      sample.mu._d() != Mod::four ||
+      sample.mu.s().length() != 2 ||
+      sample.mu.s()[0].length() != 4 ||
+      std::string(sample.mu.s()[0][0].in()) != "string1" ||
+      std::string(sample.mu.s()[0][1].in()) != "string2" ||
+      std::string(sample.mu.s()[0][2].in()) != "string3" ||
+      std::string(sample.mu.s()[0][3].in()) != "string4" ||
+      sample.mu.s()[1].length() != 1 ||
+      std::string(sample.mu.s()[1][0].in()) != "string5" ||
+      sample.ca[0] != 'n' ||
+      sample.ca[1] != 'i' ||
+      sample.ca[2] != 'n' ||
+      sample.ca[3] != 'j' ||
+      sample.ca[4] != 'a' ||
+      sample.ca[5] != 's' ||
+      std::string(sample.sa[0].in()) != "north" ||
+      std::string(sample.sa[1].in()) != "east" ||
+      std::string(sample.sa[2].in()) != "south" ||
+      std::string(sample.sa[3].in()) != "west")
     {
       std::cerr << "ERROR: Data does not match expected results:" << std::endl << std::endl;
       sample_to_cerr(sample);
@@ -392,6 +419,8 @@ int ACE_TMAIN(int argc, ACE_TCHAR* argv[])
     participant->delete_contained_entities();
     dpf->delete_participant(participant);
     TheServiceParticipant->shutdown();
+
+    std::cout << "Success!" << std::endl;
 
   } catch (...) {
     std::cerr << "ERROR!\n";

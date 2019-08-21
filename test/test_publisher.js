@@ -76,14 +76,16 @@ function doStuff(writer) {
     },
     seq1: [0, 45, 90, 135, 180],
     seq2: [32, 33, 34],
-    ns: [ ["string1", "string2", "string3", "string4"], ["string5"] ]
+    ns: [ ["string1", "string2", "string3", "string4"], ["string5"] ],
+    ca: ["n", "i", "n", "j", "a", "s"],
+    sa: ["north", "east", "south", "west"]
   }
 
   var sample2 = JSON.parse(JSON.stringify(sample1));
   sample1.mu = { _d: "one", a: 6 };
 
   sample2.id = 24;
-  sample2.mu = { _d: "three", d: 9.23 };
+  sample2.mu = { _d: "four", s: [ ["string1", "string2", "string3", "string4"], ["string5"] ] };
 
   var handle = 0, retcode = 0;
 
