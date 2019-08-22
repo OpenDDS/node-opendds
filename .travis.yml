@@ -39,6 +39,7 @@ before_script:
   - ./configure --no-tests --std=c++11 $CONFIG_OPTIONS
   - cd ..
   - npm install -g node-gyp
+  - node-gyp install --ensure
 script:
   - if [ "$DDS_SECURITY" == 1 ]; then BUILD_TARGETS+="OpenDDS_Security"; fi
   - make -C OpenDDS -sj6 DCPSInfoRepo_Main OpenDDS_Rtps_Udp $BUILD_TARGETS
