@@ -140,8 +140,18 @@ try {
             sample.ns[0][3] != "string4" ||
             sample.ns[1].length != 1 ||
             sample.ns[1][0] != "string5" ||
-            (sample.id == 23 && sample.mu._d != "one" && sample.mu.a != 6) ||
-            (sample.id == 24 && sample.mu._d != "three" && sample.mu.d != 9.23)) {
+            sample.ca[0] != "n" ||
+            sample.ca[1] != "i" ||
+            sample.ca[2] != "n" ||
+            sample.ca[3] != "j" ||
+            sample.ca[4] != "a" ||
+            sample.ca[5] != "s" ||
+            sample.sa[0] != "north" ||
+            sample.sa[1] != "east" ||
+            sample.sa[2] != "south" ||
+            sample.sa[3] != "west" ||
+            (sample.id == 23 && (sample.mu._d != "one" || sample.mu.a != 6)) ||
+            (sample.id == 24 && (sample.mu._d != "four" || sample.mu.s.length != 2 || sample.mu.s[0].length != 4 || sample.mu.s[1].length != 1))) {
           console.log("Error in data!");
           process.exitCode = 1;
         }

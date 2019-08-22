@@ -212,6 +212,16 @@ int ACE_TMAIN(int argc, ACE_TCHAR* argv[])
     sample.ns[1].length(1);
     sample.ns[1][0] = "string5";
     sample.mu.a(6);
+    sample.ca[0] = 'n';
+    sample.ca[1] = 'i';
+    sample.ca[2] = 'n';
+    sample.ca[3] = 'j';
+    sample.ca[4] = 'a';
+    sample.ca[5] = 's';
+    sample.sa[0] = "north";
+    sample.sa[1] = "east";
+    sample.sa[2] = "south";
+    sample.sa[3] = "west";
 
     DDS::InstanceHandle_t handle = DDS::HANDLE_NIL;
     DDS::ReturnCode_t return_code = DDS::RETCODE_OK;
@@ -225,7 +235,8 @@ int ACE_TMAIN(int argc, ACE_TCHAR* argv[])
 
     Mod::Sample sample2 = sample;
     sample2.id = 24;
-    sample2.mu.d(9.23);
+    Mod::NestedSeq ns(sample.ns);
+    sample2.mu.s(ns);
 
     return_code = writer->write(sample2, DDS::HANDLE_NIL);
     if (return_code != DDS::RETCODE_OK) {
