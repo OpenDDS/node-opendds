@@ -44,7 +44,7 @@ script:
   - if [ "$DDS_SECURITY" == 1 ]; then BUILD_TARGETS+="OpenDDS_Security"; fi
   - make -C OpenDDS -sj6 DCPSInfoRepo_Main OpenDDS_Rtps_Udp $BUILD_TARGETS
   - npm install
-  - export V8_ROOT=~/.cache/node-gyp/$(node-gyp list -v)
+  - export V8_ROOT=$(node-gyp list -v |& grep dir\: | cut -d ':' -f 2 | sed 's/^[ ]* //g')
   - export NAN_ROOT=$TRAVIS_BUILD_DIR/node_modules/nan
   - $ACE_ROOT/bin/mwc.pl -type gnuace -exclude ACE_TAO,OpenDDS
   - export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$TRAVIS_BUILD_DIR/tools/v8stubs
