@@ -38,13 +38,14 @@ before_script:
   - if [ "$DDS_SECURITY" == 1 ]; then CONFIG_OPTIONS+="--security"; fi
   - ./configure --no-tests --std=c++11 $CONFIG_OPTIONS
   - cd ..
+  - export npm_config_devdir=$TRAVIS_BUILD_DIR/opendds-node-gyp-devdir
   - npm install -g node-gyp
   - node-gyp install --ensure
 script:
   - if [ "$DDS_SECURITY" == 1 ]; then BUILD_TARGETS+="OpenDDS_Security"; fi
   - make -C OpenDDS -sj6 DCPSInfoRepo_Main OpenDDS_Rtps_Udp $BUILD_TARGETS
   - npm install
-  - export V8_ROOT=~/.node-gyp/$(node-gyp list)
+  - export V8_ROOT=$npm_config_devdir/$(node -v | cut -c 2-)
   - export NAN_ROOT=$TRAVIS_BUILD_DIR/node_modules/nan
   - $ACE_ROOT/bin/mwc.pl -type gnuace -exclude ACE_TAO,OpenDDS
   - export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$TRAVIS_BUILD_DIR/tools/v8stubs
