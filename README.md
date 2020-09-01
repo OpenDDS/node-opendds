@@ -1,6 +1,6 @@
 # OpenDDS module for Node.js
 
-Travis CI: [![Build Status](https://travis-ci.org/oci-labs/node-opendds.svg?branch=master)](https://travis-ci.org/oci-labs/node-opendds)
+Travis CI: [![Build Status](https://travis-ci.com/oci-labs/node-opendds.svg?branch=master)](https://travis-ci.com/oci-labs/node-opendds)
 
 ## Requirements:
 * OpenDDS (http://www.opendds.org) and its dependencies must be installed.
