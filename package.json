@@ -1,6 +1,6 @@
 {
   "name": "opendds",
-  "version": "0.0.9",
+  "version": "0.1.0",
   "description": "OpenDDS module for Node.js",
   "main": "lib/node-opendds.js",
   "directories": {
