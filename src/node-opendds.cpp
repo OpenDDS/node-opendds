@@ -432,7 +432,7 @@ namespace {
     const void* const tc_i = Nan::GetInternalFieldPointer(fci.This(), 1);
     DDS::DataWriter* const dw = static_cast<DDS::DataWriter*>(dw_i);
     const OpenDDS::DCPS::V8TypeConverter* const tc = reinterpret_cast<const OpenDDS::DCPS::V8TypeConverter*>(tc_i);
-    
+
     const Local<Object> sample_obj = fci[0]->ToObject(Nan::GetCurrentContext()).ToLocalChecked();
     void* sample_vp = tc->fromV8(sample_obj);
     DDS::InstanceHandle_t handle = tc->register_instance_helper(dw, sample_vp);
@@ -475,7 +475,7 @@ namespace {
       }
       handle = fci[1]->ToInteger(Nan::GetCurrentContext()).ToLocalChecked()->Value();
     }
-    
+
     void* sample_vp = tc->fromV8(sample_obj);
     DDS::ReturnCode_t return_code = tc->write_helper(dw, sample_vp, handle);
     tc->deleteFromV8Result(sample_vp);
@@ -516,7 +516,7 @@ namespace {
       }
       handle = fci[1]->ToInteger(Nan::GetCurrentContext()).ToLocalChecked()->Value();
     }
-    
+
     void* sample_vp = tc->fromV8(sample_obj);
     DDS::ReturnCode_t return_code = tc->unregister_instance_helper(dw, sample_vp, handle);
     tc->deleteFromV8Result(sample_vp);
@@ -557,7 +557,7 @@ namespace {
       }
       handle = fci[1]->ToInteger(Nan::GetCurrentContext()).ToLocalChecked()->Value();
     }
-    
+
     void* sample_vp = tc->fromV8(sample_obj);
     DDS::ReturnCode_t return_code = tc->dispose_helper(dw, sample_vp, handle);
     tc->deleteFromV8Result(sample_vp);

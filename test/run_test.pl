@@ -78,7 +78,7 @@ if ($sub_node) {
   if ($secure) {
     $sub_args .= " --secure -DCPSConfigFile rtps_disc.ini";
   }
-} 
+}
 
 my $SUB = PerlDDS::create_process($sub_exec_name, $sub_args);
 if ($sub_node) {
@@ -99,7 +99,7 @@ if ($pub_node) {
   if ($secure) {
     $pub_args .= " --secure -DCPSConfigFile rtps_disc.ini";
   }
-} 
+}
 
 my $PUB = PerlDDS::create_process($pub_exec_name, $pub_args);
 if ($pub_node) {

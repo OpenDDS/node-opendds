@@ -243,17 +243,17 @@ int ACE_TMAIN(int argc, ACE_TCHAR* argv[])
       throw return_code;
     }
 
-    return_code = writer->dispose(sample, handle);  
+    return_code = writer->dispose(sample, handle);
     if (return_code != DDS::RETCODE_OK) {
       throw return_code;
     }
 
-    return_code = writer->unregister_instance(sample, handle);  
+    return_code = writer->unregister_instance(sample, handle);
     if (return_code != DDS::RETCODE_OK) {
       throw return_code;
     }
 
-    return_code = writer->unregister_instance(sample2, DDS::HANDLE_NIL);  
+    return_code = writer->unregister_instance(sample2, DDS::HANDLE_NIL);
     if (return_code != DDS::RETCODE_OK) {
       throw return_code;
     }
