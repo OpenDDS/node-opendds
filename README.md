@@ -21,6 +21,10 @@ $ node-gyp configure build
 
 ## Changelog
 
+### Version 0.1.0
+
+* Add support for publishing from Node.js
+
 ### Version 0.0.9
 
 * Support building this module using an installed OpenDDS
