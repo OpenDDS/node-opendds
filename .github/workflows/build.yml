@@ -1,4 +1,4 @@
-...
+---
 name: "node-opendds Build & Test"
 on:
   push:
@@ -10,7 +10,6 @@ on:
       - master
 jobs:
   Build:
-    runs-on: '${{ matrix.os }}'
     env:
       - ACE_ROOT=$BUILD_DIR/ACE_TAO/ACE
       - TAO_ROOT=$BUILD_DIR/ACE_TAO/TAO
@@ -18,6 +17,7 @@ jobs:
       - MPC_ROOT=$BUILD_DIR/MPC
       - LD_LIBRARY_PATH=$ACE_ROOT/lib:$DDS_ROOT/lib:$LD_LIBRARY_PATH
     strategy:
+      fail-fast: false
       matrix:
         node-version:
           - 14.x
@@ -26,16 +26,17 @@ jobs:
           - {os: osx, env: 'COMPILER=clang++ NO_INLINE=1 OPENDDS_BRANCH=latest-release DDS_SECURITY=0'}
           - {os: linux, env: 'OPENDDS_BRANCH=master DDS_SECURITY=1'}
           - {os: linux, env: 'OPENDDS_BRANCH=latest-release DDS_SECURITY=1'}
+    runs-on: ${{ matrix.os }}
     steps:
-      - name: Install dependencies (Ubuntu)
-        if: runner.os == 'Linux'
+      - if: runner.os == 'Linux'
+        name: Install dependencies (Ubuntu)
         run: |-
           sudo apt-get update
           sudo apt-get install -y libssl-dev libxerces-c-dev
       - name: 'Set up Node.js ${{ matrix.node-version }}'
         uses: actions/setup-node@v1
         with:
-          node-version: '${{ matrix.node-version }}'
+          node-version: ${{ matrix.node-version }}
       - uses: actions/checkout@v2
       - run: nvm install ${{ matrix.node-version }}
       - run: nvm use ${{ matrix.node-version }}
@@ -63,10 +64,3 @@ jobs:
       - run: ./run_test.pl cpp2node $TEST_OPTIONS
       - run: ./run_test.pl node2cpp $TEST_OPTIONS
       - run: ./run_test.pl node2node $TEST_OPTIONS
-...
-#Unconverted Travis configuration
-#addons:
-#  apt:
-#    sources:
-#      - ubuntu-toolchain-r-test
-
