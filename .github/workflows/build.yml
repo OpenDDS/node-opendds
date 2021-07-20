@@ -37,7 +37,7 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
       - uses: actions/checkout@v2
-        run: |
+      - run: |-
           nvm install ${{ matrix.node-version }}
           nvm use ${{ matrix.node-version }}
           git clone --depth 1 git://github.com/DOCGroup/MPC.git
