@@ -37,29 +37,30 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
       - uses: actions/checkout@v2
-      - run: nvm install ${{ matrix.node-version }}
-      - run: nvm use ${{ matrix.node-version }}
-      - run: git clone --depth 1 git://github.com/DOCGroup/MPC.git
-      - run: git clone --depth 1 -b Latest_Micro git://github.com/DOCGroup/ACE_TAO.git
-      - run: git clone --depth 1 -b $OPENDDS_BRANCH git://github.com/objectcomputing/OpenDDS.git
-      - run: export
-      - run: cd OpenDDS
-      - run: if [ "$DDS_SECURITY" == 1 ]; then CONFIG_OPTIONS+="--security"; fi
-      - run: ./configure --no-tests --std=c++11 $CONFIG_OPTIONS
-      - run: cd ..
-      - run: export npm_config_devdir=$BUILD_DIR/opendds-node-gyp-devdir
-      - run: npm install -g node-gyp
-      - run: node-gyp install --ensure
-      - run: if [ "$DDS_SECURITY" == 1 ]; then BUILD_TARGETS+="OpenDDS_Security"; fi
-      - run: make -C OpenDDS -sj6 DCPSInfoRepo_Main OpenDDS_Rtps_Udp $BUILD_TARGETS
-      - run: npm install
-      - run: export V8_ROOT=$npm_config_devdir/$(node -v | cut -c 2-)
-      - run: export NAN_ROOT=$BUILD_DIR/node_modules/nan
-      - run: $ACE_ROOT/bin/mwc.pl -type gnuace -exclude ACE_TAO,OpenDDS
-      - run: export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$BUILD_DIR/tools/v8stubs
-      - run: make
-      - run: if [ "$DDS_SECURITY" == 1 ]; then TEST_OPTIONS+="--secure"; fi
-      - run: cd test;
-      - run: ./run_test.pl cpp2node $TEST_OPTIONS
-      - run: ./run_test.pl node2cpp $TEST_OPTIONS
-      - run: ./run_test.pl node2node $TEST_OPTIONS
+        run: |
+          nvm install ${{ matrix.node-version }}
+          nvm use ${{ matrix.node-version }}
+          git clone --depth 1 git://github.com/DOCGroup/MPC.git
+          git clone --depth 1 -b Latest_Micro git://github.com/DOCGroup/ACE_TAO.git
+          git clone --depth 1 -b $OPENDDS_BRANCH git://github.com/objectcomputing/OpenDDS.git
+          export
+          cd OpenDDS
+          if [ "$DDS_SECURITY" == 1 ]; then CONFIG_OPTIONS+="--security"; fi
+          ./configure --no-tests --std=c++11 $CONFIG_OPTIONS
+          cd ..
+          export npm_config_devdir=$BUILD_DIR/opendds-node-gyp-devdir
+          npm install -g node-gyp
+          node-gyp install --ensure
+          if [ "$DDS_SECURITY" == 1 ]; then BUILD_TARGETS+="OpenDDS_Security"; fi
+          make -C OpenDDS -sj6 DCPSInfoRepo_Main OpenDDS_Rtps_Udp $BUILD_TARGETS
+          npm install
+          export V8_ROOT=$npm_config_devdir/$(node -v | cut -c 2-)
+          export NAN_ROOT=$BUILD_DIR/node_modules/nan
+          $ACE_ROOT/bin/mwc.pl -type gnuace -exclude ACE_TAO,OpenDDS
+          export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$BUILD_DIR/tools/v8stubs
+          make
+          if [ "$DDS_SECURITY" == 1 ]; then TEST_OPTIONS+="--secure"; fi
+          cd test;
+          ./run_test.pl cpp2node $TEST_OPTIONS
+          ./run_test.pl node2cpp $TEST_OPTIONS
+          ./run_test.pl node2node $TEST_OPTIONS
