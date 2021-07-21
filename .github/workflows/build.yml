@@ -29,10 +29,11 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - if: runner.os == 'Linux'
+        name: 'install ssl and xerces'
         run: |-
           sudo apt-get update
           sudo apt-get -y install libssl-dev libxerces-c-dev
-      - name: 'Set up Node.js ${{ matrix.node-version }}'
+      - name: 'set up Node.js ${{ matrix.node-version }}'
         uses: actions/setup-node@v1
         with:
           node-version: ${{ matrix.node-version }}
@@ -40,10 +41,14 @@ jobs:
       - run: |-
           nvm install ${{ matrix.node-version }}
           nvm use ${{ matrix.node-version }}
+      - name: 'clone MPC, ACE_TAO and OpenDDS'
+        run: |-
           git clone --depth 1 git://github.com/DOCGroup/MPC.git
           git clone --depth 1 -b Latest_Micro git://github.com/DOCGroup/ACE_TAO.git
           git clone --depth 1 -b $OPENDDS_BRANCH git://github.com/objectcomputing/OpenDDS.git
           export
+      - name: 'configure and build OpenDDS'
+        run: |-
           cd OpenDDS
           if [ "$DDS_SECURITY" == 1 ]; then CONFIG_OPTIONS+="--security"; fi
           ./configure --no-tests --std=c++11 $CONFIG_OPTIONS
@@ -59,6 +64,8 @@ jobs:
           $ACE_ROOT/bin/mwc.pl -type gnuace -exclude ACE_TAO,OpenDDS
           export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$BUILD_DIR/tools/v8stubs
           make
+      - name: 'run tests'
+        run: |-
           if [ "$DDS_SECURITY" == 1 ]; then TEST_OPTIONS+="--secure"; fi
           cd test;
           ./run_test.pl cpp2node $TEST_OPTIONS
