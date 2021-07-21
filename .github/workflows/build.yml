@@ -17,7 +17,7 @@ jobs:
       TAO_ROOT: $GITHUB_WORKSPACE/ACE_TAO/TAO
       DDS_ROOT: $GITHUB_WORKSPACE/OpenDDS
       MPC_ROOT: $GITHUB_WORKSPACE/MPC
-      LD_LIBRARY_PATH: "${{ env.ACE_ROOT }}/lib:${{ env.DDS_ROOT }}/lib:$LD_LIBRARY_PATH"
+      LD_LIBRARY_PATH: $GITHUB_WORKSPACE/ACE_TAO/ACE/lib:$GITHUB_WORKSPACE/OpenDDS/lib:$LD_LIBRARY_PATH
     strategy:
       fail-fast: false
       matrix:
