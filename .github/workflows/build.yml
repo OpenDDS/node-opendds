@@ -17,7 +17,7 @@ jobs:
       TAO_ROOT: $GITHUB_WORKSPACE/ACE_TAO/TAO
       DDS_ROOT: $GITHUB_WORKSPACE/OpenDDS
       MPC_ROOT: $GITHUB_WORKSPACE/MPC
-      LD_LIBRARY_PATH: $ACE_ROOT/lib:$DDS_ROOT/lib:$LD_LIBRARY_PATH
+      LD_LIBRARY_PATH: "${{ env.ACE_ROOT }}/lib:${{ env.DDS_ROOT }}/lib:$LD_LIBRARY_PATH"
     strategy:
       fail-fast: false
       matrix:
@@ -36,9 +36,6 @@ jobs:
           echo ${{ env.DDS_ROOT }}
           echo ${{ env.MPC_ROOT }}
           echo ${{ env.LD_LIBRARY_PATH }}
-          echo ${{ env.CONFIG_OPTIONS }}
-          echo ${{ env.BUILD_TARGETS }}
-          echo ${{ env.TEST_OPTIONS }}
       - uses: actions/checkout@v2
       - name: 'set up Node.js ${{ matrix.node-version }}'
         uses: actions/setup-node@v2
@@ -46,7 +43,7 @@ jobs:
           node-version: ${{ matrix.node-version }}
       - run: |-
           npm install ${{ matrix.node-version }}
-          npm use ${{ matrix.node-version }}
+          #npm use ${{ matrix.node-version }}
           export npm_config_devdir=$GITHUB_WORKSPACE/opendds-node-gyp-devdir
           npm install -g node-gyp
           node-gyp install --ensure
@@ -75,8 +72,8 @@ jobs:
           npm install
           export V8_ROOT=$npm_config_devdir/$(node -v | cut -c 2-)
           export NAN_ROOT=$GITHUB_WORKSPACE/node_modules/nan
-          $ACE_ROOT/bin/mwc.pl -type gnuace -exclude ACE_TAO,OpenDDS
-          export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$GITHUB_WORKSPACE/tools/v8stubs
+          ${{ env.ACE_ROOT }}/bin/mwc.pl -type gnuace -exclude ACE_TAO,OpenDDS
+          export LD_LIBRARY_PATH=${{ env.LD_LIBRARY_PATH }}:$GITHUB_WORKSPACE/tools/v8stubs
           make
       - name: 'run tests'
         run: |-
