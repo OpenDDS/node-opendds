@@ -24,8 +24,8 @@ jobs:
         include:
           - {os: osx, env: 'COMPILER=clang++ NO_INLINE=1 OPENDDS_BRANCH=master DDS_SECURITY=0'}
           - {os: osx, env: 'COMPILER=clang++ NO_INLINE=1 OPENDDS_BRANCH=latest-release DDS_SECURITY=0'}
-          - {os: linux, env: 'OPENDDS_BRANCH=master DDS_SECURITY=1'}
-          - {os: linux, env: 'OPENDDS_BRANCH=latest-release DDS_SECURITY=1'}
+          #- {os: linux, env: 'OPENDDS_BRANCH=master DDS_SECURITY=1'}
+          #- {os: linux, env: 'OPENDDS_BRANCH=latest-release DDS_SECURITY=1'}
     runs-on: ${{ matrix.os }}
     steps:
       - if: runner.os == 'linux'
