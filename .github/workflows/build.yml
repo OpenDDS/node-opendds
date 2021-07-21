@@ -9,10 +9,11 @@ on:
       - master
       - MigrateToGithubActions
   schedule:
-    - cron: '10 * * * 3' #'10 0 * * 0'
+    - cron: '10 0 * * 0'
 jobs:
   Build:
     env:
+      BUILD_DIR: $GITHUB_WORKSPACE
       ACE_ROOT: $BUILD_DIR/ACE_TAO/ACE
       TAO_ROOT: $BUILD_DIR/ACE_TAO/TAO
       DDS_ROOT: $BUILD_DIR/OpenDDS
@@ -30,9 +31,15 @@ jobs:
           - {os: ubuntu-latest, env: 'OPENDDS_BRANCH=latest-release DDS_SECURITY=1'}
     runs-on: ${{ matrix.os }}
     steps:
-      - run: echo $BUILD_DIR
-      - run: echo $GITHUB_ACTION_PATH
-      - run: echo $GITHUB_WORKSPACE
+      - run: |-
+          echo $ACE_ROOT
+          echo $TAO_ROOT
+          echo $DDS_ROOT
+          echo $MPC_ROOT
+          echo $LD_LIBRARY_PATH
+          echo $CONFIG_OPTIONS
+          echo $BUILD_TARGETS
+          echo $TEST_OPTIONS
       - if: runner.os == 'Linux'
         name: 'install ssl and xerces'
         run: |-
