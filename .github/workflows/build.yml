@@ -11,11 +11,11 @@ on:
 jobs:
   Build:
     env:
-      - ACE_ROOT=$BUILD_DIR/ACE_TAO/ACE
-      - TAO_ROOT=$BUILD_DIR/ACE_TAO/TAO
-      - DDS_ROOT=$BUILD_DIR/OpenDDS
-      - MPC_ROOT=$BUILD_DIR/MPC
-      - LD_LIBRARY_PATH=$ACE_ROOT/lib:$DDS_ROOT/lib:$LD_LIBRARY_PATH
+      ACE_ROOT: $BUILD_DIR/ACE_TAO/ACE
+      TAO_ROOT: $BUILD_DIR/ACE_TAO/TAO
+      DDS_ROOT: $BUILD_DIR/OpenDDS
+      MPC_ROOT: $BUILD_DIR/MPC
+      LD_LIBRARY_PATH: $ACE_ROOT/lib:$DDS_ROOT/lib:$LD_LIBRARY_PATH
     strategy:
       fail-fast: false
       matrix:
