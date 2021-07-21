@@ -22,13 +22,13 @@ jobs:
         node-version:
           - 10
         include:
-          - {os: macOS, env: 'COMPILER=clang++ NO_INLINE=1 OPENDDS_BRANCH=master DDS_SECURITY=0'}
-          - {os: macOS, env: 'COMPILER=clang++ NO_INLINE=1 OPENDDS_BRANCH=latest-release DDS_SECURITY=0'}
-          - {os: Linux, env: 'OPENDDS_BRANCH=master DDS_SECURITY=1'}
-          - {os: Linux, env: 'OPENDDS_BRANCH=latest-release DDS_SECURITY=1'}
+          - {os: osx, env: 'COMPILER=clang++ NO_INLINE=1 OPENDDS_BRANCH=master DDS_SECURITY=0'}
+          - {os: osx, env: 'COMPILER=clang++ NO_INLINE=1 OPENDDS_BRANCH=latest-release DDS_SECURITY=0'}
+          - {os: linux, env: 'OPENDDS_BRANCH=master DDS_SECURITY=1'}
+          - {os: linux, env: 'OPENDDS_BRANCH=latest-release DDS_SECURITY=1'}
     runs-on: ${{ matrix.os }}
     steps:
-      - if: runner.os == 'Linux'
+      - if: runner.os == 'linux'
         name: Install dependencies (Ubuntu)
         run: |-
           sudo apt-get update
