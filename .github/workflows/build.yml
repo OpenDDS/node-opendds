@@ -1,13 +1,15 @@
 ---
 name: "node-opendds Build & Test"
 on:
+  pull_request:
+    branches:
+      - master
   push:
     branches:
       - master
       - MigrateToGithubActions
-  pull_request:
-    branches:
-      - master
+  schedule:
+    - cron: '10 * * * 3' #'10 0 * * 0'
 jobs:
   Build:
     env:
@@ -28,6 +30,9 @@ jobs:
           - {os: ubuntu-latest, env: 'OPENDDS_BRANCH=latest-release DDS_SECURITY=1'}
     runs-on: ${{ matrix.os }}
     steps:
+      - run: echo $BUILD_DIR
+      - run: echo $GITHUB_ACTION_PATH
+      - run: echo $GITHUB_WORKSPACE
       - if: runner.os == 'Linux'
         name: 'install ssl and xerces'
         run: |-
@@ -46,9 +51,9 @@ jobs:
           git clone --depth 1 git://github.com/DOCGroup/MPC.git
           git clone --depth 1 -b Latest_Micro git://github.com/DOCGroup/ACE_TAO.git
           git clone --depth 1 -b $OPENDDS_BRANCH git://github.com/objectcomputing/OpenDDS.git
-          export
       - name: 'configure and build OpenDDS'
         run: |-
+          export
           cd OpenDDS
           if [ "$DDS_SECURITY" == 1 ]; then CONFIG_OPTIONS+="--security"; fi
           ./configure --no-tests --std=c++11 $CONFIG_OPTIONS
