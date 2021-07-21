@@ -13,12 +13,12 @@ on:
 jobs:
   Build:
     env:
-      BUILD_DIR: $GITHUB_WORKSPACE
-      ACE_ROOT: $BUILD_DIR/ACE_TAO/ACE
-      TAO_ROOT: $BUILD_DIR/ACE_TAO/TAO
-      DDS_ROOT: $BUILD_DIR/OpenDDS
-      MPC_ROOT: $BUILD_DIR/MPC
-      LD_LIBRARY_PATH: $ACE_ROOT/lib:$DDS_ROOT/lib:$LD_LIBRARY_PATH
+      BUILD_DIR: "${{ GITHUB_WORKSPACE }}"
+      ACE_ROOT: "${{ BUILD_DIR }}/ACE_TAO/ACE"
+      TAO_ROOT: "${{ BUILD_DIR }}/ACE_TAO/TAO"
+      DDS_ROOT: "${{ BUILD_DIR }}/OpenDDS"
+      MPC_ROOT: "${{ BUILD_DIR }}/MPC"
+      LD_LIBRARY_PATH: "${{ ACE_ROOT }}/lib:$DDS_ROOT/lib:$LD_LIBRARY_PATH"
     strategy:
       fail-fast: false
       matrix:
@@ -32,27 +32,30 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - run: |-
-          echo $ACE_ROOT
-          echo $TAO_ROOT
-          echo $DDS_ROOT
-          echo $MPC_ROOT
-          echo $LD_LIBRARY_PATH
-          echo $CONFIG_OPTIONS
-          echo $BUILD_TARGETS
-          echo $TEST_OPTIONS
+          echo ${{ ACE_ROOT }}
+          echo ${{ TAO_ROOT }}
+          echo ${{ DDS_ROOT }}
+          echo ${{ MPC_ROOT }}
+          echo ${{ LD_LIBRARY_PATH }}
+          echo ${{ CONFIG_OPTIONS }}
+          echo ${{ BUILD_TARGETS }}
+          echo ${{ TEST_OPTIONS }}
+      - uses: actions/checkout@v2
+      - name: 'set up Node.js ${{ matrix.node-version }}'
+        uses: actions/setup-node@v2
+        with:
+          node-version: ${{ matrix.node-version }}
+      - run: |-
+          npm install ${{ matrix.node-version }}
+          npm use ${{ matrix.node-version }}
+          export npm_config_devdir=${{ BUILD_DIR }}/opendds-node-gyp-devdir
+          npm install -g node-gyp
+          node-gyp install --ensure
       - if: runner.os == 'Linux'
         name: 'install ssl and xerces'
         run: |-
           sudo apt-get update
           sudo apt-get -y install libssl-dev libxerces-c-dev
-      - name: 'set up Node.js ${{ matrix.node-version }}'
-        uses: actions/setup-node@v1
-        with:
-          node-version: ${{ matrix.node-version }}
-      - uses: actions/checkout@v2
-      - run: |-
-          nvm install ${{ matrix.node-version }}
-          nvm use ${{ matrix.node-version }}
       - name: 'clone MPC, ACE_TAO and OpenDDS'
         run: |-
           git clone --depth 1 git://github.com/DOCGroup/MPC.git
@@ -65,16 +68,16 @@ jobs:
           if [ "$DDS_SECURITY" == 1 ]; then CONFIG_OPTIONS+="--security"; fi
           ./configure --no-tests --std=c++11 $CONFIG_OPTIONS
           cd ..
-          export npm_config_devdir=$BUILD_DIR/opendds-node-gyp-devdir
-          npm install -g node-gyp
-          node-gyp install --ensure
+          #export npm_config_devdir=${{ BUILD_DIR }}/opendds-node-gyp-devdir
+          #npm install -g node-gyp
+          #node-gyp install --ensure
           if [ "$DDS_SECURITY" == 1 ]; then BUILD_TARGETS+="OpenDDS_Security"; fi
           make -C OpenDDS -sj6 DCPSInfoRepo_Main OpenDDS_Rtps_Udp $BUILD_TARGETS
           npm install
           export V8_ROOT=$npm_config_devdir/$(node -v | cut -c 2-)
-          export NAN_ROOT=$BUILD_DIR/node_modules/nan
+          export NAN_ROOT=${{ BUILD_DIR }}/node_modules/nan
           $ACE_ROOT/bin/mwc.pl -type gnuace -exclude ACE_TAO,OpenDDS
-          export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$BUILD_DIR/tools/v8stubs
+          export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${{ BUILD_DIR }}/tools/v8stubs
           make
       - name: 'run tests'
         run: |-
