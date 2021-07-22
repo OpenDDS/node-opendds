@@ -55,7 +55,7 @@ jobs:
         run: |-
           git clone --depth 1 git://github.com/DOCGroup/MPC.git
           git clone --depth 1 -b Latest_Micro git://github.com/DOCGroup/ACE_TAO.git
-          git clone --depth 1 -b ${{ env.OPENDDS_BRANCH }} git://github.com/objectcomputing/OpenDDS.git
+          git clone --depth 1 -b ${{ matrix.env.OPENDDS_BRANCH }} git://github.com/objectcomputing/OpenDDS.git
       - name: 'configure and build OpenDDS'
         run: |-
           export
