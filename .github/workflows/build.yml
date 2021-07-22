@@ -69,9 +69,13 @@ jobs:
           make -C OpenDDS -sj6 DCPSInfoRepo_Main OpenDDS_Rtps_Udp $BUILD_TARGETS
           npm install
           export V8_ROOT=$npm_config_devdir/$(node -v | cut -c 2-)
-          export NAN_ROOT=$GITHUB_WORKSPACE/node_modules/nan
+          export NAN_ROOT="$GITHUB_WORKSPACE/node_modules/nan"
           ${{ env.ACE_ROOT }}/bin/mwc.pl -type gnuace -exclude ACE_TAO,OpenDDS
-          export LD_LIBRARY_PATH=${{ env.LD_LIBRARY_PATH }}:$GITHUB_WORKSPACE/tools/v8stubs
+          export LD_LIBRARY_PATH="${{ env.LD_LIBRARY_PATH }}:$GITHUB_WORKSPACE/tools/v8stubs"
+          echo $ACE_ROOT
+          echo $LD_LIBRARY_PATH
+          echo ${{ env.ACE_ROOT }}
+          echo ${{ env.LD_LIBRARY_PATH }}
           make
       - name: 'run tests'
         run: |-
