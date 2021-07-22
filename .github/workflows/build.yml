@@ -31,9 +31,6 @@ jobs:
           node-version: ${{ matrix.node-version }}
       - run: |-
           npm install ${{ matrix.node-version }}
-          export npm_config_devdir=$GITHUB_WORKSPACE/opendds-node-gyp-devdir
-          npm install -g node-gyp
-          node-gyp install --ensure
       - if: runner.os == 'Linux'
         name: 'Install ssl and xerces'
         run: |-
@@ -59,6 +56,9 @@ jobs:
           cd ..
       - name: 'Build OpenDDS'
         run: |-
+          export npm_config_devdir=$GITHUB_WORKSPACE/opendds-node-gyp-devdir
+          npm install -g node-gyp
+          node-gyp install --ensure
           if [ "$DDS_SECURITY" == 1 ]; then BUILD_TARGETS+="OpenDDS_Security"; fi
           make -C OpenDDS -sj6 DCPSInfoRepo_Main OpenDDS_Rtps_Udp $BUILD_TARGETS
           npm install
