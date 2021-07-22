@@ -18,10 +18,10 @@ jobs:
         node-version:
           - 10
         include:
-          - {os: macOS-latest, env: {COMPILER: "clang++ NO_INLINE=1", OPENDDS_BRANCH: master, DDS_SECURITY: 0}}
-          - {os: macOS-latest, env: {COMPILER: "clang++ NO_INLINE=1", OPENDDS_BRANCH: latest-release, DDS_SECURITY: 0}}
-          - {os: ubuntu-latest, env: {OPENDDS_BRANCH: master, DDS_SECURITY: 1}}
-          - {os: ubuntu-latest, env: {OPENDDS_BRANCH: latest-release, DDS_SECURITY: 1}}
+          - {os: macOS-latest, DDS_SECURITY: 0, OPENDDS_BRANCH: master}
+          - {os: macOS-latest, DDS_SECURITY: 0, OPENDDS_BRANCH: latest-release}
+          - {os: ubuntu-latest, DDS_SECURITY: 1, OPENDDS_BRANCH: master}
+          - {os: ubuntu-latest, DDS_SECURITY: 1, OPENDDS_BRANCH: latest-release}
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v2
@@ -31,16 +31,16 @@ jobs:
           node-version: ${{ matrix.node-version }}
       - run: |-
           npm install ${{ matrix.node-version }}
-      - if: runner.os == 'Linux'
-        name: 'Install ssl and xerces'
-        run: |-
-          sudo apt-get update
-          sudo apt-get -y install libssl-dev libxerces-c-dev
       - name: 'Clone MPC, ACE_TAO and OpenDDS'
         run: |-
           git clone --depth 1 git://github.com/DOCGroup/MPC.git
           git clone --depth 1 -b Latest_Micro git://github.com/DOCGroup/ACE_TAO.git
-          git clone --depth 1 -b ${{ matrix.env.OPENDDS_BRANCH }} git://github.com/objectcomputing/OpenDDS.git
+          git clone --depth 1 -b ${{ matrix.OPENDDS_BRANCH }} git://github.com/objectcomputing/OpenDDS.git
+          if [ ${{ matrix.DDS_SECURITY }} == 1 ]; then
+            echo 'Install ssl and xerces'
+            sudo apt-get update
+            sudo apt-get -y install libssl-dev libxerces-c-dev
+          fi
       - name: 'Set environment variables'
         run: |-
           echo "ACE_ROOT=$GITHUB_WORKSPACE/ACE_TAO/ACE" >> $GITHUB_ENV
@@ -51,7 +51,8 @@ jobs:
       - name: 'Configure OpenDDS'
         run: |-
           cd OpenDDS
-          if [ "$DDS_SECURITY" == 1 ]; then CONFIG_OPTIONS+="--security"; fi
+          if [ ${{ matrix.DDS_SECURITY }} == 1 ]; then CONFIG_OPTIONS+="--security"; fi
+          echo "DDS_SECURITY=${{ matrix.DDS_SECURITY }} CONFIG_OPTIONS=$CONFIG_OPTIONS"
           ./configure --no-tests --std=c++11 $CONFIG_OPTIONS
           cd ..
       - name: 'Build OpenDDS'
@@ -59,17 +60,20 @@ jobs:
           export npm_config_devdir=$GITHUB_WORKSPACE/opendds-node-gyp-devdir
           npm install -g node-gyp
           node-gyp install --ensure
-          if [ "$DDS_SECURITY" == 1 ]; then BUILD_TARGETS+="OpenDDS_Security"; fi
+          if [ ${{ matrix.DDS_SECURITY }} == 1 ]; then BUILD_TARGETS+="OpenDDS_Security"; fi
+          echo "DDS_SECURITY=${{ matrix.DDS_SECURITY }} BUILD_TARGETS=$BUILD_TARGETS"
           make -C OpenDDS -sj6 DCPSInfoRepo_Main OpenDDS_Rtps_Udp $BUILD_TARGETS
           npm install
           export V8_ROOT=$npm_config_devdir/$(node -v | cut -c 2-)
           export NAN_ROOT="$GITHUB_WORKSPACE/node_modules/nan"
           ${{ env.ACE_ROOT }}/bin/mwc.pl -type gnuace -exclude ACE_TAO,OpenDDS
           export LD_LIBRARY_PATH="${{ env.LD_LIBRARY_PATH }}:$GITHUB_WORKSPACE/tools/v8stubs"
+          echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH"
           make
       - name: 'Run tests'
         run: |-
-          if [ "$DDS_SECURITY" == 1 ]; then TEST_OPTIONS+="--secure"; fi
+          if [ ${{ matrix.DDS_SECURITY }} == 1 ]; then TEST_OPTIONS+="--secure"; fi
+          echo "DDS_SECURITY=${{ matrix.DDS_SECURITY }} TEST_OPTIONS=$TEST_OPTIONS"
           cd test;
           ./run_test.pl cpp2node $TEST_OPTIONS
           ./run_test.pl node2cpp $TEST_OPTIONS
