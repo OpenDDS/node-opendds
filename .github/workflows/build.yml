@@ -24,10 +24,10 @@ jobs:
         node-version:
           - 10
         include:
-          - {os: macOS-latest, env: 'COMPILER=clang++ NO_INLINE=1 OPENDDS_BRANCH=master DDS_SECURITY=0'}
-          - {os: macOS-latest, env: 'COMPILER=clang++ NO_INLINE=1 OPENDDS_BRANCH=latest-release DDS_SECURITY=0'}
-          - {os: ubuntu-latest, env: 'OPENDDS_BRANCH=master DDS_SECURITY=1'}
-          - {os: ubuntu-latest, env: 'OPENDDS_BRANCH=latest-release DDS_SECURITY=1'}
+          - {os: macOS-latest, env: {COMPILER: "clang++ NO_INLINE=1", OPENDDS_BRANCH: master, DDS_SECURITY: 0}}
+          - {os: macOS-latest, env: {COMPILER: "clang++ NO_INLINE=1", OPENDDS_BRANCH: latest-release, DDS_SECURITY: 0}}
+          - {os: ubuntu-latest, env: {OPENDDS_BRANCH: master, DDS_SECURITY: 1}}
+          - {os: ubuntu-latest, env: {OPENDDS_BRANCH: latest-release, DDS_SECURITY: 1}}
     runs-on: ${{ matrix.os }}
     steps:
       - run: |-
