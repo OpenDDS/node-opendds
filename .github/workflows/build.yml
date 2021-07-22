@@ -13,11 +13,11 @@ on:
 jobs:
   Build:
     env:
-      ACE_ROOT: $GITHUB_WORKSPACE/ACE_TAO/ACE
-      TAO_ROOT: $GITHUB_WORKSPACE/ACE_TAO/TAO
-      DDS_ROOT: $GITHUB_WORKSPACE/OpenDDS
-      MPC_ROOT: $GITHUB_WORKSPACE/MPC
-      LD_LIBRARY_PATH: $GITHUB_WORKSPACE/ACE_TAO/ACE/lib:$GITHUB_WORKSPACE/OpenDDS/lib:$LD_LIBRARY_PATH
+      ACE_ROOT: "$GITHUB_WORKSPACE/ACE_TAO/ACE"
+      TAO_ROOT: "$GITHUB_WORKSPACE/ACE_TAO/TAO"
+      DDS_ROOT: "$GITHUB_WORKSPACE/OpenDDS"
+      MPC_ROOT: "$GITHUB_WORKSPACE/MPC"
+      LD_LIBRARY_PATH: "$GITHUB_WORKSPACE/ACE_TAO/ACE/lib:$GITHUB_WORKSPACE/OpenDDS/lib:$LD_LIBRARY_PATH"
     strategy:
       fail-fast: false
       matrix:
@@ -61,11 +61,10 @@ jobs:
           export
           cd OpenDDS
           if [ "$DDS_SECURITY" == 1 ]; then CONFIG_OPTIONS+="--security"; fi
+          echo $DDS_SECURITY
+          echo $CONFIG_OPTIONS
           ./configure --no-tests --std=c++11 $CONFIG_OPTIONS
           cd ..
-          #export npm_config_devdir=$GITHUB_WORKSPACE/opendds-node-gyp-devdir
-          #npm install -g node-gyp
-          #node-gyp install --ensure
           if [ "$DDS_SECURITY" == 1 ]; then BUILD_TARGETS+="OpenDDS_Security"; fi
           make -C OpenDDS -sj6 DCPSInfoRepo_Main OpenDDS_Rtps_Udp $BUILD_TARGETS
           npm install
