@@ -12,12 +12,6 @@ on:
     - cron: '10 0 * * 0'
 jobs:
   Build:
-    #env:
-    #  ACE_ROOT: "$GITHUB_WORKSPACE/ACE_TAO/ACE"
-    #  TAO_ROOT: "$GITHUB_WORKSPACE/ACE_TAO/TAO"
-    #  DDS_ROOT: "$GITHUB_WORKSPACE/OpenDDS"
-    #  MPC_ROOT: "$GITHUB_WORKSPACE/MPC"
-    #  LD_LIBRARY_PATH: "$GITHUB_WORKSPACE/ACE_TAO/ACE/lib:$GITHUB_WORKSPACE/OpenDDS/lib:$LD_LIBRARY_PATH"
     strategy:
       fail-fast: false
       matrix:
@@ -30,13 +24,6 @@ jobs:
           - {os: ubuntu-latest, env: {OPENDDS_BRANCH: latest-release, DDS_SECURITY: 1}}
     runs-on: ${{ matrix.os }}
     steps:
-      - name: 'Set environment variables'
-        run: |-
-          echo "ACE_ROOT=$GITHUB_WORKSPACE/ACE_TAO/ACE" >> $GITHUB_ENV
-          echo "TAO_ROOT=$GITHUB_WORKSPACE/ACE_TAO/TAO" >> $GITHUB_ENV
-          echo "DDS_ROOT=$GITHUB_WORKSPACE/OpenDDS" >> $GITHUB_ENV
-          echo "MPC_ROOT=$GITHUB_WORKSPACE/MPC" >> $GITHUB_ENV
-          echo "LD_LIBRARY_PATH=$GITHUB_WORKSPACE/ACE_TAO/ACE/lib:$GITHUB_WORKSPACE/OpenDDS/lib:$LD_LIBRARY_PATH" >> $GITHUB_ENV
       - uses: actions/checkout@v2
       - name: 'Set up Node.js ${{ matrix.node-version }}'
         uses: actions/setup-node@v2
@@ -57,20 +44,21 @@ jobs:
           git clone --depth 1 git://github.com/DOCGroup/MPC.git
           git clone --depth 1 -b Latest_Micro git://github.com/DOCGroup/ACE_TAO.git
           git clone --depth 1 -b ${{ matrix.env.OPENDDS_BRANCH }} git://github.com/objectcomputing/OpenDDS.git
-      - name: 'Configure and build OpenDDS'
+      - name: 'Set environment variables'
         run: |-
-          #export
-          echo ${{ env.ACE_ROOT }}
-          echo ${{ env.TAO_ROOT }}
-          echo ${{ env.DDS_ROOT }}
-          echo ${{ env.MPC_ROOT }}
-          echo ${{ env.LD_LIBRARY_PATH }}
+          echo "ACE_ROOT=$GITHUB_WORKSPACE/ACE_TAO/ACE" >> $GITHUB_ENV
+          echo "TAO_ROOT=$GITHUB_WORKSPACE/ACE_TAO/TAO" >> $GITHUB_ENV
+          echo "DDS_ROOT=$GITHUB_WORKSPACE/OpenDDS" >> $GITHUB_ENV
+          echo "MPC_ROOT=$GITHUB_WORKSPACE/MPC" >> $GITHUB_ENV
+          echo "LD_LIBRARY_PATH=$GITHUB_WORKSPACE/ACE_TAO/ACE/lib:$GITHUB_WORKSPACE/OpenDDS/lib:$LD_LIBRARY_PATH" >> $GITHUB_ENV
+      - name: 'Configure OpenDDS'
+        run: |-
           cd OpenDDS
           if [ "$DDS_SECURITY" == 1 ]; then CONFIG_OPTIONS+="--security"; fi
-          echo $DDS_SECURITY
-          echo $CONFIG_OPTIONS
           ./configure --no-tests --std=c++11 $CONFIG_OPTIONS
           cd ..
+      - name: 'Build OpenDDS'
+        run: |-
           if [ "$DDS_SECURITY" == 1 ]; then BUILD_TARGETS+="OpenDDS_Security"; fi
           make -C OpenDDS -sj6 DCPSInfoRepo_Main OpenDDS_Rtps_Udp $BUILD_TARGETS
           npm install
@@ -79,7 +67,7 @@ jobs:
           ${{ env.ACE_ROOT }}/bin/mwc.pl -type gnuace -exclude ACE_TAO,OpenDDS
           export LD_LIBRARY_PATH="${{ env.LD_LIBRARY_PATH }}:$GITHUB_WORKSPACE/tools/v8stubs"
           make
-      - name: 'run tests'
+      - name: 'Run tests'
         run: |-
           if [ "$DDS_SECURITY" == 1 ]; then TEST_OPTIONS+="--secure"; fi
           cd test;
