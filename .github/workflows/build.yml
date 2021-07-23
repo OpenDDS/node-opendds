@@ -34,7 +34,7 @@ jobs:
         run: |-
           git clone --depth 1 git://github.com/DOCGroup/MPC.git
           git clone --depth 1 -b Latest_Micro git://github.com/DOCGroup/ACE_TAO.git
-          git clone --depth 1 -b ${{ matrix.OPENDDS_BRANCH }} git://github.com/objectcomputing/OpenDDS.git
+          git clone --depth 1 -b ${{ matrix.opendds_branch }} git://github.com/objectcomputing/OpenDDS.git
           if [ ${{ matrix.dds_security }} == 1 ]; then
             echo 'Install ssl and xerces'
             sudo apt-get update
