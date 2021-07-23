@@ -16,13 +16,13 @@ jobs:
       fail-fast: false
       matrix:
         node_version: [14.x] # [10.x, 12.x, 14.x, 15.x, 16.x]
-        #os: [ubuntu-latest, macos-latest] # GitHub-hosted runners
-        #dds_security: [0, 1]
+        os: [ubuntu-latest] #, macos-latest] # GitHub-hosted runners
+        dds_security: [0, 1]
         #use the above 2 lines to replace 'include' below if each os needs both security options
         opendds_branch: [master, latest-release]
-        include:
-          - {os: ubuntu-latest, dds_security: 1}
-          - {os: macos-latest, dds_security: 0}
+        #include:
+        #  - {os: ubuntu-latest, dds_security: 1}
+        #  - {os: macos-latest, dds_security: 0}
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v2
