@@ -1,5 +1,5 @@
 ---
-name: "node-opendds Build & Test"
+name: "node-opendds CI"
 on:
   pull_request:
     branches:
@@ -11,32 +11,31 @@ on:
   schedule:
     - cron: '10 0 * * 0'
 jobs:
-  Build:
+  build:
     strategy:
       fail-fast: false
       matrix:
-        node-version:
-          - 10
+        node_version: [14.x] # [10.x, 12.x, 14.x, 15.x, 16.x]
+        #os: [ubuntu-latest, macos-latest] # GitHub-hosted runners
+        #dds_security: [0, 1]
+        #use the above 2 lines to replace 'include' below if each os needs both security options
+        opendds_branch: [master, latest-release]
         include:
-          - {os: macOS-latest, DDS_SECURITY: 0, OPENDDS_BRANCH: master}
-          - {os: macOS-latest, DDS_SECURITY: 0, OPENDDS_BRANCH: latest-release}
-          - {os: ubuntu-latest, DDS_SECURITY: 1, OPENDDS_BRANCH: master}
-          - {os: ubuntu-latest, DDS_SECURITY: 1, OPENDDS_BRANCH: latest-release}
+          - {os: ubuntu-latest, dds_security: 1}
+          - {os: macos-latest, dds_security: 0}
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v2
-      - name: 'Set up Node.js ${{ matrix.node-version }}'
-        uses: actions/setup-node@v2
+      - uses: actions/setup-node@v2
         with:
-          node-version: ${{ matrix.node-version }}
-      - run: |-
-          npm install ${{ matrix.node-version }}
+          node-version: ${{ matrix.node_version }}
+          cache: 'npm'
       - name: 'Clone MPC, ACE_TAO and OpenDDS'
         run: |-
           git clone --depth 1 git://github.com/DOCGroup/MPC.git
           git clone --depth 1 -b Latest_Micro git://github.com/DOCGroup/ACE_TAO.git
           git clone --depth 1 -b ${{ matrix.OPENDDS_BRANCH }} git://github.com/objectcomputing/OpenDDS.git
-          if [ ${{ matrix.DDS_SECURITY }} == 1 ]; then
+          if [ ${{ matrix.dds_security }} == 1 ]; then
             echo 'Install ssl and xerces'
             sudo apt-get update
             sudo apt-get -y install libssl-dev libxerces-c-dev
@@ -48,32 +47,32 @@ jobs:
           echo "DDS_ROOT=$GITHUB_WORKSPACE/OpenDDS" >> $GITHUB_ENV
           echo "MPC_ROOT=$GITHUB_WORKSPACE/MPC" >> $GITHUB_ENV
           echo "LD_LIBRARY_PATH=$GITHUB_WORKSPACE/ACE_TAO/ACE/lib:$GITHUB_WORKSPACE/OpenDDS/lib:$LD_LIBRARY_PATH" >> $GITHUB_ENV
-      - name: 'Configure OpenDDS'
+      - name: 'Configure'
         run: |-
           cd OpenDDS
-          if [ ${{ matrix.DDS_SECURITY }} == 1 ]; then CONFIG_OPTIONS+="--security"; fi
-          echo "DDS_SECURITY=${{ matrix.DDS_SECURITY }} CONFIG_OPTIONS=$CONFIG_OPTIONS"
+          if [ ${{ matrix.dds_security }} == 1 ]; then CONFIG_OPTIONS+="--security"; fi
+          echo "dds_security=${{ matrix.dds_security }} CONFIG_OPTIONS=$CONFIG_OPTIONS"
           ./configure --no-tests --std=c++11 $CONFIG_OPTIONS
           cd ..
-      - name: 'Build OpenDDS'
+      - name: 'Build'
         run: |-
           export npm_config_devdir=$GITHUB_WORKSPACE/opendds-node-gyp-devdir
           npm install -g node-gyp
           node-gyp install --ensure
-          if [ ${{ matrix.DDS_SECURITY }} == 1 ]; then BUILD_TARGETS+="OpenDDS_Security"; fi
-          echo "DDS_SECURITY=${{ matrix.DDS_SECURITY }} BUILD_TARGETS=$BUILD_TARGETS"
+          if [ ${{ matrix.dds_security }} == 1 ]; then BUILD_TARGETS+="OpenDDS_Security"; fi
+          echo "dds_security=${{ matrix.dds_security }} BUILD_TARGETS=$BUILD_TARGETS"
           make -C OpenDDS -sj6 DCPSInfoRepo_Main OpenDDS_Rtps_Udp $BUILD_TARGETS
-          npm install
+          #npm install
           export V8_ROOT=$npm_config_devdir/$(node -v | cut -c 2-)
           export NAN_ROOT="$GITHUB_WORKSPACE/node_modules/nan"
           ${{ env.ACE_ROOT }}/bin/mwc.pl -type gnuace -exclude ACE_TAO,OpenDDS
           export LD_LIBRARY_PATH="${{ env.LD_LIBRARY_PATH }}:$GITHUB_WORKSPACE/tools/v8stubs"
           echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH"
           make
-      - name: 'Run tests'
+      - name: 'Test'
         run: |-
-          if [ ${{ matrix.DDS_SECURITY }} == 1 ]; then TEST_OPTIONS+="--secure"; fi
-          echo "DDS_SECURITY=${{ matrix.DDS_SECURITY }} TEST_OPTIONS=$TEST_OPTIONS"
+          if [ ${{ matrix.dds_security }} == 1 ]; then TEST_OPTIONS+="--secure"; fi
+          echo "dds_security=${{ matrix.dds_security }} TEST_OPTIONS=$TEST_OPTIONS"
           cd test;
           ./run_test.pl cpp2node $TEST_OPTIONS
           ./run_test.pl node2cpp $TEST_OPTIONS
