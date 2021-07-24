@@ -18,15 +18,21 @@ jobs:
         node_version: [10.x] # [10.x, 12.x, 14.x, 15.x, 16.x]
         opendds_branch: [master, latest-release]
         include:
-          - {os: ubuntu-latest, dds_security: 1}
           - {os: macos-latest, dds_security: 0}
+          - {os: ubuntu-latest, dds_security: 1}
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v2
         with:
           node-version: ${{ matrix.node_version }}
-          cache: 'npm'
+      - run: |-
+          export npm_config_devdir=$GITHUB_WORKSPACE/opendds-node-gyp-devdir
+          npm install -g node-gyp
+          node-gyp install --ensure
+          npm install ${{ matrix.node_version }} --save nan
+          echo "V8_ROOT=$npm_config_devdir/$(node -v | cut -c 2-)" >> $GITHUB_ENV
+          echo "NAN_ROOT=$GITHUB_WORKSPACE/node_modules/nan" >> $GITHUB_ENV
       - name: 'Clone MPC, ACE_TAO and OpenDDS'
         run: |-
           git clone --depth 1 git://github.com/DOCGroup/MPC.git
@@ -57,13 +63,6 @@ jobs:
           make -C OpenDDS -sj6 DCPSInfoRepo_Main OpenDDS_Rtps_Udp $BUILD_TARGETS
       - name: 'Build'
         run: |-
-          export npm_config_devdir=$GITHUB_WORKSPACE/opendds-node-gyp-devdir
-          npm install -g node-gyp
-          node-gyp install --ensure
-          npm install ${{ matrix.node_version }}
-          npm install --save nan
-          export V8_ROOT=$npm_config_devdir/$(node -v | cut -c 2-)
-          export NAN_ROOT="$GITHUB_WORKSPACE/node_modules/nan"
           ${{ env.ACE_ROOT }}/bin/mwc.pl -type gnuace -exclude ACE_TAO,OpenDDS
           export LD_LIBRARY_PATH="${{ env.LD_LIBRARY_PATH }}:$GITHUB_WORKSPACE/tools/v8stubs"
           echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH"
