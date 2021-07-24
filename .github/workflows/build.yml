@@ -19,7 +19,7 @@ jobs:
         opendds_branch: [master, latest-release]
         include:
           - {os: ubuntu-latest, dds_security: 1}
-          #- {os: macos-latest, dds_security: 0}
+          - {os: macos-latest, dds_security: 0}
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v2
@@ -59,7 +59,7 @@ jobs:
           if [ ${{ matrix.dds_security }} == 1 ]; then BUILD_TARGETS+="OpenDDS_Security"; fi
           echo "dds_security=${{ matrix.dds_security }} BUILD_TARGETS=$BUILD_TARGETS"
           make -C OpenDDS -sj6 DCPSInfoRepo_Main OpenDDS_Rtps_Udp $BUILD_TARGETS
-          npm install
+          npm install --save nan
           export V8_ROOT=$npm_config_devdir/$(node -v | cut -c 2-)
           export NAN_ROOT="$GITHUB_WORKSPACE/node_modules/nan"
           ${{ env.ACE_ROOT }}/bin/mwc.pl -type gnuace -exclude ACE_TAO,OpenDDS
