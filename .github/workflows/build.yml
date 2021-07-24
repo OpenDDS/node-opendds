@@ -19,7 +19,7 @@ jobs:
         opendds_branch: [master, latest-release]
         include:
           - {os: ubuntu-latest, dds_security: 1}
-          - {os: macos-latest, dds_security: 0}
+          #- {os: macos-latest, dds_security: 0}
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v2
