@@ -29,9 +29,8 @@ jobs:
       - run: |-
           export npm_config_devdir=$GITHUB_WORKSPACE/opendds-node-gyp-devdir
           npm install -g node-gyp
-          node-gyp install --ensure
-          echo "install --save nan"
-          node-gyp install --save nan
+          node-gyp install
+          npm install --save nan
           echo "V8_ROOT=$npm_config_devdir/$(node -v | cut -c 2-)" >> $GITHUB_ENV
           echo "NAN_ROOT=$GITHUB_WORKSPACE/node_modules/nan" >> $GITHUB_ENV
       - name: 'Clone MPC, ACE_TAO and OpenDDS'
