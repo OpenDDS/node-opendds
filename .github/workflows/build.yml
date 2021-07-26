@@ -33,15 +33,7 @@ jobs:
           echo "DDS_ROOT=$GITHUB_WORKSPACE/OpenDDS" >> $GITHUB_ENV
           echo "MPC_ROOT=$GITHUB_WORKSPACE/MPC" >> $GITHUB_ENV
           echo "LD_LIBRARY_PATH=$GITHUB_WORKSPACE/ACE_TAO/ACE/lib:$GITHUB_WORKSPACE/OpenDDS/lib:$GITHUB_WORKSPACE/tools/v8stubs:$LD_LIBRARY_PATH" >> $GITHUB_ENV
-      - run: |-
-          export npm_config_devdir=$GITHUB_WORKSPACE/opendds-node-gyp-devdir
-          npm install -g node-gyp
-          npm install --save nan
-          node-gyp configure
-          node-gyp build
-          echo "V8_ROOT=$npm_config_devdir/$(node -v | cut -c 2-)" >> $GITHUB_ENV
-          echo "NAN_ROOT=$GITHUB_WORKSPACE/node_modules/nan" >> $GITHUB_ENV
-      - name: 'Clone MPC, ACE_TAO and OpenDDS'
+      - name: 'Clone OpenDDS'
         run: |-
           git clone --depth 1 git://github.com/DOCGroup/MPC.git
           git clone --depth 1 -b Latest_Micro git://github.com/DOCGroup/ACE_TAO.git
@@ -51,19 +43,28 @@ jobs:
             sudo apt-get update
             sudo apt-get -y install libssl-dev libxerces-c-dev
           fi
-      - name: 'Configure & Build OpenDDS'
+      - name: 'Configure OpenDDS'
         run: |-
-          if [ ${{ matrix.dds_security }} == 1 ]; then
-            CONFIG_OPTIONS+="--security";
-            BUILD_TARGETS+="OpenDDS_Security";
-          fi
-          echo "dds_security=${{ matrix.dds_security }}; CONFIG_OPTIONS=$CONFIG_OPTIONS; BUILD_TARGETS=$BUILD_TARGETS"
+          if [ ${{ matrix.dds_security }} == 1 ]; then CONFIG_OPTIONS+="--security"; fi
+          echo "dds_security=${{ matrix.dds_security }}; CONFIG_OPTIONS=$CONFIG_OPTIONS"
           cd OpenDDS
           ./configure --no-tests --std=c++11 $CONFIG_OPTIONS
           cd ..
-          make -C OpenDDS -sj6 DCPSInfoRepo_Main OpenDDS_Rtps_Udp $BUILD_TARGETS
+      - run: |-
+          export npm_config_devdir=$GITHUB_WORKSPACE/opendds-node-gyp-devdir
+          npm install -g node-gyp
+          npm install --save nan
+          #node-gyp configure
+          #node-gyp build
+          node-gyp install --ensure
+          echo "V8_ROOT=$npm_config_devdir/$(node -v | cut -c 2-)" >> $GITHUB_ENV
+          echo "NAN_ROOT=$GITHUB_WORKSPACE/node_modules/nan" >> $GITHUB_ENV
       - name: 'Build'
         run: |-
+          if [ ${{ matrix.dds_security }} == 1 ]; then BUILD_TARGETS+="OpenDDS_Security"; fi
+          echo "dds_security=${{ matrix.dds_security }}; BUILD_TARGETS=$BUILD_TARGETS"
+          make -C OpenDDS -sj6 DCPSInfoRepo_Main OpenDDS_Rtps_Udp $BUILD_TARGETS
+          npm install
           ${{ env.ACE_ROOT }}/bin/mwc.pl -type gnuace -exclude ACE_TAO,OpenDDS
           make
       - name: 'Test'
