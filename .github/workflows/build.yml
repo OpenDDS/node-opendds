@@ -15,7 +15,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        node_version: [10.x] # [10.x, 12.x, 14.x, 15.x, 16.x]
+        #node_version: [14.x] # [10.x, 12.x, 14.x, 15.x, 16.x]
+        node_version:
+          #- 10.x
+          - 14.x
         opendds_branch: [master, latest-release]
         include:
           - {os: macos-latest, dds_security: 0}
@@ -23,9 +26,15 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v2
-      - uses: actions/setup-node@v1
+      - uses: actions/setup-node@v2
         with:
           node-version: ${{ matrix.node_version }}
+          cache: npm
+      - name: 'Install node-gyp'
+        run: |-
+          npm install --save nan
+          npm install -g node-gyp
+          node-gyp configure build
       - name: 'Set environment variables'
         run: |-
           echo "ACE_ROOT=$GITHUB_WORKSPACE/ACE_TAO/ACE" >> $GITHUB_ENV
@@ -33,8 +42,10 @@ jobs:
           echo "DDS_ROOT=$GITHUB_WORKSPACE/OpenDDS" >> $GITHUB_ENV
           echo "MPC_ROOT=$GITHUB_WORKSPACE/MPC" >> $GITHUB_ENV
           echo "NAN_ROOT=$GITHUB_WORKSPACE/node_modules/nan" >> $GITHUB_ENV
-          echo "npm_config_devdir=$GITHUB_WORKSPACE/opendds-node-gyp-devdir" >> $GITHUB_ENV
+          #echo "npm_config_devdir=$GITHUB_WORKSPACE/opendds-node-gyp-devdir" >> $GITHUB_ENV
+          echo "V8_ROOT=$GITHUB_WORKSPACE/opendds-node-gyp-devdir/$(node -v | cut -c 2-)" >> $GITHUB_ENV
           echo "LD_LIBRARY_PATH=$GITHUB_WORKSPACE/ACE_TAO/ACE/lib:$GITHUB_WORKSPACE/OpenDDS/lib:$GITHUB_WORKSPACE/tools/v8stubs:$LD_LIBRARY_PATH" >> $GITHUB_ENV
+      - run: npm test
       - name: 'Clone OpenDDS'
         run: |-
           git clone --depth 1 git://github.com/DOCGroup/MPC.git
@@ -56,12 +67,6 @@ jobs:
           ./configure --no-tests --std=c++11 $CONFIG_OPTIONS
           cd ..
           make -C OpenDDS -sj6 DCPSInfoRepo_Main OpenDDS_Rtps_Udp $BUILD_TARGETS
-      - name: 'Install node-gyp'
-        run: |-
-          npm install --save nan
-          npm install -g node-gyp
-          node-gyp configure build
-          echo "V8_ROOT=${{ env.npm_config_devdir }}/$(node -v | cut -c 2-)" >> $GITHUB_ENV
       - name: 'Build'
         run: |-
           ${{ env.ACE_ROOT }}/bin/mwc.pl -type gnuace -exclude ACE_TAO,OpenDDS
