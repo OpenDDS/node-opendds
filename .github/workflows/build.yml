@@ -15,7 +15,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        node_version: [10.x] # [10.x, 12.x, 14.x, 15.x, 16.x]
+        node_version: [12.x] # [10.x, 12.x, 14.x, 15.x, 16.x]
         opendds_branch: [master, latest-release]
         include:
           - {os: macos-latest, dds_security: 0}
@@ -56,23 +56,15 @@ jobs:
           ./configure --no-tests --std=c++11 $CONFIG_OPTIONS
           cd ..
           make -C OpenDDS -sj6 DCPSInfoRepo_Main OpenDDS_Rtps_Udp $BUILD_TARGETS
-      - run: |-
+      - name: 'Install node-gyp'
+        run: |-
           npm install --save nan
           npm install -g node-gyp
-          echo "node-gyp configure"
-          node-gyp configure
-          #node-gyp build
-          node-gyp install --ensure
-          #export V8_ROOT=$npm_config_devdir/$(node -v | cut -c 2-)
-          export V8_ROOT=${{ env.npm_config_devdir }}/$(node -v | cut -c 2-)
-          echo "1.V8_ROOT=$V8_ROOT"
+          node-gyp configure build
           echo "V8_ROOT=${{ env.npm_config_devdir }}/$(node -v | cut -c 2-)" >> $GITHUB_ENV
       - name: 'Build'
         run: |-
-          echo "V8_ROOT=${{ env.V8_ROOT }}"
-          echo "${{ env.ACE_ROOT }}/bin/mwc.pl -type gnuace -exclude ACE_TAO,OpenDDS"
           ${{ env.ACE_ROOT }}/bin/mwc.pl -type gnuace -exclude ACE_TAO,OpenDDS
-          echo "make"
           make
       - name: 'Test'
         run: |-
