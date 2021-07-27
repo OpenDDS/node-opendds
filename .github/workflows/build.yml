@@ -29,7 +29,7 @@ jobs:
       - uses: actions/setup-node@v2
         with:
           node-version: ${{ matrix.node_version }}
-          cache: npm
+          #cache: npm
       - name: 'Install node-gyp'
         run: |-
           npm install --save nan
