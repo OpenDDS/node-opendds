@@ -18,7 +18,7 @@ jobs:
         node_version:
           - 10.x
         #opendds_branch: [master, latest-release]
-        opendds_branch: [branch-DDS-3.13]
+        opendds_branch: [branch-DDS-3.14]
         include:
           - {os: macos-latest, dds_security: 0}
           - {os: ubuntu-latest, dds_security: 1}
