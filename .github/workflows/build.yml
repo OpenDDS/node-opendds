@@ -62,7 +62,6 @@ jobs:
           npm install --save nan
           npm install -g node-gyp
           node-gyp configure build
-      - run: npm test
       - name: 'Build'
         run: |-
           ${{ env.ACE_ROOT }}/bin/mwc.pl -type gnuace -exclude ACE_TAO,OpenDDS
