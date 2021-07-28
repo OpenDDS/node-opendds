@@ -15,10 +15,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        #node_version: [14.x] # [10.x, 12.x, 14.x, 15.x, 16.x]
         node_version:
-          - 10.x
-          #- 14.x
+          #- 10.x
+          - 14.x
         opendds_branch: [master, latest-release]
         include:
           - {os: macos-latest, dds_security: 0}
@@ -39,12 +38,6 @@ jobs:
           #echo "npm_config_devdir=$GITHUB_WORKSPACE/opendds-node-gyp-devdir" >> $GITHUB_ENV
           echo "V8_ROOT=$GITHUB_WORKSPACE/opendds-node-gyp-devdir/$(node -v | cut -c 2-)" >> $GITHUB_ENV
           echo "LD_LIBRARY_PATH=$GITHUB_WORKSPACE/ACE_TAO/ACE/lib:$GITHUB_WORKSPACE/OpenDDS/lib:$GITHUB_WORKSPACE/tools/v8stubs:$LD_LIBRARY_PATH" >> $GITHUB_ENV
-      - name: 'Install node-gyp'
-        run: |-
-          npm install --save nan
-          npm install -g node-gyp
-          node-gyp configure build
-      - run: npm test
       - name: 'Clone OpenDDS'
         run: |-
           git clone --depth 1 git://github.com/DOCGroup/MPC.git
@@ -66,6 +59,12 @@ jobs:
           ./configure --no-tests --std=c++11 $CONFIG_OPTIONS
           cd ..
           make -C OpenDDS -sj6 DCPSInfoRepo_Main OpenDDS_Rtps_Udp $BUILD_TARGETS
+      - name: 'Install node-gyp'
+        run: |-
+          npm install --save nan
+          npm install -g node-gyp
+          node-gyp configure build
+      - run: npm test
       - name: 'Build'
         run: |-
           ${{ env.ACE_ROOT }}/bin/mwc.pl -type gnuace -exclude ACE_TAO,OpenDDS
