@@ -16,8 +16,7 @@ jobs:
       fail-fast: false
       matrix:
         node_version:
-          #- 10.x
-          - 14.x
+          - 10.x
         opendds_branch: [master, latest-release]
         include:
           - {os: macos-latest, dds_security: 0}
@@ -35,7 +34,6 @@ jobs:
           echo "DDS_ROOT=$GITHUB_WORKSPACE/OpenDDS" >> $GITHUB_ENV
           echo "MPC_ROOT=$GITHUB_WORKSPACE/MPC" >> $GITHUB_ENV
           echo "NAN_ROOT=$GITHUB_WORKSPACE/node_modules/nan" >> $GITHUB_ENV
-          #echo "npm_config_devdir=$GITHUB_WORKSPACE/opendds-node-gyp-devdir" >> $GITHUB_ENV
           echo "V8_ROOT=$GITHUB_WORKSPACE/opendds-node-gyp-devdir/$(node -v | cut -c 2-)" >> $GITHUB_ENV
           echo "LD_LIBRARY_PATH=$GITHUB_WORKSPACE/ACE_TAO/ACE/lib:$GITHUB_WORKSPACE/OpenDDS/lib:$GITHUB_WORKSPACE/tools/v8stubs:$LD_LIBRARY_PATH" >> $GITHUB_ENV
       - name: 'Clone OpenDDS'
