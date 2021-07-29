@@ -66,6 +66,7 @@ jobs:
       - name: 'Build'
         run: |-
           ${{ env.ACE_ROOT }}/bin/mwc.pl -type gnuace -exclude ACE_TAO,OpenDDS
+          echo "node:$(node -v)  npm:$(npm -v)"
           make
       - name: 'Test'
         run: |-
