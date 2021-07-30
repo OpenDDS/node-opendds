@@ -46,7 +46,8 @@ jobs:
           nvm use ${{ matrix.node_version }}
           npm install --save nan
           npm install -g node-gyp
-          node-gyp install --ensure
+          #node-gyp install --ensure
+          node-gyp configure build
           echo "node:$(node -v)  npm:$(npm -v)"
           echo "V8_ROOT=${{ env.npm_config_devdir }}/$(node -v | cut -c 2-)" >> $GITHUB_ENV
       - name: 'Clone OpenDDS'
