@@ -68,11 +68,6 @@ jobs:
           ./configure --no-tests --std=c++11 $CONFIG_OPTIONS
           cd ..
           make -C OpenDDS -sj6 DCPSInfoRepo_Main OpenDDS_Rtps_Udp $BUILD_TARGETS
-      - name: 'Install node-gyp'
-        run: |-
-          npm install -g node-gyp
-          #node-gyp configure build
-          node-gyp install --ensure
       - name: 'Build'
         run: |-
           ${{ env.ACE_ROOT }}/bin/mwc.pl -type gnuace -exclude ACE_TAO,OpenDDS
