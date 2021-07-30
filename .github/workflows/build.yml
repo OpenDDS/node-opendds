@@ -45,6 +45,8 @@ jobs:
           nvm install ${{ matrix.node_version }}
           nvm use ${{ matrix.node_version }}
           npm install --save nan
+          npm install -g node-gyp
+          node-gyp install --ensure
           echo "node:$(node -v)  npm:$(npm -v)"
           echo "V8_ROOT=${{ env.npm_config_devdir }}/$(node -v | cut -c 2-)" >> $GITHUB_ENV
       - name: 'Clone OpenDDS'
@@ -70,6 +72,8 @@ jobs:
           make -C OpenDDS -sj6 DCPSInfoRepo_Main OpenDDS_Rtps_Udp $BUILD_TARGETS
       - name: 'Build'
         run: |-
+          npm install
+          echo "node:$(node -v)  npm:$(npm -v)"
           ${{ env.ACE_ROOT }}/bin/mwc.pl -type gnuace -exclude ACE_TAO,OpenDDS
           make
       - name: 'Test'
