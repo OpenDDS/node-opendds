@@ -54,14 +54,14 @@ jobs:
           git clone --depth 1 git://github.com/DOCGroup/MPC.git
           git clone --depth 1 -b Latest_Micro git://github.com/DOCGroup/ACE_TAO.git
           git clone --depth 1 -b ${{matrix.opendds_branch}} git://github.com/objectcomputing/OpenDDS.git
-          if [${{matrix.dds_security}}]; then
+          if [${{matrix.dds_security}} == 1]; then
             echo 'Install ssl and xerces'
             sudo apt-get update
             sudo apt-get -y install libssl-dev libxerces-c-dev
           fi
       - name: 'Configure & Build OpenDDS'
         run: |-
-          if [${{matrix.dds_security}}]; then
+          if [${{matrix.dds_security}} == 1]; then
             CONFIG_OPTIONS+="--security";
             BUILD_TARGETS+="OpenDDS_Security";
           fi
@@ -80,7 +80,7 @@ jobs:
           make
       - name: 'Test'
         run: |-
-          if [${{matrix.dds_security}}]; then TEST_OPTIONS+="--secure"; fi
+          if [${{matrix.dds_security}} == 1]; then TEST_OPTIONS+="--secure"; fi
           echo "dds_security=${{matrix.dds_security}} TEST_OPTIONS=$TEST_OPTIONS"
           cd test;
           ./run_test.pl cpp2node $TEST_OPTIONS
