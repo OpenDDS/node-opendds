@@ -41,7 +41,6 @@ jobs:
           cd ${{ env.NVM_DIR }}
           git checkout v0.38.0
           [ -s "./nvm.sh" ] && \. "./nvm.sh"  # loads nvm
-          [ -s "./bash_completion" ] && \. "./bash_completion"  # loads nvm bash_completion
           cd $GITHUB_WORKSPACE
           nvm install ${{ matrix.node_version }}
           nvm use ${{ matrix.node_version }}
@@ -72,7 +71,8 @@ jobs:
       - name: 'Install node-gyp'
         run: |-
           npm install -g node-gyp
-          node-gyp configure build
+          #node-gyp configure build
+          node-gyp install --ensure
       - name: 'Build'
         run: |-
           ${{ env.ACE_ROOT }}/bin/mwc.pl -type gnuace -exclude ACE_TAO,OpenDDS
