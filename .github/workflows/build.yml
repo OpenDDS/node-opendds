@@ -56,7 +56,7 @@ jobs:
           ./configure --no-tests --std=c++11 $CONFIG_OPTIONS
           cd ..
           make -C OpenDDS -sj6 DCPSInfoRepo_Main OpenDDS_Rtps_Udp $BUILD_TARGETS
-      - name: 'Install node'
+      - name: 'Install node, Build, Test'
         run: |-
           git clone https://github.com/nvm-sh/nvm.git
           cd ${{ env.NVM_DIR }}
@@ -70,14 +70,10 @@ jobs:
           #node-gyp install --ensure
           node-gyp configure build
           echo "node:$(node -v)  npm:$(npm -v)"
-          echo "V8_ROOT=${{ env.npm_config_devdir }}/$(node -v | cut -c 2-)" >> $GITHUB_ENV
-      - name: 'Build'
-        run: |-
-          echo "node:$(node -v)  npm:$(npm -v)"
+          #echo "V8_ROOT=${{ env.npm_config_devdir }}/$(node -v | cut -c 2-)" >> $GITHUB_ENV
+          export V8_ROOT=${{ env.npm_config_devdir }}/$(node -v | cut -c 2-)"
           ${{ env.ACE_ROOT }}/bin/mwc.pl -type gnuace -exclude ACE_TAO,OpenDDS
           make
-      - name: 'Test'
-        run: |-
           if [ ${{ matrix.dds_security }} == 1 ]; then TEST_OPTIONS+="--secure"; fi
           echo "dds_security=${{ matrix.dds_security }} TEST_OPTIONS=$TEST_OPTIONS"
           cd test;
