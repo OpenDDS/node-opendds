@@ -21,13 +21,10 @@ jobs:
           # - master
           # - latest-release
           - branch-DDS-3.14
-        #include:
-        #  - {os: macos-latest, dds_security: 0}
-        #  - {os: ubuntu-latest, dds_security: 1}
-        #include: [{os: macos-latest, dds_security: 0}, {os: ubuntu-latest, dds_security: 1}]
-        os: [ubuntu-latest, macos-latest]
-        dds_security: [0, 1]
-    runs-on: ${{ matrix.os }}
+        m:
+          - {os: macos-latest, dds_security: 0}
+          - {os: ubuntu-latest, dds_security: 1}
+    runs-on: ${{ matrix.m.os }}
     steps:
       - uses: actions/checkout@v2
       - name: 'Set environment variables'
@@ -45,18 +42,18 @@ jobs:
           git clone --depth 1 git://github.com/DOCGroup/MPC.git
           git clone --depth 1 -b Latest_Micro git://github.com/DOCGroup/ACE_TAO.git
           git clone --depth 1 -b ${{ matrix.opendds_branch }} git://github.com/objectcomputing/OpenDDS.git
-          if [ ${{ matrix.dds_security }} == 1 ]; then
+          if [ ${{ matrix.m.dds_security }} == 1 ]; then
             echo 'Install ssl and xerces'
             sudo apt-get update
             sudo apt-get -y install libssl-dev libxerces-c-dev
           fi
       - name: 'Configure & Build OpenDDS'
         run: |-
-          if [ ${{ matrix.dds_security }} == 1 ]; then
+          if [ ${{ matrix.m.dds_security }} == 1 ]; then
             CONFIG_OPTIONS+="--security";
             BUILD_TARGETS+="OpenDDS_Security";
           fi
-          echo "dds_security=${{ matrix.dds_security }}; CONFIG_OPTIONS=$CONFIG_OPTIONS; BUILD_TARGETS=$BUILD_TARGETS"
+          echo "dds_security=${{ matrix.m.dds_security }}; CONFIG_OPTIONS=$CONFIG_OPTIONS; BUILD_TARGETS=$BUILD_TARGETS"
           cd OpenDDS
           ./configure --no-tests --std=c++11 $CONFIG_OPTIONS
           cd ..
@@ -79,8 +76,8 @@ jobs:
           ${{ env.ACE_ROOT }}/bin/mwc.pl -type gnuace -exclude ACE_TAO,OpenDDS
           make
           echo "Test ========== ========== =========="
-          if [ ${{ matrix.dds_security }} == 1 ]; then TEST_OPTIONS+="--secure"; fi
-          echo "dds_security=${{ matrix.dds_security }} TEST_OPTIONS=$TEST_OPTIONS"
+          if [ ${{ matrix.m.dds_security }} == 1 ]; then TEST_OPTIONS+="--secure"; fi
+          echo "dds_security=${{ matrix.m.dds_security }} TEST_OPTIONS=$TEST_OPTIONS"
           cd test;
           echo "cpp2node"
           ./run_test.pl cpp2node $TEST_OPTIONS
