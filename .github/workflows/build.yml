@@ -21,9 +21,10 @@ jobs:
           # - master
           # - latest-release
           - branch-DDS-3.14
-        include:
-          - {os: macos-latest, dds_security: 0}
-          - {os: ubuntu-latest, dds_security: 1}
+        #include:
+        #  - {os: macos-latest, dds_security: 0}
+        #  - {os: ubuntu-latest, dds_security: 1}
+        include: [{os: macos-latest, dds_security: 0}, {os: ubuntu-latest, dds_security: 1}]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v2
