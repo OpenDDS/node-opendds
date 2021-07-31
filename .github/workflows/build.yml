@@ -24,7 +24,9 @@ jobs:
         #include:
         #  - {os: macos-latest, dds_security: 0}
         #  - {os: ubuntu-latest, dds_security: 1}
-        include: [{os: macos-latest, dds_security: 0}, {os: ubuntu-latest, dds_security: 1}]
+        #include: [{os: macos-latest, dds_security: 0}, {os: ubuntu-latest, dds_security: 1}]
+        os: [ubuntu-latest, macos-latest]
+        dds_security: [0, 1]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v2
