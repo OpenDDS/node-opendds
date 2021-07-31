@@ -71,7 +71,7 @@ jobs:
           node-gyp configure build
           echo "node:$(node -v)  npm:$(npm -v)"
           #echo "V8_ROOT=${{ env.npm_config_devdir }}/$(node -v | cut -c 2-)" >> $GITHUB_ENV
-          export V8_ROOT=${{ env.npm_config_devdir }}/$(node -v | cut -c 2-)"
+          export V8_ROOT=${{ env.npm_config_devdir }}/$(node -v | cut -c 2-)
           ${{ env.ACE_ROOT }}/bin/mwc.pl -type gnuace -exclude ACE_TAO,OpenDDS
           make
           if [ ${{ matrix.dds_security }} == 1 ]; then TEST_OPTIONS+="--secure"; fi
