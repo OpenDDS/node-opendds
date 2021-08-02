@@ -33,6 +33,8 @@ if (exists($args{"node2cpp"})) {
   $sub_node = 0;
 }
 
+print "\nTest: $scenario " $secure ? "--secure\n" : "\n";
+
 my $DCPSREPO;
 if (not $secure) {
   $DCPSREPO = PerlDDS::create_process("$DDS_ROOT/bin/DCPSInfoRepo");
