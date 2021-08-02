@@ -77,11 +77,7 @@ jobs:
           make
           echo "Test ========== ========== =========="
           if [ ${{ matrix.m.dds_security }} == 1 ]; then TEST_OPTIONS+="--secure"; fi
-          echo "dds_security=${{ matrix.m.dds_security }} TEST_OPTIONS=$TEST_OPTIONS"
           cd test;
-          echo "cpp2node"
           ./run_test.pl cpp2node $TEST_OPTIONS
-          echo "node2cpp"
           ./run_test.pl node2cpp $TEST_OPTIONS
-          echo "node2node"
           ./run_test.pl node2node $TEST_OPTIONS
