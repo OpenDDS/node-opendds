@@ -23,7 +23,7 @@ jobs:
           - branch-DDS-3.14
         m:
           - {os: ubuntu-latest, dds_security: 1}
-          - {os: macos-latest, dds_security: 0}
+          #- {os: macos-latest, dds_security: 0}
     runs-on: ${{ matrix.m.os }}
     steps:
       - uses: actions/checkout@v2
