@@ -13,6 +13,8 @@ my $status = 0;
 my $dcpsrepo_ior = "repo.ior";
 unlink $dcpsrepo_ior;
 
+print "\nTest: @ARGV\n";
+
 my %args = map { $_ => 1 } @ARGV;
 my $secure = exists($args{"--secure"});
 
@@ -32,8 +34,6 @@ if (exists($args{"node2cpp"})) {
   $pub_node = 0;
   $sub_node = 0;
 }
-
-print "\nTest: $scenario " $secure ? "--secure\n" : "\n";
 
 my $DCPSREPO;
 if (not $secure) {
