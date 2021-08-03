@@ -26,7 +26,7 @@ jobs:
           - {os: macos-latest, dds_security: 0}
     runs-on: ${{ matrix.m.os }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v2.3.4
       - name: 'Set environment variables'
         run: |-
           echo "ACE_ROOT=$GITHUB_WORKSPACE/ACE_TAO/ACE" >> $GITHUB_ENV
@@ -48,7 +48,6 @@ jobs:
         with:
           repository: DOCGroup/ACE_TAO
           ref: Latest_Micro
-          #path: OpenDDS/ACE_TAO
           path: ACE_TAO
           fetch-depth: 1
       - name: 'Checkout OpenDDS'
@@ -57,10 +56,9 @@ jobs:
           repository: objectcomputing/OpenDDS
           ref: ${{ matrix.opendds_branch }}
           path: OpenDDS
-          #submodules: true
           fetch-depth: 1
-      - name: 'Install ssl and xerces'
-        if: ${{ matrix.m.dds_security }} == 1
+      - if: "${{ matrix.m.dds_security }} == 1"
+        name: 'Install ssl and xerces'
         run: |-
           sudo apt-get update
           sudo apt-get -y install libssl-dev libxerces-c-dev
