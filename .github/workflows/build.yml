@@ -61,7 +61,7 @@ jobs:
         run: |-
           sudo apt-get update
           sudo apt-get -y install libssl-dev libxerces-c-dev
-        if: ${{ matrix.m.dds_security == 1}}
+        if: ${{ matrix.m.dds_security == 1 }}
       - name: 'Configure & Build OpenDDS'
         run: |-
           if [ ${{ matrix.m.dds_security }} == 1 ]; then
