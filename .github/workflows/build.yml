@@ -37,16 +37,33 @@ jobs:
           echo "NAN_ROOT=$GITHUB_WORKSPACE/node_modules/nan" >> $GITHUB_ENV
           echo "npm_config_devdir=$GITHUB_WORKSPACE/opendds-node-gyp-devdir" >> $GITHUB_ENV
           echo "LD_LIBRARY_PATH=$GITHUB_WORKSPACE/ACE_TAO/ACE/lib:$GITHUB_WORKSPACE/OpenDDS/lib:$GITHUB_WORKSPACE/tools/v8stubs:$LD_LIBRARY_PATH" >> $GITHUB_ENV
-      - name: 'Clone OpenDDS'
+      - name: 'Checkout MPC'
+        uses: actions/checkout@v2.3.4
+        with:
+          repository: DOCGroup/MPC
+          path: MPC
+          fetch-depth: 1
+      - name: 'Checkout ACE_TAO'
+        uses: actions/checkout@v2.3.4
+        with:
+          repository: DOCGroup/ACE_TAO
+          ref: Latest_Micro
+          #path: OpenDDS/ACE_TAO
+          path: ACE_TAO
+          fetch-depth: 1
+      - name: 'Checkout OpenDDS'
+        uses: actions/checkout@v2.3.4
+        with:
+          repository: objectcomputing/OpenDDS
+          ref: ${{ matrix.opendds_branch }}
+          path: OpenDDS
+          #submodules: true
+          fetch-depth: 1
+      - name: 'Install ssl and xerces'
+        if: ${{ matrix.m.dds_security }} == 1
         run: |-
-          git clone --depth 1 git://github.com/DOCGroup/MPC.git
-          git clone --depth 1 -b Latest_Micro git://github.com/DOCGroup/ACE_TAO.git
-          git clone --depth 1 -b ${{ matrix.opendds_branch }} git://github.com/objectcomputing/OpenDDS.git
-          if [ ${{ matrix.m.dds_security }} == 1 ]; then
-            echo 'Install ssl and xerces'
-            sudo apt-get update
-            sudo apt-get -y install libssl-dev libxerces-c-dev
-          fi
+          sudo apt-get update
+          sudo apt-get -y install libssl-dev libxerces-c-dev
       - name: 'Configure & Build OpenDDS'
         run: |-
           if [ ${{ matrix.m.dds_security }} == 1 ]; then
