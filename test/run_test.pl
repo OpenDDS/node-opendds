@@ -13,6 +13,8 @@ my $status = 0;
 my $dcpsrepo_ior = "repo.ior";
 unlink $dcpsrepo_ior;
 
+print "\nTest: @ARGV\n";
+
 my %args = map { $_ => 1 } @ARGV;
 my $secure = exists($args{"--secure"});
 

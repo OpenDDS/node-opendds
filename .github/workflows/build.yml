@@ -1,0 +1,98 @@
+---
+name: "node-opendds CI"
+on:
+  pull_request:
+    branches:
+      - master
+  push:
+    branches:
+      - master
+      - MigrateToGithubActions
+  schedule:
+    - cron: '10 0 * * 0'
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        node_version:
+          - 10
+        opendds_branch:
+          # - master
+          # - latest-release
+          - branch-DDS-3.14
+        m:
+          - {os: ubuntu-latest, dds_security: 1}
+          - {os: macos-latest, dds_security: 0}
+    runs-on: ${{ matrix.m.os }}
+    steps:
+      - uses: actions/checkout@v2
+      - name: 'Set environment variables'
+        run: |-
+          echo "ACE_ROOT=$GITHUB_WORKSPACE/ACE_TAO/ACE" >> $GITHUB_ENV
+          echo "TAO_ROOT=$GITHUB_WORKSPACE/ACE_TAO/TAO" >> $GITHUB_ENV
+          echo "DDS_ROOT=$GITHUB_WORKSPACE/OpenDDS" >> $GITHUB_ENV
+          echo "MPC_ROOT=$GITHUB_WORKSPACE/MPC" >> $GITHUB_ENV
+          echo "NVM_DIR=$GITHUB_WORKSPACE/nvm" >> $GITHUB_ENV
+          echo "NAN_ROOT=$GITHUB_WORKSPACE/node_modules/nan" >> $GITHUB_ENV
+          echo "npm_config_devdir=$GITHUB_WORKSPACE/opendds-node-gyp-devdir" >> $GITHUB_ENV
+          echo "LD_LIBRARY_PATH=$GITHUB_WORKSPACE/ACE_TAO/ACE/lib:$GITHUB_WORKSPACE/OpenDDS/lib:$GITHUB_WORKSPACE/tools/v8stubs:$LD_LIBRARY_PATH" >> $GITHUB_ENV
+      - name: 'Checkout MPC'
+        uses: actions/checkout@v2
+        with:
+          repository: DOCGroup/MPC
+          path: MPC
+          fetch-depth: 1
+      - name: 'Checkout ACE_TAO'
+        uses: actions/checkout@v2
+        with:
+          repository: DOCGroup/ACE_TAO
+          ref: Latest_Micro
+          path: ACE_TAO
+          fetch-depth: 1
+      - name: 'Checkout OpenDDS'
+        uses: actions/checkout@v2
+        with:
+          repository: objectcomputing/OpenDDS
+          ref: ${{ matrix.opendds_branch }}
+          path: OpenDDS
+          fetch-depth: 1
+      - name: 'Install ssl and xerces'
+        run: |-
+          sudo apt-get update
+          sudo apt-get -y install libssl-dev libxerces-c-dev
+        if: ${{ matrix.m.dds_security == 1 }}
+      - name: 'Configure & Build OpenDDS'
+        run: |-
+          if [ ${{ matrix.m.dds_security }} == 1 ]; then
+            CONFIG_OPTIONS+="--security";
+            BUILD_TARGETS+="OpenDDS_Security";
+          fi
+          echo "dds_security=${{ matrix.m.dds_security }}; CONFIG_OPTIONS=$CONFIG_OPTIONS; BUILD_TARGETS=$BUILD_TARGETS"
+          cd OpenDDS
+          ./configure --no-tests --std=c++11 $CONFIG_OPTIONS
+          cd ..
+          make -C OpenDDS -sj6 DCPSInfoRepo_Main OpenDDS_Rtps_Udp $BUILD_TARGETS
+      - name: 'Install node, Build, Test'
+        run: |-
+          git clone https://github.com/nvm-sh/nvm.git
+          cd ${{ env.NVM_DIR }}
+          git checkout v0.38.0
+          [ -s "./nvm.sh" ] && \. "./nvm.sh"  # loads nvm
+          cd $GITHUB_WORKSPACE
+          nvm install ${{ matrix.node_version }}
+          nvm use ${{ matrix.node_version }}
+          npm install --save nan
+          npm install -g node-gyp
+          node-gyp configure build
+          echo "node:$(node -v)  npm:$(npm -v)"
+          export V8_ROOT=${{ env.npm_config_devdir }}/$(node -v | cut -c 2-)
+          echo "Build ========== ========== =========="
+          ${{ env.ACE_ROOT }}/bin/mwc.pl -type gnuace -exclude ACE_TAO,OpenDDS
+          make
+          echo "Test ========== ========== =========="
+          if [ ${{ matrix.m.dds_security }} == 1 ]; then TEST_OPTIONS+="--secure"; fi
+          cd test;
+          ./run_test.pl cpp2node $TEST_OPTIONS
+          ./run_test.pl node2cpp $TEST_OPTIONS
+          ./run_test.pl node2node $TEST_OPTIONS
