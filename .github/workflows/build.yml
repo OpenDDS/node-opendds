@@ -26,7 +26,7 @@ jobs:
           - {os: macos-latest, dds_security: 0}
     runs-on: ${{ matrix.m.os }}
     steps:
-      - uses: actions/checkout@v2.3.4
+      - uses: actions/checkout@v2
       - name: 'Set environment variables'
         run: |-
           echo "ACE_ROOT=$GITHUB_WORKSPACE/ACE_TAO/ACE" >> $GITHUB_ENV
@@ -38,20 +38,20 @@ jobs:
           echo "npm_config_devdir=$GITHUB_WORKSPACE/opendds-node-gyp-devdir" >> $GITHUB_ENV
           echo "LD_LIBRARY_PATH=$GITHUB_WORKSPACE/ACE_TAO/ACE/lib:$GITHUB_WORKSPACE/OpenDDS/lib:$GITHUB_WORKSPACE/tools/v8stubs:$LD_LIBRARY_PATH" >> $GITHUB_ENV
       - name: 'Checkout MPC'
-        uses: actions/checkout@v2.3.4
+        uses: actions/checkout@v2
         with:
           repository: DOCGroup/MPC
           path: MPC
           fetch-depth: 1
       - name: 'Checkout ACE_TAO'
-        uses: actions/checkout@v2.3.4
+        uses: actions/checkout@v2
         with:
           repository: DOCGroup/ACE_TAO
           ref: Latest_Micro
           path: ACE_TAO
           fetch-depth: 1
       - name: 'Checkout OpenDDS'
-        uses: actions/checkout@v2.3.4
+        uses: actions/checkout@v2
         with:
           repository: objectcomputing/OpenDDS
           ref: ${{ matrix.opendds_branch }}
