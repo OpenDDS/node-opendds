@@ -6,5 +6,6 @@
 *.ilk
 *.pdb
 *.vcxproj*
+*.log
 Debug
 ipch

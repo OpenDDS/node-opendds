@@ -300,7 +300,7 @@ int ACE_TMAIN(int argc, ACE_TCHAR* argv[])
     if (sample.id != 23 ||
       std::string(sample.data.in()) != "Hello, world\n" ||
       sample.enu != Mod::two ||
-      sample.enu2 != static_cast<Mod::MyEnum>(42) || // invalid enumerator
+      sample.enu2 != Mod::three ||
       sample.bt.o != 254 ||
       sample.bt.us != 65500 ||
       sample.bt.s != 32700 ||
@@ -358,7 +358,7 @@ int ACE_TMAIN(int argc, ACE_TCHAR* argv[])
     if (sample.id != 24 ||
       std::string(sample.data.in()) != "Hello, world\n" ||
       sample.enu != Mod::two ||
-      sample.enu2 != static_cast<Mod::MyEnum>(42) || // invalid enumerator
+      sample.enu2 != Mod::three ||
       sample.bt.o != 254 ||
       sample.bt.us != 65500 ||
       sample.bt.s != 32700 ||

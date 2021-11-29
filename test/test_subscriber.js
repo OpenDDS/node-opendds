@@ -106,7 +106,7 @@ try {
         if (!(sample.id == 23 || sample.id == 24) ||
             sample.data != "Hello, world\n" ||
             sample.enu != "two" ||
-            sample.enu2 != "<<invalid>>" ||
+            sample.enu2 != "three" ||
             sample.bt.o != 254 ||
             sample.bt.us != 65500 ||
             sample.bt.us != 65500 ||

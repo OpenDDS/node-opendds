@@ -7,9 +7,9 @@ on:
   push:
     branches:
       - master
-      - MigrateToGithubActions
   schedule:
     - cron: '10 0 * * 0'
+
 jobs:
   build:
     strategy:
@@ -17,13 +17,17 @@ jobs:
       matrix:
         node_version:
           - 10
+          - 12
+          - 14
+          - 16
         opendds_branch:
-          # - master
+          - master
           # - latest-release
           - branch-DDS-3.14
         m:
           - {os: ubuntu-latest, dds_security: 1}
           - {os: macos-latest, dds_security: 0}
+
     runs-on: ${{ matrix.m.os }}
     steps:
       - uses: actions/checkout@v2

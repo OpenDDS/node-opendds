@@ -10,8 +10,10 @@ use PerlDDS::Run_Test;
 use strict;
 
 my $status = 0;
-my $dcpsrepo_ior = "repo.ior";
-unlink $dcpsrepo_ior;
+#my $dcpsrepo_ior = "repo.ior";
+#unlink $dcpsrepo_ior;
+
+my $test = new PerlDDS::TestFramework();
 
 print "\nTest: @ARGV\n";
 
@@ -35,17 +37,19 @@ if (exists($args{"node2cpp"})) {
   $sub_node = 0;
 }
 
-my $DCPSREPO;
-if (not $secure) {
-  $DCPSREPO = PerlDDS::create_process("$DDS_ROOT/bin/DCPSInfoRepo");
+$test->setup_discovery("-ORBDebugLevel 1 -ORBLogFile DCPSInfoRepo.log") unless $secure;
 
-  $DCPSREPO->Spawn();
-  if (PerlACE::waitforfile_timed($dcpsrepo_ior, 30) == -1) {
-      print STDERR "ERROR: waiting for Info Repo IOR file\n";
-      $DCPSREPO->Kill();
-      exit 1;
-  }
-}
+#my $DCPSREPO;
+#if (not $secure) {
+#  $DCPSREPO = PerlDDS::create_process("$DDS_ROOT/bin/DCPSInfoRepo");
+#
+#  $DCPSREPO->Spawn();
+#  if (PerlACE::waitforfile_timed($dcpsrepo_ior, 30) == -1) {
+#      print STDERR "ERROR: waiting for Info Repo IOR file\n";
+#      $DCPSREPO->Kill();
+#      exit 1;
+#  }
+#}
 
 sub which {
   my $file = shift;
@@ -66,6 +70,7 @@ if ($^O eq 'darwin') {
 }
 
 PerlDDS::add_lib_path("idl");
+PerlDDS::add_lib_path("../tools/v8stubs");
 
 my $sub_exec_name = "";
 my $sub_args = "";
@@ -82,11 +87,12 @@ if ($sub_node) {
   }
 }
 
-my $SUB = PerlDDS::create_process($sub_exec_name, $sub_args);
-if ($sub_node) {
-  $SUB->IgnoreExeSubDir(1);
-}
-$SUB->Spawn();
+$test->process("sub", $sub_exec_name, $sub_args);
+#my $SUB = $test->create_process($sub_exec_name, $sub_args);
+#if ($sub_node) {
+#  $SUB->IgnoreExeSubDir(1);
+#}
+#$SUB->Spawn();
 
 my $pub_exec_name = "";
 my $pub_args = "";
@@ -103,30 +109,36 @@ if ($pub_node) {
   }
 }
 
-my $PUB = PerlDDS::create_process($pub_exec_name, $pub_args);
-if ($pub_node) {
-  $PUB->IgnoreExeSubDir(1);
-}
-my $PubResult = $PUB->SpawnWaitKill(60);
-if ($PubResult != 0) {
-    print STDERR "ERROR: " . $pub_exec_name . " returned $PubResult\n";
-    $status = 1;
-}
+$test->process("pub", $pub_exec_name, $pub_args);
+#my $PUB = $test->create_process($pub_exec_name, $pub_args);
+#if ($pub_node) {
+#  $PUB->IgnoreExeSubDir(1);
+#}
+#$my $PubResult = $PUB->SpawnWaitKill(60);
+#if ($PubResult != 0) {
+#    print STDERR "ERROR: " . $pub_exec_name . " returned $PubResult\n";
+#    $status = 1;
+#}
 
-my $SubResult = $SUB->WaitKill(10);
-if ($SubResult != 0) {
-    print STDERR "ERROR: " . $sub_exec_name . " returned $SubResult\n";
-    $status = 1;
-}
+#my $SubResult = $SUB->WaitKill(10);
+#if ($SubResult != 0) {
+#    print STDERR "ERROR: " . $sub_exec_name . " returned $SubResult\n";
+#    $status = 1;
+#}
 
-if (not $secure) {
-  my $ir = $DCPSREPO->TerminateWaitKill(5);
-  if ($ir != 0) {
-      print STDERR "ERROR: DCPSInfoRepo returned $ir\n";
-      $status = 1;
-  }
+#if (not $secure) {
+#  my $ir = $DCPSREPO->TerminateWaitKill(5);
+#  if ($ir != 0) {
+#      print STDERR "ERROR: DCPSInfoRepo returned $ir\n";
+#      $status = 1;
+#  }
+#
+#  unlink $dcpsrepo_ior;
+#}
 
-  unlink $dcpsrepo_ior;
-}
+$test->start_process("sub");
+$test->start_process("pub");
+
+exit $test->finish(30);
 
 exit $status;
