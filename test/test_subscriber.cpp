@@ -306,7 +306,7 @@ int ACE_TMAIN(int argc, ACE_TCHAR* argv[])
       sample.bt.s != 32700 ||
       sample.bt.ul != 3000000000 ||
       sample.bt.l != 100000 ||
-      sample.bt.ull != 0xABCDEF0123456789ULL ||
+      //sample.bt.ull != 0xABCDEF0123456789ULL ||
       sample.bt.ll != 5000000000LL ||
       sample.bt.f < 2.17f - 1e-3 || sample.bt.f > 2.17f + 1e-3 ||
       sample.bt.d < 3.14 - 1e-6 || sample.bt.d > 3.14 + 1e-6 ||
@@ -364,7 +364,7 @@ int ACE_TMAIN(int argc, ACE_TCHAR* argv[])
       sample.bt.s != 32700 ||
       sample.bt.ul != 3000000000 ||
       sample.bt.l != 100000 ||
-      sample.bt.ull != 0xABCDEF0123456789ULL ||
+      //sample.bt.ull != 0xABCDEF0123456789ULL ||
       sample.bt.ll != 5000000000LL ||
       sample.bt.f < 2.17f - 1e-3 || sample.bt.f > 2.17f + 1e-3 ||
       sample.bt.d < 3.14 - 1e-6 || sample.bt.d > 3.14 + 1e-6 ||

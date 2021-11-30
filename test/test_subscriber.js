@@ -109,7 +109,6 @@ try {
             sample.enu2 != "three" ||
             sample.bt.o != 254 ||
             sample.bt.us != 65500 ||
-            sample.bt.us != 65500 ||
             sample.bt.s != 32700 ||
             sample.bt.ul != 3000000000 ||
             sample.bt.l != 100000 ||
