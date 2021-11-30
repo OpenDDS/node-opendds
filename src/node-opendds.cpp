@@ -60,10 +60,8 @@ namespace {
     arg_storage.reserve(fci.Length());
     ACE_ARGV_T<char> argv(false /*substitute env vars*/);
     for (int i = 0; i < fci.Length(); ++i) {
-      const Local<String> js_str = fci[i]->ToString();
-      arg_storage.push_back(std::string(js_str->Utf8Length(), '\0'));
+      arg_storage.push_back(std::string(*Nan::Utf8String(fci[i])));
       std::string& str = arg_storage.back();
-      js_str->WriteUtf8(&str[0]);
       argv.add(str.c_str());
     }
     int argc = argv.argc();
@@ -73,7 +71,7 @@ namespace {
     ot->SetInternalFieldCount(1);
     Nan::SetMethod(ot, "create_participant", create_participant);
     Nan::SetMethod(ot, "delete_participant", delete_participant);
-    const Local<Object> obj = ot->NewInstance();
+    const Local<Object> obj = ot->NewInstance(Nan::GetCurrentContext()).ToLocalChecked();
     Nan::SetInternalFieldPointer(obj, 0, dpf._retn());
     fci.GetReturnValue().Set(obj);
   }
@@ -112,7 +110,7 @@ namespace {
     Nan::SetMethod(ot, "subscribe", subscribe);
     Nan::SetMethod(ot, "unsubscribe", unsubscribe);
     Nan::SetMethod(ot, "create_datawriter", create_datawriter);
-    const Local<Object> obj = ot->NewInstance();
+    const Local<Object> obj = ot->NewInstance(Nan::GetCurrentContext()).ToLocalChecked();
     Nan::SetInternalFieldPointer(obj, 0, dp._retn());
     fci.GetReturnValue().Set(obj);
   }
@@ -195,32 +193,31 @@ namespace {
     }
     Nan::MaybeLocal<String> cft_str = Nan::New<String>("ContentFilteredTopic");
     const Local<String> cft_lstr = cft_str.ToLocalChecked();
-    if (*qos_js && qos_js->Has(cft_lstr)) {
-      const Local<Value> cft_js_lv = qos_js->Get(cft_lstr);
+    if (*qos_js && Nan::Has(qos_js, cft_lstr).ToChecked()) {
+      const Local<Value> cft_js_lv = Nan::Get(qos_js, cft_lstr).ToLocalChecked();
       if (cft_js_lv->IsObject()) {
         const Local<Object> cft_js = cft_js_lv->ToObject(Nan::GetCurrentContext()).ToLocalChecked();
         Nan::MaybeLocal<String> fe_str = Nan::New<String>("filter_expression"),
           ep_str = Nan::New<String>("expression_parameters");
         const Local<String> fe_lstr = fe_str.ToLocalChecked();
-        if (!cft_js->Has(fe_lstr)) {
+        if (!Nan::Has(cft_js, fe_lstr).ToChecked()) {
           Nan::ThrowError("filter_expression is required in "
                           "ContentFilteredTopic.");
           fci.GetReturnValue().SetUndefined();
           return;
         }
-        const Nan::Utf8String filt(cft_js->Get(fe_lstr));
+        const Nan::Utf8String filt(Nan::Get(cft_js, fe_lstr).ToLocalChecked());
         DDS::StringSeq params;
         const Local<String> ep_lstr = ep_str.ToLocalChecked();
-        if (cft_js->Has(ep_lstr)) {
-          const Local<Value> params_js_lv = cft_js->Get(ep_lstr);
+        if (Nan::Has(cft_js, ep_lstr).ToChecked()) {
+          const Local<Value> params_js_lv = Nan::Get(cft_js, ep_lstr).ToLocalChecked();
           if (params_js_lv->IsObject()) {
             const Local<Object> params_js = params_js_lv->ToObject(Nan::GetCurrentContext()).ToLocalChecked();
             const Nan::Maybe<uint32_t> len =
-              Nan::To<uint32_t>(params_js->Get(Nan::New<String>("length")
-                                               .ToLocalChecked()));
+              Nan::To<uint32_t>(Nan::Get(params_js, Nan::New<String>("length").ToLocalChecked()).ToLocalChecked());
             params.length(len.FromMaybe(0));
             for (uint32_t i = 0; i < params.length(); ++i) {
-              const Nan::Utf8String pstr(params_js->Get(i));
+              const Nan::Utf8String pstr(Nan::Get(params_js, i).ToLocalChecked());
               params[i] = *pstr;
             }
           }
@@ -235,8 +232,8 @@ namespace {
     dp->get_default_subscriber_qos(sub_qos);
     Nan::MaybeLocal<String> subqos_str = Nan::New<String>("SubscriberQos");
     const Local<String> subqos_lstr = subqos_str.ToLocalChecked();
-    if (*qos_js && qos_js->Has(subqos_lstr)) {
-      const Local<Value> subqos_lv = qos_js->Get(subqos_lstr);
+    if (*qos_js && Nan::Has(qos_js, subqos_lstr).ToChecked()) {
+      const Local<Value> subqos_lv = Nan::Get(qos_js, subqos_lstr).ToLocalChecked();
       if (subqos_lv->IsObject()) {
         try {
           convertQos(sub_qos, subqos_lv->ToObject(Nan::GetCurrentContext()).ToLocalChecked());
@@ -263,8 +260,8 @@ namespace {
     sub->get_default_datareader_qos(dr_qos);
     Nan::MaybeLocal<String> drqos_str = Nan::New<String>("DataReaderQos");
     const Local<String> drqos_lstr = drqos_str.ToLocalChecked();
-    if (*qos_js && qos_js->Has(drqos_lstr)) {
-      Local<Value> drqos_lv = qos_js->Get(drqos_lstr);
+    if (*qos_js && Nan::Has(qos_js, drqos_lstr).ToChecked()) {
+      Local<Value> drqos_lv = Nan::Get(qos_js, drqos_lstr).ToLocalChecked();
       if (drqos_lv->IsObject()) {
         try {
           convertQos(dr_qos, drqos_lv->ToObject(Nan::GetCurrentContext()).ToLocalChecked());
@@ -286,7 +283,7 @@ namespace {
 
     const Local<ObjectTemplate> ot = Nan::New<ObjectTemplate>();
     ot->SetInternalFieldCount(1);
-    const Local<Object> obj = ot->NewInstance();
+    const Local<Object> obj = ot->NewInstance(Nan::GetCurrentContext()).ToLocalChecked();
     Nan::SetInternalFieldPointer(obj, 0, dr._retn());
     ndrl->set_javascript_datareader(obj);
     fci.GetReturnValue().Set(obj);
@@ -361,8 +358,8 @@ namespace {
     dp->get_default_publisher_qos(pub_qos);
     Nan::MaybeLocal<String> pubqos_str = Nan::New<String>("PublisherQos");
     const Local<String> pubqos_lstr = pubqos_str.ToLocalChecked();
-    if (*qos_js && qos_js->Has(pubqos_lstr)) {
-      const Local<Value> pubqos_lv = qos_js->Get(pubqos_lstr);
+    if (*qos_js && Nan::Has(qos_js, pubqos_lstr).ToChecked()) {
+      const Local<Value> pubqos_lv = Nan::Get(qos_js, pubqos_lstr).ToLocalChecked();
       if (pubqos_lv->IsObject()) {
         try {
           convertQos(pub_qos, pubqos_lv->ToObject(Nan::GetCurrentContext()).ToLocalChecked());
@@ -384,8 +381,8 @@ namespace {
     DDS::DataWriterQos dw_qos;
     pub->get_default_datawriter_qos(dw_qos);
     const Local<String> dwqos_lstr = Nan::New<String>("DataWriterQos").ToLocalChecked();
-    if (*qos_js && qos_js->Has(dwqos_lstr)) {
-      const Local<Value> dwqos_lv = qos_js->Get(dwqos_lstr);
+    if (*qos_js && Nan::Has(qos_js, dwqos_lstr).ToChecked()) {
+      const Local<Value> dwqos_lv = Nan::Get(qos_js, dwqos_lstr).ToLocalChecked();
       if (dwqos_lv->IsObject()) {
         try {
           convertQos(dw_qos, dwqos_lv->ToObject(Nan::GetCurrentContext()).ToLocalChecked());
@@ -410,7 +407,7 @@ namespace {
     Nan::SetMethod(ot, "write", write);
     Nan::SetMethod(ot, "unregister_instance", unregister_instance);
     Nan::SetMethod(ot, "dispose", dispose);
-    const Local<Object> obj = ot->NewInstance();
+    const Local<Object> obj = ot->NewInstance(Nan::GetCurrentContext()).ToLocalChecked();
     Nan::SetInternalFieldPointer(obj, 0, dw._retn());
     Nan::SetInternalFieldPointer(obj, 1, const_cast<OpenDDS::DCPS::V8TypeConverter*>(tc));
     fci.GetReturnValue().Set(obj);
@@ -612,7 +609,7 @@ namespace {
     fci.GetReturnValue().Set(ok);
   }
 
-  void init_node_opendds(Local<Object> target)
+  NAN_MODULE_INIT(init_node_opendds)
   {
     Nan::SetMethod(target, "initialize", initialize);
     Nan::SetMethod(target, "finalize", finalize);
@@ -620,4 +617,4 @@ namespace {
   }
 }
 
-NODE_MODULE(node_opendds, init_node_opendds)
+NODE_MODULE(node_opendds, init_node_opendds);
