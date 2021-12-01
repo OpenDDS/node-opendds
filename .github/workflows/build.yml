@@ -75,8 +75,11 @@ jobs:
       - name: 'Configure & Build OpenDDS'
         run: |-
           if [ ${{ matrix.m.dds_security }} == 1 ]; then
-            CONFIG_OPTIONS+="--security";
+            CONFIG_OPTIONS+=" --security";
             BUILD_TARGETS+="OpenDDS_Security";
+            if [ ${{ matrix.m.os }} == 'macos-latest'}} ]; then
+              CONFIG_OPTIONS+=" --xerces3=/usr/local/Cellar/xerces-c/3.2.3 --openssl=/usr/local/opt/openssl@1.1"
+            fi
           fi
           echo "dds_security=${{ matrix.m.dds_security }}; CONFIG_OPTIONS=$CONFIG_OPTIONS; BUILD_TARGETS=$BUILD_TARGETS"
           cd OpenDDS
