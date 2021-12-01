@@ -77,7 +77,7 @@ jobs:
           if [ ${{ matrix.m.dds_security }} == 1 ]; then
             CONFIG_OPTIONS+=" --security";
             BUILD_TARGETS+="OpenDDS_Security";
-            if [ ${{ matrix.m.os }} == 'macos-latest'}} ]; then
+            if [ '${{ matrix.m.os }}' == 'macos-latest' ]; then
               CONFIG_OPTIONS+=" --xerces3=/usr/local/Cellar/xerces-c/3.2.3 --openssl=/usr/local/opt/openssl@1.1"
             fi
           fi
