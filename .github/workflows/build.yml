@@ -74,6 +74,11 @@ jobs:
         if: ${{ matrix.m.dds_security == 1 && matrix.m.os == 'macos-latest' }}
       - name: 'Configure & Build OpenDDS'
         run: |-
+          if [ ${{ matrix.node_version >= 16 ]; then
+            CONFIG_OPTIONS+=" --std=c++14";
+          else
+            CONFIG_OPTIONS+=" --std=c++11";
+          fi
           if [ ${{ matrix.m.dds_security }} == 1 ]; then
             CONFIG_OPTIONS+=" --security";
             BUILD_TARGETS+="OpenDDS_Security";
