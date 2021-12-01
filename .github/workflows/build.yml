@@ -23,9 +23,11 @@ jobs:
         opendds_branch:
           - master
           # - latest-release
-          - branch-DDS-3.14
+          # - branch-DDS-3.14
         m:
           - {os: ubuntu-latest, dds_security: 1}
+          - {os: ubuntu-latest, dds_security: 0}
+          - {os: macos-latest, dds_security: 1}
           - {os: macos-latest, dds_security: 0}
 
     runs-on: ${{ matrix.m.os }}
@@ -61,11 +63,15 @@ jobs:
           ref: ${{ matrix.opendds_branch }}
           path: OpenDDS
           fetch-depth: 1
-      - name: 'Install ssl and xerces'
+      - name: 'Install ssl and xerces (ubuntu)'
         run: |-
           sudo apt-get update
           sudo apt-get -y install libssl-dev libxerces-c-dev
-        if: ${{ matrix.m.dds_security == 1 }}
+        if: ${{ matrix.m.dds_security == 1 && matrix.m.os == 'ubuntu-latest' }}
+      - name: 'Install xerces (macos)'
+        run: |
+          brew install xerces-c
+        if: ${{ matrix.m.dds_security == 1 && matrix.m.os == 'macos-latest' }}
       - name: 'Configure & Build OpenDDS'
         run: |-
           if [ ${{ matrix.m.dds_security }} == 1 ]; then
@@ -74,7 +80,7 @@ jobs:
           fi
           echo "dds_security=${{ matrix.m.dds_security }}; CONFIG_OPTIONS=$CONFIG_OPTIONS; BUILD_TARGETS=$BUILD_TARGETS"
           cd OpenDDS
-          ./configure --no-tests --std=c++11 $CONFIG_OPTIONS
+          ./configure --no-tests $CONFIG_OPTIONS
           cd ..
           make -C OpenDDS -sj6 DCPSInfoRepo_Main OpenDDS_Rtps_Udp $BUILD_TARGETS
       - name: 'Install node, Build, Test'
