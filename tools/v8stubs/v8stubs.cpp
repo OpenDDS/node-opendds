@@ -63,16 +63,16 @@ namespace v8 {
   bool Value::IsNumber() const { return false; }
   int String::Length() const { return 0; }
   double Number::Value() const { return 0.0; }
-  int64_t Integer::Value() const { return 0l; }
+  int64_t Integer::Value() const { return static_cast<int64_t>(0); }
   MaybeLocal<String> Value::ToString(v8::Local<v8::Context>) const { return {}; }
   MaybeLocal<Object> Value::ToObject(v8::Local<v8::Context>) const { return {}; }
   MaybeLocal<Integer> Value::ToInteger(v8::Local<v8::Context>) const { return {}; }
   Maybe<bool> Object::Has(v8::Local<v8::Context>, v8::Local<v8::Value>) { return Just(false); }
   MaybeLocal<Value> Object::Get(v8::Local<v8::Context>, v8::Local<v8::Value>) { return {}; }
   Maybe<bool> Object::Set(v8::Local<v8::Context>, unsigned int, v8::Local<v8::Value>) { return Just(false); }
-  Maybe<uint32_t> Value::Uint32Value(v8::Local<v8::Context>) const { return Just(0u); }
+  Maybe<uint32_t> Value::Uint32Value(v8::Local<v8::Context>) const { return Just(static_cast<uint32_t>(0)); }
   Maybe<bool> Object::Set(v8::Local<v8::Context>, v8::Local<v8::Value>, v8::Local<v8::Value>) { return Just(false); }
   MaybeLocal<Value> Object::Get(v8::Local<v8::Context>, unsigned int) { return {}; }
-  Maybe<int64_t> Value::IntegerValue(v8::Local<v8::Context>) const { return Just(0l); }
+  Maybe<int64_t> Value::IntegerValue(v8::Local<v8::Context>) const { return Just(static_cast<int64_t>(0)); }
   HandleScope::HandleScope(v8::Isolate*) {}
 }
