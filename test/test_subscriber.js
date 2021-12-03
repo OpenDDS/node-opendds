@@ -112,7 +112,7 @@ try {
             sample.bt.s != 32700 ||
             sample.bt.ul != 3000000000 ||
             sample.bt.l != 100000 ||
-            //sample.bt.ull != "12379813738877118345" || // This currently fails due to a truncation error from JS "number". Solution will write 64-bit integers (signed & unsigned) as decimal strings. Uncomment this line once truncation issue is resolved in latest release branch.
+            sample.bt.ull != "12379813738877118345" ||
             sample.bt.ll != 5000000000 ||
             sample.bt.f > (2.17 + 1e-3) || sample.bt.f < (2.17 - 1e-3) || // avoid direct floating point comparisons by testing epsilon ranges
             sample.bt.d > (3.14 + 1e-6) || sample.bt.d < (3.14 - 1e-6) ||
