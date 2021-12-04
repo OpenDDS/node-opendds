@@ -7,9 +7,9 @@ on:
   push:
     branches:
       - master
-      - MigrateToGithubActions
   schedule:
     - cron: '10 0 * * 0'
+
 jobs:
   build:
     strategy:
@@ -17,13 +17,19 @@ jobs:
       matrix:
         node_version:
           - 10
+          - 12
+          - 14
+          - 16
         opendds_branch:
-          # - master
+          - master
           # - latest-release
-          - branch-DDS-3.14
+          # - branch-DDS-3.14
         m:
           - {os: ubuntu-latest, dds_security: 1}
+          - {os: ubuntu-latest, dds_security: 0}
+          - {os: macos-latest, dds_security: 1}
           - {os: macos-latest, dds_security: 0}
+
     runs-on: ${{ matrix.m.os }}
     steps:
       - uses: actions/checkout@v2
@@ -57,20 +63,32 @@ jobs:
           ref: ${{ matrix.opendds_branch }}
           path: OpenDDS
           fetch-depth: 1
-      - name: 'Install ssl and xerces'
+      - name: 'Install ssl and xerces (ubuntu)'
         run: |-
           sudo apt-get update
           sudo apt-get -y install libssl-dev libxerces-c-dev
-        if: ${{ matrix.m.dds_security == 1 }}
+        if: ${{ matrix.m.dds_security == 1 && matrix.m.os == 'ubuntu-latest' }}
+      - name: 'Install xerces (macos)'
+        run: |
+          brew install xerces-c
+        if: ${{ matrix.m.dds_security == 1 && matrix.m.os == 'macos-latest' }}
       - name: 'Configure & Build OpenDDS'
         run: |-
+          if [ ${{ matrix.node_version }} == 16 ]; then
+            CONFIG_OPTIONS+=" --std=c++14";
+          else
+            CONFIG_OPTIONS+=" --std=c++11";
+          fi
           if [ ${{ matrix.m.dds_security }} == 1 ]; then
-            CONFIG_OPTIONS+="--security";
+            CONFIG_OPTIONS+=" --security";
             BUILD_TARGETS+="OpenDDS_Security";
+            if [ '${{ matrix.m.os }}' == 'macos-latest' ]; then
+              CONFIG_OPTIONS+=" --xerces3=/usr/local/Cellar/xerces-c/3.2.3 --openssl=/usr/local/opt/openssl@1.1"
+            fi
           fi
           echo "dds_security=${{ matrix.m.dds_security }}; CONFIG_OPTIONS=$CONFIG_OPTIONS; BUILD_TARGETS=$BUILD_TARGETS"
           cd OpenDDS
-          ./configure --no-tests --std=c++11 $CONFIG_OPTIONS
+          ./configure --no-tests $CONFIG_OPTIONS
           cd ..
           make -C OpenDDS -sj6 DCPSInfoRepo_Main OpenDDS_Rtps_Udp $BUILD_TARGETS
       - name: 'Install node, Build, Test'

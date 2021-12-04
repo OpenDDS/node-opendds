@@ -9,8 +9,8 @@ using namespace v8;
 Local<Object> copyToV8(const DDS::Time_t& src)
 {
   Local<Object> stru = Nan::New<Object>();
-  stru->Set(Nan::New<String>("sec").ToLocalChecked(), Nan::New(src.sec));
-  stru->Set(Nan::New<String>("nanosec").ToLocalChecked(),
+  Nan::Set(stru, Nan::New<String>("sec").ToLocalChecked(), Nan::New(src.sec));
+  Nan::Set(stru, Nan::New<String>("nanosec").ToLocalChecked(),
             Nan::New(src.nanosec));
   return stru;
 }
@@ -18,11 +18,11 @@ Local<Object> copyToV8(const DDS::Time_t& src)
 Local<Object> copyToV8(const DDS::SampleInfo& src)
 {
   Local<Object> stru = Nan::New<Object>();
-#define INT(X) stru->Set(Nan::New<String>(#X).ToLocalChecked(), Nan::New(src.X))
+#define INT(X) Nan::Set(stru, Nan::New<String>(#X).ToLocalChecked(), Nan::New(src.X))
   INT(sample_state);
   INT(view_state);
   INT(instance_state);
-  stru->Set(Nan::New<String>("source_timestamp").ToLocalChecked(),
+  Nan::Set(stru, Nan::New<String>("source_timestamp").ToLocalChecked(),
             copyToV8(src.source_timestamp));
   INT(instance_handle);
   INT(publication_handle);
@@ -32,7 +32,7 @@ Local<Object> copyToV8(const DDS::SampleInfo& src)
   INT(generation_rank);
   INT(absolute_generation_rank);
 #undef INT
-  stru->Set(Nan::New<String>("valid_data").ToLocalChecked(),
+  Nan::Set(stru, Nan::New<String>("valid_data").ToLocalChecked(),
             Nan::New(src.valid_data));
   return stru;
 }
@@ -113,9 +113,11 @@ void NodeDRListener::push_back(const DDS::SampleInfo& src, const void* sample)
     return;
   }
 
-  Local<Value> argv[] = {Nan::New(js_dr_), Handle<Value>(copyToV8(src)),
-                         src.valid_data ? conv_.toV8(sample).As<Value>()
-                         : Nan::Undefined().As<Value>()};
+  Local<Value> argv[] = {
+    Nan::New(js_dr_),
+    copyToV8(src),
+    src.valid_data ? conv_.toV8(sample).As<Value>() : Nan::Undefined().As<Value>()
+  };
 
   Local<Function> callback = Nan::New(callback_);
   Nan::Callback cb(callback);

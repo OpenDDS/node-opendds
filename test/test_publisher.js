@@ -57,7 +57,7 @@ function doStuff(writer) {
     id: 23,
     data: "Hello, world\n",
     enu: "two",
-    enu2: 42,
+    enu2: "three",
     bt: {
       o: "254",
       us: 65500,
