@@ -25,39 +25,40 @@ void append(DDS::PropertySeq& props, const char* name, const std::string& value)
   props[len] = prop;
 }
 
-void wait_for_match(const DDS::DataReader_var& reader)
+int wait_for_match(const DDS::DataReader_var& reader)
 {
+  int ret = -1;
   DDS::StatusCondition_var condition = reader->get_statuscondition();
   condition->set_enabled_statuses(DDS::SUBSCRIPTION_MATCHED_STATUS);
+  DDS::WaitSet_var ws(new DDS::WaitSet);
+  DDS::ReturnCode_t a = ws->attach_condition(condition);
+  if (a != DDS::RETCODE_OK) {
+    ACE_ERROR((LM_ERROR, ACE_TEXT("(%P|%t) ERROR: %N:%l: wait_match() - attach_condition returned %d\n"), a));
+    return ret;
+  }
 
-  DDS::WaitSet_var ws = new DDS::WaitSet;
-  ws->attach_condition(condition);
-
-  DDS::Duration_t timeout =
-    { DDS::DURATION_INFINITE_SEC, DDS::DURATION_INFINITE_NSEC };
-
+  const DDS::Duration_t wake_interval = { 1, 0 };
+  DDS::SubscriptionMatchedStatus ms = { 0, 0, 0, 0, 0 };
   DDS::ConditionSeq conditions;
-  DDS::SubscriptionMatchedStatus matches = {0, 0, 0, 0, 0};
-
-  while (true) {
-    if (reader->get_subscription_matched_status(matches) != ::DDS::RETCODE_OK) {
-      ACE_ERROR((LM_ERROR,
-                 ACE_TEXT("%N:%l: wait_for_match()")
-                 ACE_TEXT(" ERROR: get_subscription_matched_status failed!\n")));
-      ACE_OS::exit(-1);
-    }
-
-    if (matches.current_count >= 1) {
+  while (ret != 0) {
+    if (reader->get_subscription_matched_status(ms) == DDS::RETCODE_OK) {
+      if (ms.current_count >= 1) {
+        ret = 0;
+      } else { // wait for a change
+        DDS::ReturnCode_t w = ws->wait(conditions, wake_interval);
+        if ((w != DDS::RETCODE_OK) && (w != DDS::RETCODE_TIMEOUT)) {
+          ACE_ERROR((LM_ERROR, ACE_TEXT("(%P|%t) ERROR: %N:%l: wait_match() - wait returned %d\n"), w));
+          break;
+        }
+      }
+    } else {
+      ACE_ERROR((LM_ERROR, ACE_TEXT("(%P|%t) ERROR: %N:%l: wait_match() - get_subscription_matched_status failed!\n")));
       break;
     }
-    if (ws->wait(conditions, timeout) != DDS::RETCODE_OK) {
-      ACE_ERROR((LM_ERROR,
-                 ACE_TEXT("%N:%l: wait_for_match()")
-                 ACE_TEXT(" ERROR: wait failed!\n")));
-      ACE_OS::exit(-1);
-    }
   }
+
   ws->detach_condition(condition);
+  return ret;
 }
 
 void wait_for_data(const Mod::SampleDataReader_var& reader, Mod::Sample& data)
@@ -68,9 +69,7 @@ void wait_for_data(const Mod::SampleDataReader_var& reader, Mod::Sample& data)
   DDS::WaitSet_var ws = new DDS::WaitSet;
   ws->attach_condition(condition);
 
-  DDS::Duration_t timeout =
-    { DDS::DURATION_INFINITE_SEC, DDS::DURATION_INFINITE_NSEC };
-
+  const DDS::Duration_t wake_interval = { 1, 0 };
   DDS::ConditionSeq conditions;
 
   DDS::SampleInfo si;
@@ -86,14 +85,14 @@ void wait_for_data(const Mod::SampleDataReader_var& reader, Mod::Sample& data)
       ACE_ERROR((LM_ERROR,
                  ACE_TEXT("%N:%l: wait_for_data()")
                  ACE_TEXT(" ERROR: take_next_sample failed with error %d\n"), status));
-      ACE_OS::exit(-1);
+      ACE_OS::exit(1);
     }
-
-    if (ws->wait(conditions, timeout) != DDS::RETCODE_OK) {
+    status = ws->wait(conditions, wake_interval);
+    if ((status != DDS::RETCODE_OK) && (status != DDS::RETCODE_TIMEOUT)) {
       ACE_ERROR((LM_ERROR,
                  ACE_TEXT("%N:%l: wait_for_data()")
                  ACE_TEXT(" ERROR: wait failed!\n")));
-      ACE_OS::exit(-1);
+      ACE_OS::exit(1);
     }
   }
   ws->detach_condition(condition);
