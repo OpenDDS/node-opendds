@@ -25,39 +25,40 @@ void append(DDS::PropertySeq& props, const char* name, const std::string& value)
   props[len] = prop;
 }
 
-void wait_for_match(const DDS::DataWriter_var& writer)
+int wait_for_match(const DDS::DataWriter_var& writer)
 {
+  int ret = -1;
   DDS::StatusCondition_var condition = writer->get_statuscondition();
   condition->set_enabled_statuses(DDS::PUBLICATION_MATCHED_STATUS);
+  DDS::WaitSet_var ws(new DDS::WaitSet);
+  DDS::ReturnCode_t a = ws->attach_condition(condition);
+  if (a != DDS::RETCODE_OK) {
+    ACE_ERROR((LM_ERROR, ACE_TEXT("(%P|%t) ERROR: %N:%l: wait_match() - attach_condition returned %d\n"), a));
+    return ret;
+  }
 
-  DDS::WaitSet_var ws = new DDS::WaitSet;
-  ws->attach_condition(condition);
-
-  DDS::Duration_t timeout =
-    { DDS::DURATION_INFINITE_SEC, DDS::DURATION_INFINITE_NSEC };
-
+  const DDS::Duration_t wake_interval = { 1, 0 };
+  DDS::PublicationMatchedStatus ms = { 0, 0, 0, 0, 0 };
   DDS::ConditionSeq conditions;
-  DDS::PublicationMatchedStatus matches = {0, 0, 0, 0, 0};
-
-  while (true) {
-    if (writer->get_publication_matched_status(matches) != ::DDS::RETCODE_OK) {
-      ACE_ERROR((LM_ERROR,
-                 ACE_TEXT("%N:%l: wait_for_match()")
-                 ACE_TEXT(" ERROR: get_publication_matched_status failed!\n")));
-      ACE_OS::exit(-1);
-    }
-
-    if (matches.current_count >= 1) {
+  while (ret != 0) {
+    if (writer->get_publication_matched_status(ms) == DDS::RETCODE_OK) {
+      if (ms.current_count >= 1) {
+        ret = 0;
+      } else { // wait for a change
+        DDS::ReturnCode_t w = ws->wait(conditions, wake_interval);
+        if ((w != DDS::RETCODE_OK) && (w != DDS::RETCODE_TIMEOUT)) {
+          ACE_ERROR((LM_ERROR, ACE_TEXT("(%P|%t) ERROR: %N:%l: wait_match() - wait returned %d\n"), w));
+          break;
+        }
+      }
+    } else {
+      ACE_ERROR((LM_ERROR, ACE_TEXT("(%P|%t) ERROR: %N:%l: wait_match() - get_publication_matched_status failed!\n")));
       break;
     }
-    if (ws->wait(conditions, timeout) != DDS::RETCODE_OK) {
-      ACE_ERROR((LM_ERROR,
-                 ACE_TEXT("%N:%l: wait_for_match()")
-                 ACE_TEXT(" ERROR: wait failed!\n")));
-      ACE_OS::exit(-1);
-    }
   }
+
   ws->detach_condition(condition);
+  return ret;
 }
 
 int ACE_TMAIN(int argc, ACE_TCHAR* argv[])
@@ -137,7 +138,7 @@ int ACE_TMAIN(int argc, ACE_TCHAR* argv[])
       ACE_ERROR_RETURN((LM_ERROR,
                         ACE_TEXT("%N:%l: main()")
                         ACE_TEXT(" ERROR: create_participant failed!\n")),
-                       -1);
+                        1);
     }
 
     Mod::SampleTypeSupport_var ts = new Mod::SampleTypeSupportImpl;
@@ -154,7 +155,7 @@ int ACE_TMAIN(int argc, ACE_TCHAR* argv[])
       ACE_ERROR_RETURN((LM_ERROR,
                         ACE_TEXT("%N:%l: main()")
                         ACE_TEXT(" ERROR: create_topic failed!\n")),
-                       -1);
+                        1);
     }
 
     // Create Publisher
@@ -165,7 +166,7 @@ int ACE_TMAIN(int argc, ACE_TCHAR* argv[])
       ACE_ERROR_RETURN((LM_ERROR,
                         ACE_TEXT("%N:%l: main()")
                         ACE_TEXT(" ERROR: create_publisher failed!\n")),
-                       -1);
+                        1);
     }
 
     // Create DataWriter
@@ -176,7 +177,9 @@ int ACE_TMAIN(int argc, ACE_TCHAR* argv[])
     dw_qos.liveliness.lease_duration = five;
     DDS::DataWriter_var dw = pub->create_datawriter(topic, dw_qos, 0, 0);
 
-    wait_for_match(dw);
+    if (wait_for_match(dw)) {
+      ACE_ERROR_RETURN((LM_ERROR, "test publisher wait_for_match failed\n"), 1);
+    }
 
     Mod::SampleDataWriter_var writer = Mod::SampleDataWriter::_narrow(dw);
 
