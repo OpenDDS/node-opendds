@@ -95,6 +95,7 @@ jobs:
         with:
           repository: nvm-sh/nvm.git
           path: ${{ env.NVM_DIR }}
+          ref: v0.39.0
           fetch-depth: 1
       - name: 'Install node, Build, Test'
         run: |-
