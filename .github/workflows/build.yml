@@ -16,14 +16,12 @@ jobs:
       fail-fast: false
       matrix:
         node_version:
-          - 10
           - 12
           - 14
           - 16
         opendds_branch:
           - master
-          # - latest-release
-          # - branch-DDS-3.14
+          - latest-release
         m:
           - {os: ubuntu-latest, dds_security: 1}
           - {os: ubuntu-latest, dds_security: 0}
@@ -91,23 +89,26 @@ jobs:
           ./configure --no-tests $CONFIG_OPTIONS
           cd ..
           make -C OpenDDS -sj6 DCPSInfoRepo_Main OpenDDS_Rtps_Udp $BUILD_TARGETS
+      - name: 'Checkout nvm'
+        uses: actions/checkout@v2
+        with:
+          repository: nvm-sh/nvm.git
+          path: ${{ env.NVM_DIR }}
+          ref: v0.39.0
+          fetch-depth: 1
       - name: 'Install node, Build, Test'
         run: |-
-          git clone https://github.com/nvm-sh/nvm.git
           cd ${{ env.NVM_DIR }}
-          git checkout v0.38.0
           [ -s "./nvm.sh" ] && \. "./nvm.sh"  # loads nvm
           cd $GITHUB_WORKSPACE
           nvm install ${{ matrix.node_version }}
           nvm use ${{ matrix.node_version }}
-          npm install --save nan
-          npm install -g node-gyp
-          node-gyp configure build
-          echo "node:$(node -v)  npm:$(npm -v)"
-          export V8_ROOT=${{ env.npm_config_devdir }}/$(node -v | cut -c 2-)
+          echo "node:$(node -v) npm:$(npm -v)"
+          export V8_ROOT=$NVM_INC/../..
           echo "Build ========== ========== =========="
+          npm install
           ${{ env.ACE_ROOT }}/bin/mwc.pl -type gnuace -exclude ACE_TAO,OpenDDS
-          make
+          make -j2 || make
           echo "Test ========== ========== =========="
           if [ ${{ matrix.m.dds_security }} == 1 ]; then TEST_OPTIONS+="--secure"; fi
           cd test;
