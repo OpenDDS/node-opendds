@@ -107,6 +107,7 @@ jobs:
           echo "node:$(node -v) npm:$(npm -v)"
           export V8_ROOT=$NVM_INC/../..
           echo "Build ========== ========== =========="
+          npm install
           ${{ env.ACE_ROOT }}/bin/mwc.pl -type gnuace -exclude ACE_TAO,OpenDDS
           make -j2 || make
           echo "Test ========== ========== =========="
