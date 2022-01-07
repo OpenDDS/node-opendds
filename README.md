@@ -12,6 +12,23 @@
 * macOS using Xcode 9.x clang C++ compiler
 * Other OpenDDS-supported platforms should work, but may required changes to binding.gyp
 
+## Building and running the tests
+
+This assumes you are using nvm.
+
+```
+$ # In OpenDDS directory.
+$ source setenv.sh
+$ # In node-opendds directory
+$ export V8_ROOT=$NVM_INC/../..
+$ export NAN_ROOT=$PWD/node_modules/nan
+$ npm install
+$ mwc.pl -type gnuace
+$ make
+$ cd tests
+$ ./run_test.pl
+```
+
 ## To build the module (for development of this module, users can simply use npm)
 ```
 $ node-gyp configure build
