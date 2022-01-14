@@ -5,6 +5,7 @@ var ddsCerts = process.env.DDS_ROOT + "/tests/security/certs/identity";
 
 var qos = {user_data: 'foo'};
 var secure = process.argv.includes('--secure');
+var rtps = process.argv.includes('--rtps');
 if (secure) {
   qos.property = { value: [
 
@@ -30,7 +31,7 @@ if (secure) {
 }
 
 function init_opendds(opendds_addon) {
-  if (secure) {
+  if (secure || rtps) {
     return opendds_addon.initialize('-DCPSConfigFile', 'rtps_disc.ini');
   } else {
     return opendds_addon.initialize();

@@ -17,6 +17,7 @@ print "\nTest: @ARGV\n";
 
 my %args = map { $_ => 1 } @ARGV;
 my $secure = exists($args{"--secure"});
+my $rtps = exists($args{"--rtps"});
 
 my $scenario = "cpp2node";
 my $pub_node = 0;
@@ -35,7 +36,7 @@ if (exists($args{"node2cpp"})) {
   $sub_node = 0;
 }
 
-$test->setup_discovery("-ORBDebugLevel 1 -ORBLogFile DCPSInfoRepo.log") unless $secure;
+$test->setup_discovery("-ORBDebugLevel 1 -ORBLogFile DCPSInfoRepo.log") unless $secure || $rtps;
 
 sub which {
   my $file = shift;
@@ -65,11 +66,15 @@ if ($sub_node) {
   $sub_args .= "test_subscriber.js";
   if ($secure) {
     $sub_args .= " --secure";
+  } elsif ($rtps) {
+    $sub_args .= " --rtps";
   }
 } else {
   $sub_exec_name .= "test_subscriber";
   if ($secure) {
     $sub_args .= " --secure -DCPSConfigFile rtps_disc.ini";
+  } elsif ($rtps) {
+    $sub_args .= " -DCPSConfigFile rtps_disc.ini";
   }
 }
 
@@ -82,11 +87,15 @@ if ($pub_node) {
   $pub_args .= "test_publisher.js";
   if ($secure) {
     $pub_args .= " --secure";
+  } elsif ($rtps) {
+    $pub_args .= " --rtps";
   }
 } else {
   $pub_exec_name .= "test_publisher";
   if ($secure) {
     $pub_args .= " --secure -DCPSConfigFile rtps_disc.ini";
+  } elsif ($rtps) {
+    $pub_args .= " -DCPSConfigFile rtps_disc.ini";
   }
 }
 
