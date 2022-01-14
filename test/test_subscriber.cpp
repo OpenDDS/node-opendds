@@ -2,6 +2,8 @@
 #include "dds/DCPS/Marked_Default_Qos.h"
 #include "dds/DCPS/WaitSet.h"
 
+#include "tests/Utils/StatusMatching.h"
+
 #include "idl/NodeJSTestTypeSupportImpl.h"
 #include <ace/Get_Opt.h>
 
@@ -23,42 +25,6 @@ void append(DDS::PropertySeq& props, const char* name, const std::string& value)
   const unsigned int len = props.length();
   props.length(len + 1);
   props[len] = prop;
-}
-
-int wait_for_match(const DDS::DataReader_var& reader)
-{
-  int ret = -1;
-  DDS::StatusCondition_var condition = reader->get_statuscondition();
-  condition->set_enabled_statuses(DDS::SUBSCRIPTION_MATCHED_STATUS);
-  DDS::WaitSet_var ws(new DDS::WaitSet);
-  DDS::ReturnCode_t a = ws->attach_condition(condition);
-  if (a != DDS::RETCODE_OK) {
-    ACE_ERROR((LM_ERROR, ACE_TEXT("(%P|%t) ERROR: %N:%l: wait_match() - attach_condition returned %d\n"), a));
-    return ret;
-  }
-
-  const DDS::Duration_t wake_interval = { 1, 0 };
-  DDS::SubscriptionMatchedStatus ms = { 0, 0, 0, 0, 0 };
-  DDS::ConditionSeq conditions;
-  while (ret != 0) {
-    if (reader->get_subscription_matched_status(ms) == DDS::RETCODE_OK) {
-      if (ms.current_count >= 1) {
-        ret = 0;
-      } else { // wait for a change
-        DDS::ReturnCode_t w = ws->wait(conditions, wake_interval);
-        if ((w != DDS::RETCODE_OK) && (w != DDS::RETCODE_TIMEOUT)) {
-          ACE_ERROR((LM_ERROR, ACE_TEXT("(%P|%t) ERROR: %N:%l: wait_match() - wait returned %d\n"), w));
-          break;
-        }
-      }
-    } else {
-      ACE_ERROR((LM_ERROR, ACE_TEXT("(%P|%t) ERROR: %N:%l: wait_match() - get_subscription_matched_status failed!\n")));
-      break;
-    }
-  }
-
-  ws->detach_condition(condition);
-  return ret;
 }
 
 void wait_for_data(const Mod::SampleDataReader_var& reader, Mod::Sample& data)
@@ -284,7 +250,7 @@ int ACE_TMAIN(int argc, ACE_TCHAR* argv[])
     dr_qos.liveliness.lease_duration = five;
     DDS::DataReader_var dr = sub->create_datareader(topic, dr_qos, 0, 0);
 
-    wait_for_match(dr);
+    Utils::wait_match(dr, 1);
 
     //std::cout << "matched!" << std::endl;
 

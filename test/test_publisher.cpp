@@ -2,6 +2,8 @@
 #include "dds/DCPS/Marked_Default_Qos.h"
 #include "dds/DCPS/WaitSet.h"
 
+#include "tests/Utils/StatusMatching.h"
+
 #include "idl/NodeJSTestTypeSupportImpl.h"
 #include <ace/Get_Opt.h>
 
@@ -23,42 +25,6 @@ void append(DDS::PropertySeq& props, const char* name, const std::string& value)
   const unsigned int len = props.length();
   props.length(len + 1);
   props[len] = prop;
-}
-
-int wait_for_match(const DDS::DataWriter_var& writer)
-{
-  int ret = -1;
-  DDS::StatusCondition_var condition = writer->get_statuscondition();
-  condition->set_enabled_statuses(DDS::PUBLICATION_MATCHED_STATUS);
-  DDS::WaitSet_var ws(new DDS::WaitSet);
-  DDS::ReturnCode_t a = ws->attach_condition(condition);
-  if (a != DDS::RETCODE_OK) {
-    ACE_ERROR((LM_ERROR, ACE_TEXT("(%P|%t) ERROR: %N:%l: wait_match() - attach_condition returned %d\n"), a));
-    return ret;
-  }
-
-  const DDS::Duration_t wake_interval = { 1, 0 };
-  DDS::PublicationMatchedStatus ms = { 0, 0, 0, 0, 0 };
-  DDS::ConditionSeq conditions;
-  while (ret != 0) {
-    if (writer->get_publication_matched_status(ms) == DDS::RETCODE_OK) {
-      if (ms.current_count >= 1) {
-        ret = 0;
-      } else { // wait for a change
-        DDS::ReturnCode_t w = ws->wait(conditions, wake_interval);
-        if ((w != DDS::RETCODE_OK) && (w != DDS::RETCODE_TIMEOUT)) {
-          ACE_ERROR((LM_ERROR, ACE_TEXT("(%P|%t) ERROR: %N:%l: wait_match() - wait returned %d\n"), w));
-          break;
-        }
-      }
-    } else {
-      ACE_ERROR((LM_ERROR, ACE_TEXT("(%P|%t) ERROR: %N:%l: wait_match() - get_publication_matched_status failed!\n")));
-      break;
-    }
-  }
-
-  ws->detach_condition(condition);
-  return ret;
 }
 
 int ACE_TMAIN(int argc, ACE_TCHAR* argv[])
@@ -177,7 +143,7 @@ int ACE_TMAIN(int argc, ACE_TCHAR* argv[])
     dw_qos.liveliness.lease_duration = five;
     DDS::DataWriter_var dw = pub->create_datawriter(topic, dw_qos, 0, 0);
 
-    if (wait_for_match(dw)) {
+    if (Utils::wait_match(dw, 1)) {
       ACE_ERROR_RETURN((LM_ERROR, "test publisher wait_for_match failed\n"), 1);
     }
 
