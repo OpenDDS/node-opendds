@@ -166,8 +166,7 @@ void NodeDRListener::unsubscribe_now_i(std::unique_lock<std::mutex>& lock)
   _add_ref();
   uv_close((uv_handle_t*)&async_uv_, close_cb);
 
-  dp_->_add_ref();
-  const DDS::DomainParticipant_var dp(dp_);
+  const DDS::DomainParticipant_var dp(DDS::DomainParticipant::_duplicate(dp_));
   const DDS::Subscriber_var sub = dr->get_subscriber();
   const DDS::TopicDescription_var td = dr->get_topicdescription();
 
