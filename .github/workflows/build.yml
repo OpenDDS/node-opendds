@@ -115,3 +115,6 @@ jobs:
           ./run_test.pl cpp2node $TEST_OPTIONS
           ./run_test.pl node2cpp $TEST_OPTIONS
           ./run_test.pl node2node $TEST_OPTIONS
+          ./run_test.pl cpp2node --rtps
+          ./run_test.pl node2cpp --rtps
+          ./run_test.pl node2node --rtps

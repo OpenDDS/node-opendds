@@ -9,6 +9,8 @@
 #include <dds/DCPS/LocalObject.h>
 #include <dds/DCPS/DataReaderImpl.h>
 
+#include <mutex>
+
 namespace NodeOpenDDS {
 
   class NodeDRListener
@@ -33,6 +35,8 @@ namespace NodeOpenDDS {
   private:
     static void async_cb(uv_async_t* async_uv);
     static void close_cb(uv_handle_t* handle_uv);
+
+    void unsubscribe_now_i(std::unique_lock<std::mutex>& lock);
 
     typedef DDS::RequestedDeadlineMissedStatus RDMStatus;
     void on_requested_deadline_missed(DDS::DataReader*, const RDMStatus&) {}
@@ -68,9 +72,12 @@ namespace NodeOpenDDS {
 
     /// True if Datareader Listener is going to unsubscribe itself soon.
     bool unsubscribing_;
+    bool unsubscribed_;
 
     /// True if Datareader Listener taking samples.
     bool receiving_samples_;
+
+    mutable std::mutex mutex_;
   };
 
   /// Wrapper object to call unsubscribe at a better time using Node Event

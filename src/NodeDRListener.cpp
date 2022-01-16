@@ -45,6 +45,7 @@ NodeDRListener::NodeDRListener(DDS::DomainParticipant* dp,
   , conv_(conv)
   , async_uv_(this)
   , unsubscribing_(false)
+  , unsubscribed_(false)
   , receiving_samples_(false)
 {
   uv_async_init(uv_default_loop(), &async_uv_, async_cb);
@@ -66,6 +67,7 @@ void NodeDRListener::close_cb(uv_handle_t* handle_uv)
 
 void NodeDRListener::on_data_available(DDS::DataReader*)
 {
+  std::unique_lock<std::mutex> lock(mutex_);
   if (unsubscribing_) {
     return;
   }
@@ -75,6 +77,7 @@ void NodeDRListener::on_data_available(DDS::DataReader*)
 
 void NodeDRListener::async() // called from libuv event loop
 {
+  std::unique_lock<std::mutex> lock(mutex_);
   receiving_samples_ = true;
 
   Nan::HandleScope scope;
@@ -84,12 +87,14 @@ void NodeDRListener::async() // called from libuv event loop
   OpenDDS::DCPS::DataReaderImpl* const dri =
     dynamic_cast<OpenDDS::DCPS::DataReaderImpl*>(dr);
 
+  lock.unlock();
   try {
     OpenDDS::DCPS::DataReaderImpl::GenericBundle gen;
     dri->take(*this, DDS::NOT_READ_SAMPLE_STATE, DDS::ANY_VIEW_STATE,
               DDS::ANY_INSTANCE_STATE);
   } catch (...) {
   }
+  lock.lock();
 
   receiving_samples_ = false;
   if (unsubscribing_) {
@@ -100,6 +105,7 @@ void NodeDRListener::async() // called from libuv event loop
 
 void NodeDRListener::set_javascript_datareader(const Local<v8::Object>& js_dr)
 {
+  std::unique_lock<std::mutex> lock(mutex_);
   js_dr_.Reset(js_dr);
 }
 
@@ -109,6 +115,7 @@ void NodeDRListener::reserve(CORBA::ULong)
 
 void NodeDRListener::push_back(const DDS::SampleInfo& src, const void* sample)
 {
+  std::unique_lock<std::mutex> lock(mutex_);
   if (unsubscribing_) {
     return;
   }
@@ -120,23 +127,36 @@ void NodeDRListener::push_back(const DDS::SampleInfo& src, const void* sample)
   };
 
   Local<Function> callback = Nan::New(callback_);
+  lock.unlock();
+
   Nan::Callback cb(callback);
   Nan::Call(cb, sizeof(argv) / sizeof(argv[0]), argv);
 }
 
 void NodeDRListener::unsubscribe()
 {
+  std::unique_lock<std::mutex> lock(mutex_);
   if (receiving_samples_) {
     // Inform the Listener to skip any remaining samples and use
     // UnsubscibeWorker to unsubscribe at the next opportunity.
     unsubscribing_ = true;
   } else { // Unsubscribe Now
-    unsubscribe_now();
+    unsubscribe_now_i(lock);
   }
 }
 
 void NodeDRListener::unsubscribe_now()
 {
+  std::unique_lock<std::mutex> lock(mutex_);
+  unsubscribe_now_i(lock);
+}
+
+void NodeDRListener::unsubscribe_now_i(std::unique_lock<std::mutex>& lock)
+{
+  if (unsubscribed_) {
+    return;
+  }
+
   Local<v8::Object> dr_js = Nan::New(js_dr_);
   void* const dr_obj = Nan::GetInternalFieldPointer(dr_js, 0);
   DDS::DataReader_var dr = static_cast<DDS::DataReader*>(dr_obj);
@@ -146,21 +166,28 @@ void NodeDRListener::unsubscribe_now()
   _add_ref();
   uv_close((uv_handle_t*)&async_uv_, close_cb);
 
+  const DDS::DomainParticipant_var dp(DDS::DomainParticipant::_duplicate(dp_));
   const DDS::Subscriber_var sub = dr->get_subscriber();
   const DDS::TopicDescription_var td = dr->get_topicdescription();
+
+  dp_ = 0;
+  unsubscribed_ = true;
+
+  lock.unlock();
+
   dr = 0;
   sub->delete_contained_entities();
-  dp_->delete_subscriber(sub);
+  dp->delete_subscriber(sub);
 
   const DDS::ContentFilteredTopic_var cft =
     DDS::ContentFilteredTopic::_narrow(td);
   if (cft) {
     const DDS::Topic_var topic = cft->get_related_topic();
-    dp_->delete_contentfilteredtopic(cft);
-    dp_->delete_topic(topic);
+    dp->delete_contentfilteredtopic(cft);
+    dp->delete_topic(topic);
   } else {
     const DDS::Topic_var topic = DDS::Topic::_narrow(td);
-    dp_->delete_topic(topic);
+    dp->delete_topic(topic);
   }
 }
 
