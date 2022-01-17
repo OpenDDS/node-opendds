@@ -54,6 +54,8 @@ function log(label, object) {
 }
 
 function doStuff(writer) {
+  console.log("writer has waited long enough for association");
+
   var sample1 = {
     id: 23,
     data: "Hello, world\n",
@@ -95,6 +97,8 @@ function doStuff(writer) {
   retcode = writer.write(sample1, handle);
 
   retcode = writer.write(sample2);
+
+  retcode = writer.wait_for_acknowledgments();
 
   retcode = writer.dispose(sample1, handle);
 

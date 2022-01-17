@@ -212,6 +212,9 @@ int ACE_TMAIN(int argc, ACE_TCHAR* argv[])
       throw return_code;
     }
 
+    const DDS::Duration_t delay = {DDS::DURATION_INFINITE_SEC, DDS::DURATION_INFINITE_NSEC};
+    writer->wait_for_acknowledgments(delay);
+
     return_code = writer->dispose(sample, handle);
     if (return_code != DDS::RETCODE_OK) {
       throw return_code;

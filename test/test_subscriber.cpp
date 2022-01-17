@@ -381,6 +381,8 @@ int ACE_TMAIN(int argc, ACE_TCHAR* argv[])
       result = 1;
     }
 
+    Utils::wait_match(dr, 0);
+
     participant->delete_contained_entities();
     dpf->delete_participant(participant);
     TheServiceParticipant->shutdown();

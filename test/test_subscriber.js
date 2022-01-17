@@ -51,6 +51,11 @@ function log(label, object) {
   console.log(label + ': ' + JSON.stringify(object, null, 2));
 }
 
+function doStuff(participant, reader) {
+  console.log("reader has waited long enough for acknowledgments");
+  participant.unsubscribe(reader);
+}
+
 try {
   if (!library) {
     throw 'Failed to load shared library';
@@ -100,10 +105,9 @@ try {
     }
   }, function (dr, sinfo, sample) {
     try {
-      log('Received callback', sample);
       log('Sample Info', sinfo);
-      if (sinfo.valid_data && sample.id == last_sample_id) {
-        participant.unsubscribe(reader);
+      if (sinfo.valid_data) {
+        log('Received callback', sample);
         if (!(sample.id == 23 || sample.id == 24) ||
             sample.data != "Hello, world\n" ||
             sample.enu != "two" ||
@@ -154,6 +158,9 @@ try {
             (sample.id == 24 && (sample.mu._d != "four" || sample.mu.s.length != 2 || sample.mu.s[0].length != 4 || sample.mu.s[1].length != 1))) {
           console.log("Error in data!");
           process.exitCode = 1;
+        }
+        if (sample.id == last_sample_id) {
+          setTimeout(function () { doStuff(participant, dr); }, 3000);
         }
       }
     } catch (e) {
