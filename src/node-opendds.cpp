@@ -50,6 +50,7 @@ namespace {
   void create_datawriter(const Nan::FunctionCallbackInfo<Value>& fci);
   void register_instance(const Nan::FunctionCallbackInfo<Value>& fci);
   void write(const Nan::FunctionCallbackInfo<Value>& fci);
+  void wait_for_acknowledgments(const Nan::FunctionCallbackInfo<Value>& fci);
   void unregister_instance(const Nan::FunctionCallbackInfo<Value>& fci);
   void dispose(const Nan::FunctionCallbackInfo<Value>& fci);
 
@@ -405,6 +406,7 @@ namespace {
     ot->SetInternalFieldCount(2);
     Nan::SetMethod(ot, "register_instance", register_instance);
     Nan::SetMethod(ot, "write", write);
+    Nan::SetMethod(ot, "wait_for_acknowledgments", wait_for_acknowledgments);
     Nan::SetMethod(ot, "unregister_instance", unregister_instance);
     Nan::SetMethod(ot, "dispose", dispose);
     const Local<Object> obj = ot->NewInstance(Nan::GetCurrentContext()).ToLocalChecked();
@@ -478,6 +480,24 @@ namespace {
     tc->deleteFromV8Result(sample_vp);
     if (return_code != DDS::RETCODE_OK) {
       Nan::ThrowError("couldn't write sample");
+      fci.GetReturnValue().SetUndefined();
+      return;
+    }
+    fci.GetReturnValue().Set(return_code);
+  }
+
+  void wait_for_acknowledgments(const Nan::FunctionCallbackInfo<Value>& fci)
+  {
+    void* const dw_i = Nan::GetInternalFieldPointer(fci.This(), 0);
+    DDS::DataWriter* const dw = static_cast<DDS::DataWriter*>(dw_i);
+
+    // TODO Handle non-infinite durations
+
+    const DDS::Duration_t delay = {DDS::DURATION_INFINITE_SEC, DDS::DURATION_INFINITE_NSEC};
+    const DDS::ReturnCode_t return_code = dw->wait_for_acknowledgments(delay);
+
+    if (return_code != DDS::RETCODE_OK) {
+      Nan::ThrowError("couldn't wait for acknowledgments");
       fci.GetReturnValue().SetUndefined();
       return;
     }

@@ -212,9 +212,8 @@ int ACE_TMAIN(int argc, ACE_TCHAR* argv[])
       throw return_code;
     }
 
-    if (Utils::wait_match(dw, 0)) {
-      ACE_ERROR_RETURN((LM_ERROR, "test publisher wait_for_match failed\n"), 1);
-    }
+    const DDS::Duration_t delay = {DDS::DURATION_INFINITE_SEC, DDS::DURATION_INFINITE_NSEC};
+    writer->wait_for_acknowledgments(delay);
 
     return_code = writer->dispose(sample, handle);
     if (return_code != DDS::RETCODE_OK) {

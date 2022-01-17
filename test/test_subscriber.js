@@ -51,6 +51,11 @@ function log(label, object) {
   console.log(label + ': ' + JSON.stringify(object, null, 2));
 }
 
+function doStuff(participant, reader) {
+  console.log("reader has waited long enough for acknowledgments");
+  participant.unsubscribe(reader);
+}
+
 try {
   if (!library) {
     throw 'Failed to load shared library';
@@ -155,7 +160,7 @@ try {
           process.exitCode = 1;
         }
         if (sample.id == last_sample_id) {
-          participant.unsubscribe(reader);
+          setTimeout(function () { doStuff(participant, dr); }, 3000);
         }
       }
     } catch (e) {
