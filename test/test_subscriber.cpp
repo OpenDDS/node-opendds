@@ -246,6 +246,7 @@ int ACE_TMAIN(int argc, ACE_TCHAR* argv[])
     DDS::DataReaderQos dr_qos;
     sub->get_default_datareader_qos(dr_qos);
     const DDS::Duration_t one = {1, 0}, five = {5, 0};
+    dr_qos.reliability.kind = DDS::RELIABLE_RELIABILITY_QOS;
     dr_qos.latency_budget.duration = one;
     dr_qos.liveliness.lease_duration = five;
     DDS::DataReader_var dr = sub->create_datareader(topic, dr_qos, 0, 0);
