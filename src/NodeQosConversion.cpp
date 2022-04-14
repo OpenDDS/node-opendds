@@ -164,16 +164,16 @@ void convertQos(DDS::DurabilityServiceQosPolicy& qos, const Local<Object>& qos_j
     }
   }
   if (Nan::Has(qos_js, hd_str).ToChecked()) {
-    qos.history_depth = Nan::To<int32_t>(Nan::Get(qos_js, hd_str).ToLocalChecked()).FromMaybe(0); 
+    qos.history_depth = Nan::To<int32_t>(Nan::Get(qos_js, hd_str).ToLocalChecked()).FromMaybe(0);
   }
   if (Nan::Has(qos_js, ms_str).ToChecked()) {
-    qos.max_samples = Nan::To<int32_t>(Nan::Get(qos_js, ms_str).ToLocalChecked()).FromMaybe(0); 
+    qos.max_samples = Nan::To<int32_t>(Nan::Get(qos_js, ms_str).ToLocalChecked()).FromMaybe(0);
   }
   if (Nan::Has(qos_js, mi_str).ToChecked()) {
-    qos.max_instances = Nan::To<int32_t>(Nan::Get(qos_js, mi_str).ToLocalChecked()).FromMaybe(0); 
+    qos.max_instances = Nan::To<int32_t>(Nan::Get(qos_js, mi_str).ToLocalChecked()).FromMaybe(0);
   }
   if (Nan::Has(qos_js, mspi_str).ToChecked()) {
-    qos.max_samples_per_instance = Nan::To<int32_t>(Nan::Get(qos_js, mspi_str).ToLocalChecked()).FromMaybe(0); 
+    qos.max_samples_per_instance = Nan::To<int32_t>(Nan::Get(qos_js, mspi_str).ToLocalChecked()).FromMaybe(0);
   }
 }
 
@@ -229,7 +229,7 @@ void convertQos(DDS::HistoryQosPolicy& qos, const Local<Object>& qos_js)
     }
   }
   if (Nan::Has(qos_js, depth_str).ToChecked()) {
-    qos.depth = Nan::To<int32_t>(Nan::Get(qos_js, depth_str).ToLocalChecked()).FromMaybe(0); 
+    qos.depth = Nan::To<int32_t>(Nan::Get(qos_js, depth_str).ToLocalChecked()).FromMaybe(0);
   }
 }
 
@@ -240,13 +240,13 @@ void convertQos(DDS::ResourceLimitsQosPolicy& qos, const Local<Object>& qos_js)
     mspi_str = Nan::New<String>("max_samples_per_instance").ToLocalChecked();
 
   if (Nan::Has(qos_js, ms_str).ToChecked()) {
-    qos.max_samples = Nan::To<int32_t>(Nan::Get(qos_js, ms_str).ToLocalChecked()).FromMaybe(0); 
+    qos.max_samples = Nan::To<int32_t>(Nan::Get(qos_js, ms_str).ToLocalChecked()).FromMaybe(0);
   }
   if (Nan::Has(qos_js, mi_str).ToChecked()) {
-    qos.max_instances = Nan::To<int32_t>(Nan::Get(qos_js, mi_str).ToLocalChecked()).FromMaybe(0); 
+    qos.max_instances = Nan::To<int32_t>(Nan::Get(qos_js, mi_str).ToLocalChecked()).FromMaybe(0);
   }
   if (Nan::Has(qos_js, mspi_str).ToChecked()) {
-    qos.max_samples_per_instance = Nan::To<int32_t>(Nan::Get(qos_js, mspi_str).ToLocalChecked()).FromMaybe(0); 
+    qos.max_samples_per_instance = Nan::To<int32_t>(Nan::Get(qos_js, mspi_str).ToLocalChecked()).FromMaybe(0);
   }
 }
 
