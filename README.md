@@ -7,6 +7,7 @@
 ** If using the installed tree, set the DDS_ROOT environment variable using the installed dds-devel.sh script.
 
 ## Tested platforms:
+* Node LTS versions 12, 14, 16
 * Linux (Ubuntu18.04, CentOS7) x86_64 using the distro-supplied GCC and c++11=1
 * Windows 10 x86_64 using Visual Studio 2015
 * macOS using Xcode 9.x clang C++ compiler
@@ -35,6 +36,10 @@ $ node-gyp configure build
 ```
 
 ## Changelog
+
+### Version 0.1.1
+
+* Add support and test coverage for multiple LTS versions of Node (12, 14, 16)
 
 ### Version 0.1.0
 
