@@ -46,7 +46,7 @@ sub which {
       return "$p/$file";
     }
     elsif ($exeext ne '' && -x "$p/$file$exeext") {
-      return "$p/$file$exeext";
+      return "$p/$file";
     }
   }
   return undef;
