@@ -10,6 +10,10 @@ on:
   schedule:
     - cron: '10 0 * * 0'
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     strategy:
@@ -27,11 +31,65 @@ jobs:
           - {os: ubuntu-latest, dds_security: 0}
           - {os: macos-latest, dds_security: 1}
           - {os: macos-latest, dds_security: 0}
+          - {os: windows-2019, dds_security: 1}
+          - {os: windows-2019, dds_security: 0}
 
     runs-on: ${{ matrix.m.os }}
     steps:
-      - uses: actions/checkout@v2
-      - name: 'Set environment variables'
+      - uses: actions/checkout@v3
+      - name: 'Checkout MPC'
+        uses: actions/checkout@v3
+        with:
+          repository: DOCGroup/MPC
+          path: MPC
+          fetch-depth: 1
+      - name: 'Checkout ACE_TAO'
+        uses: actions/checkout@v3
+        with:
+          repository: DOCGroup/ACE_TAO
+          ref: Latest_Micro
+          path: ACE_TAO
+          fetch-depth: 1
+      - name: 'Checkout OpenDDS'
+        uses: actions/checkout@v3
+        with:
+          repository: objectcomputing/OpenDDS
+          ref: ${{ matrix.opendds_branch }}
+          path: OpenDDS
+          fetch-depth: 1
+      - name: 'Install ssl and xerces (ubuntu)'
+        if: ${{ matrix.m.dds_security == 1 && matrix.m.os == 'ubuntu-latest' }}
+        run: |-
+          sudo apt-get update
+          sudo apt-get -y install libssl-dev libxerces-c-dev
+      - name: 'Install xerces (macos)'
+        if: ${{ matrix.m.dds_security == 1 && matrix.m.os == 'macos-latest' }}
+        run: |
+          brew install xerces-c
+      - name: 'Install openssl and xerces (windows)'
+        if: ${{ matrix.m.dds_security == 1 && matrix.m.os == 'windows-2019' }}
+        uses: lukka/run-vcpkg@v7
+        with:
+          vcpkgGitCommitId: b86c0c35b88e2bf3557ff49dc831689c2f085090
+          vcpkgArguments: --recurse openssl xerces-c
+          vcpkgTriplet: x64-windows
+      - name: 'Set Up MSVC Environment'
+        if: ${{ matrix.m.os == 'windows-2019' }}
+        uses: ilammy/msvc-dev-cmd@v1
+      - name: 'Set Up Problem Matcher (windows)'
+        if: ${{ matrix.m.os == 'windows-2019' }}
+        uses: ammaraskar/msvc-problem-matcher@0.1
+      - name: 'Set Up Problem Matcher (ubuntu / macos)'
+        if: ${{ matrix.m.os == 'ubuntu-latest' || matrix.m.os == 'macos-latest' }}
+        uses: ammaraskar/gcc-problem-matcher@0.1
+      - name: 'Set Up node (windows)'
+        if: ${{ matrix.m.os == 'windows-2019' }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node_version }}
+      - name: 'Set environment variables (ubuntu / macos)'
+        if: ${{ matrix.m.os == 'ubuntu-latest' || matrix.m.os == 'macos-latest' }}
+        shell: bash
         run: |-
           echo "ACE_ROOT=$GITHUB_WORKSPACE/ACE_TAO/ACE" >> $GITHUB_ENV
           echo "TAO_ROOT=$GITHUB_WORKSPACE/ACE_TAO/TAO" >> $GITHUB_ENV
@@ -40,38 +98,7 @@ jobs:
           echo "NVM_DIR=$GITHUB_WORKSPACE/nvm" >> $GITHUB_ENV
           echo "NAN_ROOT=$GITHUB_WORKSPACE/node_modules/nan" >> $GITHUB_ENV
           echo "npm_config_devdir=$GITHUB_WORKSPACE/opendds-node-gyp-devdir" >> $GITHUB_ENV
-          echo "LD_LIBRARY_PATH=$GITHUB_WORKSPACE/ACE_TAO/ACE/lib:$GITHUB_WORKSPACE/OpenDDS/lib:$GITHUB_WORKSPACE/tools/v8stubs:$LD_LIBRARY_PATH" >> $GITHUB_ENV
-      - name: 'Checkout MPC'
-        uses: actions/checkout@v2
-        with:
-          repository: DOCGroup/MPC
-          path: MPC
-          fetch-depth: 1
-      - name: 'Checkout ACE_TAO'
-        uses: actions/checkout@v2
-        with:
-          repository: DOCGroup/ACE_TAO
-          ref: Latest_Micro
-          path: ACE_TAO
-          fetch-depth: 1
-      - name: 'Checkout OpenDDS'
-        uses: actions/checkout@v2
-        with:
-          repository: objectcomputing/OpenDDS
-          ref: ${{ matrix.opendds_branch }}
-          path: OpenDDS
-          fetch-depth: 1
-      - name: 'Install ssl and xerces (ubuntu)'
-        run: |-
-          sudo apt-get update
-          sudo apt-get -y install libssl-dev libxerces-c-dev
-        if: ${{ matrix.m.dds_security == 1 && matrix.m.os == 'ubuntu-latest' }}
-      - name: 'Install xerces (macos)'
-        run: |
-          brew install xerces-c
-        if: ${{ matrix.m.dds_security == 1 && matrix.m.os == 'macos-latest' }}
-      - name: 'Configure & Build OpenDDS'
-        run: |-
+          echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$GITHUB_WORKSPACE/ACE_TAO/ACE/lib:$GITHUB_WORKSPACE/OpenDDS/lib:$GITHUB_WORKSPACE/tools/v8stubs" >> $GITHUB_ENV
           if [ ${{ matrix.node_version }} == 16 ]; then
             CONFIG_OPTIONS+=" --std=c++14";
           else
@@ -79,24 +106,71 @@ jobs:
           fi
           if [ ${{ matrix.m.dds_security }} == 1 ]; then
             CONFIG_OPTIONS+=" --security";
-            BUILD_TARGETS+="OpenDDS_Security";
+            BUILD_TARGETS+=" OpenDDS_Security";
             if [ '${{ matrix.m.os }}' == 'macos-latest' ]; then
               CONFIG_OPTIONS+=" --xerces3=/usr/local/Cellar/xerces-c/3.2.3 --openssl=/usr/local/opt/openssl@1.1"
             fi
           fi
-          echo "dds_security=${{ matrix.m.dds_security }}; CONFIG_OPTIONS=$CONFIG_OPTIONS; BUILD_TARGETS=$BUILD_TARGETS"
+          echo "CONFIG_OPTIONS=$CONFIG_OPTIONS" >> $GITHUB_ENV
+          echo "BUILD_TARGETS=DCPSInfoRepo_Main OpenDDS_Rtps_Udp$BUILD_TARGETS" >> $GITHUB_ENV
+      - name: 'Set environment variables (windows)'
+        if: ${{ matrix.m.os == 'windows-2019' }}
+        shell: bash
+        run: |-
+          echo "ACE_ROOT=$GITHUB_WORKSPACE\\ACE_TAO\\ACE" >> $GITHUB_ENV
+          echo "TAO_ROOT=$GITHUB_WORKSPACE\\ACE_TAO\\TAO" >> $GITHUB_ENV
+          echo "DDS_ROOT=$GITHUB_WORKSPACE\\OpenDDS" >> $GITHUB_ENV
+          echo "MPC_ROOT=$GITHUB_WORKSPACE\\MPC" >> $GITHUB_ENV
+          echo "NVM_DIR=$GITHUB_WORKSPACE\\nvm" >> $GITHUB_ENV
+          echo "NAN_ROOT=$GITHUB_WORKSPACE\\node_modules\\nan" >> $GITHUB_ENV
+          echo "npm_config_devdir=$GITHUB_WORKSPACE\\opendds-node-gyp-devdir" >> $GITHUB_ENV
+          if [ ${{ matrix.node_version }} == 16 ]; then
+            CONFIG_OPTIONS+=" --std=c++14";
+          else
+            CONFIG_OPTIONS+=" --std=c++11";
+          fi
+          if [ ${{ matrix.m.dds_security }} == 1 ]; then
+            CONFIG_OPTIONS+=" --security";
+            BUILD_TARGETS+=";OpenDDS_Security";
+            if [ '${{ matrix.m.os }}' == 'windows-2019' ]; then
+              CONFIG_OPTIONS+=" --xerces3=$VCPKG_ROOT\\installed\\x64-windows --openssl=$VCPKG_ROOT\\installed\\x64-windows"
+            fi
+          fi
+          echo "CONFIG_OPTIONS=$CONFIG_OPTIONS" >> $GITHUB_ENV
+          echo "BUILD_TARGETS=DCPSInfoRepo_Main;OpenDDS_Rtps_Udp$BUILD_TARGETS" >> $GITHUB_ENV
+      - name: 'Configure & Build OpenDDS (ubuntu / macos)'
+        if: ${{ matrix.m.os == 'ubuntu-latest' || matrix.m.os == 'macos-latest' }}
+        shell: bash
+        run: |-
+          echo "dds_security=${{ matrix.m.dds_security }}; CONFIG_OPTIONS=${{ env.CONFIG_OPTIONS }}; BUILD_TARGETS=${{ env.BUILD_TARGETS }}"
           cd OpenDDS
-          ./configure --no-tests $CONFIG_OPTIONS
+          ./configure --no-tests ${{ env.CONFIG_OPTIONS }}
           cd ..
-          make -C OpenDDS -sj6 DCPSInfoRepo_Main OpenDDS_Rtps_Udp $BUILD_TARGETS
+          make -C OpenDDS -sj6 ${{ env.BUILD_TARGETS }}
+      - name: 'Configure OpenDDS (windows)'
+        if: ${{ matrix.m.os == 'windows-2019' }}
+        shell: cmd
+        run: |-
+          echo "dds_security=${{ matrix.m.dds_security }}; CONFIG_OPTIONS=${{ env.CONFIG_OPTIONS }}; BUILD_TARGETS=${{ env.BUILD_TARGETS }}"
+          cd OpenDDS
+          configure --no-tests ${{ env.CONFIG_OPTIONS }}
+      - name: 'Build OpenDDS (windows)'
+        if: ${{ matrix.m.os == 'windows-2019' }}
+        shell: cmd
+        run: |-
+          cd OpenDDS
+          call setenv.cmd
+          msbuild -p:Configuration=Debug,Platform=x64 -t:${{ env.BUILD_TARGETS }} -m DDS_TAOv2.sln
       - name: 'Checkout nvm'
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           repository: nvm-sh/nvm.git
           path: ${{ env.NVM_DIR }}
           ref: v0.39.0
           fetch-depth: 1
-      - name: 'Install node, Build, Test'
+      - name: 'Install node, Build, Test (ubuntu / macos)'
+        if: ${{ matrix.m.os == 'ubuntu-latest' || matrix.m.os == 'macos-latest' }}
+        shell: bash
         run: |-
           cd ${{ env.NVM_DIR }}
           [ -s "./nvm.sh" ] && \. "./nvm.sh"  # loads nvm
@@ -111,10 +185,80 @@ jobs:
           make -j2 || make
           echo "Test ========== ========== =========="
           if [ ${{ matrix.m.dds_security }} == 1 ]; then TEST_OPTIONS+="--secure"; fi
-          cd test;
+          cd test
           ./run_test.pl cpp2node $TEST_OPTIONS
           ./run_test.pl node2cpp $TEST_OPTIONS
           ./run_test.pl node2node $TEST_OPTIONS
           ./run_test.pl cpp2node --rtps
           ./run_test.pl node2cpp --rtps
           ./run_test.pl node2node --rtps
+      - name: 'Install (windows)'
+        if: ${{ matrix.m.os == 'windows-2019' }}
+        shell: cmd
+        run: |-
+          cd OpenDDS
+          call setenv.cmd
+          cd ..
+          call npm.cmd config set msvs_version 2019
+          call npm.cmd install --debug --lib_suffix=d
+      - name: 'Find V8 (windows)'
+        if: ${{ matrix.m.os == 'windows-2019' }}
+        shell: cmd
+        run: |-
+          dir /s "v8.h" | findstr /c:"\include\node" > v8_path_string.txt
+          echo "type v8_path_string.txt"
+          type v8_path_string.txt
+          (for /f "tokens=3,*" %%a in (v8_path_string.txt) do @echo %%a) > v8_path.txt
+          echo "type v8_path.txt"
+          type v8_path.txt
+      - name: 'Build, Expecting Failure (windows)'
+        if: ${{ matrix.m.os == 'windows-2019' }}
+        continue-on-error: true
+        shell: cmd
+        run: |-
+          cd OpenDDS
+          call setenv.cmd
+          cd ..
+          set /p V8_ROOT=<v8_path.txt
+          set V8_ROOT=%V8_ROOT%\..\..
+          echo "V8_ROOT = %V8_ROOT%"
+          set PATH=%PATH%;%GITHUB_WORKSPACE%\ACE_TAO\ACE\lib;%GITHUB_WORKSPACE%\OpenDDS\lib;%GITHUB_WORKSPACE%\tools\v8stubs"
+          echo "PATH = %PATH%"
+          perl ${{ env.ACE_ROOT }}\bin\mwc.pl -type vs2019 -exclude ACE_TAO,OpenDDS
+          msbuild -p:Configuration=Debug,Platform=x64 -m node_opendds.sln
+      - name: 'Upload Project Files Artifact (windows)'
+        if: ${{ matrix.m.os == 'windows-2019' }} && false # not currently required (&& false), but keep for future windows debugging
+        uses: actions/upload-artifact@v3
+        with:
+          name: node_${{ matrix.node_version }}_${{ matrix.opendds_branch }}_${{ matrix.m.dds_security }}_vs2019_project_files
+          path: |
+            build/**/*.sln
+            build/**/*.vcxproj
+            *.sln
+            test/**/*.vcxproj
+      - name: 'Temporary Workaround LongDouble Issue'
+        if: ${{ matrix.m.os == 'windows-2019' }}
+        shell: bash
+        run: |-
+          # This is still required for latest-release. Remove whenever 3.21 is dropped
+          sed --in-place 's/out.ld = ln->Value();/out.ld.assign(ln->Value());/g' test/idl/NodeJSTestTypeSupportImpl.cpp
+      - name: 'Build, Test (windows)'
+        if: ${{ matrix.m.os == 'windows-2019' }}
+        shell: cmd
+        run: |-
+          cd OpenDDS
+          call setenv.cmd
+          cd ..
+          set /p V8_ROOT=<v8_path.txt
+          set V8_ROOT=%V8_ROOT%\..\..
+          echo "V8_ROOT = %V8_ROOT%"
+          set PATH=%PATH%;%GITHUB_WORKSPACE%\ACE_TAO\ACE\lib;%GITHUB_WORKSPACE%\OpenDDS\lib;%GITHUB_WORKSPACE%\tools\v8stubs"
+          echo "PATH = %PATH%"
+          msbuild -p:Configuration=Debug,Platform=x64 -m node_opendds.sln
+          cd test
+          perl run_test.pl cpp2node
+          REM perl run_test.pl node2cpp # re-enable when fixed
+          REM perl run_test.pl node2node # re-enable when fixed
+          perl run_test.pl cpp2node --rtps
+          REM perl run_test.pl node2cpp --rtps # re-enable when fixed
+          REM perl run_test.pl node2node --rtps # re-enable when fixed

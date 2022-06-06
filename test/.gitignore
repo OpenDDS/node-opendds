@@ -9,3 +9,5 @@
 *.log
 Debug
 ipch
+test_publisher
+test_subscriber

@@ -18,7 +18,7 @@ namespace v8 {
 #else
   Local<Boolean> Value::ToBoolean(v8::Isolate*) const { return {}; }
   internal::Address* EscapableHandleScope::Escape(internal::Address*) { return 0; }
-  internal::Address* HandleScope::CreateHandle(v8::internal::Isolate*, unsigned long) { return 0; }
+  internal::Address* HandleScope::CreateHandle(v8::internal::Isolate*, internal::Address) { return 0; }
   namespace internal {
     Isolate* IsolateFromNeverReadOnlySpaceObject(Address) { return 0; }
   }
