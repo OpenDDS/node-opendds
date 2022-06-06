@@ -275,8 +275,8 @@ jobs:
           msbuild -p:Configuration=Debug,Platform=x64 -m node_opendds.sln
           cd test
           perl run_test.pl cpp2node
-          #perl run_test.pl node2cpp # re-enable when fixed
-          #perl run_test.pl node2node # re-enable when fixed
+          REM perl run_test.pl node2cpp # re-enable when fixed
+          REM perl run_test.pl node2node # re-enable when fixed
           perl run_test.pl cpp2node --rtps
-          #perl run_test.pl node2cpp --rtps # re-enable when fixed
-          #perl run_test.pl node2node --rtps # re-enable when fixed
+          REM perl run_test.pl node2cpp --rtps # re-enable when fixed
+          REM perl run_test.pl node2node --rtps # re-enable when fixed
