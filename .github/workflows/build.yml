@@ -85,26 +85,8 @@ jobs:
       - name: 'Set Up node (windows)'
         if: ${{ matrix.m.os == 'windows-2019' }}
         uses: actions/setup-node@v3
-        #uses: dcodeIO/setup-node-nvm@v4
         with:
           node-version: ${{ matrix.node_version }}
-#      - name: 'Find V8 (windows)'
-#        if: ${{ matrix.m.os == 'windows-2019' }}
-#        shell: cmd
-#        run: |-
-#          cd D:\
-#          dir /s "node.exe" | findstr /c:"\bin" > %GITHUB_WORKSPACE%\temp1.txt
-#          (for /f "tokens=3,*" %%a in (temp1.txt) do @echo %%a) > %GITHUB_WORKSPACE%\temp2.txt
-#          set /p NODE_DIR=<%GITHUB_WORKSPACE%\temp2.txt
-#          echo "NODE_DIR=%NODE_DIR$" >> %GITHUB_ENV%
-#          set PATH=%PATH%;%NODE_DIR%
-#          echo "PATH=%PATH%" >> %GITHUB_ENV%
-      - name: 'Inspect node directory (windows)'
-        if: ${{ matrix.m.os == 'windows-2019' }}
-        shell: cmd
-        run: |-
-          cd /d C:\hostedtoolcache\windows\node\12.22.12\x64
-          dir
       - name: 'Set environment variables (ubuntu / macos)'
         if: ${{ matrix.m.os == 'ubuntu-latest' || matrix.m.os == 'macos-latest' }}
         shell: bash
