@@ -236,12 +236,6 @@ jobs:
             build/**/*.vcxproj
             *.sln
             test/**/*.vcxproj
-      - name: 'Temporary Workaround LongDouble Issue'
-        if: ${{ matrix.m.os == 'windows-2019' }}
-        shell: bash
-        run: |-
-          # This is still required for latest-release. Remove whenever 3.21 is dropped
-          sed --in-place 's/out.ld = ln->Value();/out.ld.assign(ln->Value());/g' test/idl/NodeJSTestTypeSupportImpl.cpp
       - name: 'Build, Test (windows)'
         if: ${{ matrix.m.os == 'windows-2019' }}
         shell: cmd
