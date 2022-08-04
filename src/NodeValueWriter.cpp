@@ -187,7 +187,7 @@ void NodeValueWriter::write_float128(ACE_CDR::LongDouble value)
 #if ACE_SIZEOF_LONG_DOUBLE == 16
   primitive_helper<ACE_CDR::LongDouble, v8::Number>(value);
 #else
-  primitive_helper<ACE_CDR::LongDouble::NativeImpl, v8::Number>(value());
+  primitive_helper<ACE_CDR::LongDouble::NativeImpl, v8::Number>(value);
 #endif
 }
 
