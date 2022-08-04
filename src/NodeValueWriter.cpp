@@ -49,7 +49,10 @@ void NodeValueWriter::end_union()
 
 void NodeValueWriter::begin_discriminator()
 {
-  next_key_ = "$discriminator";
+  next_key_ = "_d";
+
+  // For whenever we switch to JSON spec compliance and/or have NodeValueReader up and running
+  //next_key_ = "$discriminator";
 }
 
 void NodeValueWriter::end_discriminator()
@@ -146,27 +149,27 @@ void NodeValueWriter::write_uint32(ACE_CDR::ULong value)
 void NodeValueWriter::write_int64(ACE_CDR::LongLong value)
 {
   // If we decide not to use BigInt
-  //char buff[21]; // 2^63 is 19 characters long in decimal representation, plus optional sign, plus null
-  //std::sprintf(buff, "%ld", value);
-  //v8::MaybeLocal<v8::String> v8_value = Nan::New<v8::String>(buff, std::strlen(buff));
-  //value_helper<v8::String>(v8_value);
+  char buff[21]; // 2^63 is 19 characters long in decimal representation, plus optional sign, plus null
+  std::sprintf(buff, "%ld", value);
+  v8::MaybeLocal<v8::String> v8_value = Nan::New<v8::String>(buff, std::strlen(buff));
+  value_helper<v8::String>(v8_value);
 
   // If we decide to use BigInt
-  v8::MaybeLocal<v8::BigInt> v8_value = v8::BigInt::New(v8::Isolate::GetCurrent(), static_cast<int64_t>(value));
-  value_helper<v8::BigInt>(v8_value);
+  //v8::MaybeLocal<v8::BigInt> v8_value = v8::BigInt::New(v8::Isolate::GetCurrent(), static_cast<int64_t>(value));
+  //value_helper<v8::BigInt>(v8_value);
 }
 
 void NodeValueWriter::write_uint64(ACE_CDR::ULongLong value)
 {
   // If we decide not to use BigInt
-  //char buff[21]; // 2^64 is 20 characters long in decimal representation, plus null
-  //std::sprintf(buff, "%lu", value);
-  //v8::MaybeLocal<v8::String> v8_value = Nan::New<v8::String>(buff, std::strlen(buff));
-  //value_helper<v8::String>(v8_value);
+  char buff[21]; // 2^64 is 20 characters long in decimal representation, plus null
+  std::sprintf(buff, "%lu", value);
+  v8::MaybeLocal<v8::String> v8_value = Nan::New<v8::String>(buff, std::strlen(buff));
+  value_helper<v8::String>(v8_value);
 
   // If we decide to use BigInt
-  v8::MaybeLocal<v8::BigInt> v8_value = v8::BigInt::NewFromUnsigned(v8::Isolate::GetCurrent(), static_cast<uint64_t>(value));
-  value_helper<v8::BigInt>(v8_value);
+  //v8::MaybeLocal<v8::BigInt> v8_value = v8::BigInt::NewFromUnsigned(v8::Isolate::GetCurrent(), static_cast<uint64_t>(value));
+  //value_helper<v8::BigInt>(v8_value);
 }
 
 void NodeValueWriter::write_float32(ACE_CDR::Float value)

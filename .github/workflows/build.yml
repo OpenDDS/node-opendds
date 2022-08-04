@@ -24,8 +24,8 @@ jobs:
           - 14
           - 16
         opendds_branch:
-          - master
-          - latest-release
+        #  - master
+          - expose_get_value_writer_dispatcher
         m:
           - {os: ubuntu-latest, dds_security: 1}
           - {os: ubuntu-latest, dds_security: 0}
@@ -53,7 +53,7 @@ jobs:
       - name: 'Checkout OpenDDS'
         uses: actions/checkout@v3
         with:
-          repository: objectcomputing/OpenDDS
+          repository: simpsont-oci/OpenDDS
           ref: ${{ matrix.opendds_branch }}
           path: OpenDDS
           fetch-depth: 1
@@ -251,8 +251,8 @@ jobs:
           msbuild -p:Configuration=Debug,Platform=x64 -m node_opendds.sln
           cd test
           perl run_test.pl cpp2node
-          REM perl run_test.pl node2cpp # re-enable when fixed
-          REM perl run_test.pl node2node # re-enable when fixed
+          perl run_test.pl node2cpp
+          perl run_test.pl node2node
           perl run_test.pl cpp2node --rtps
-          REM perl run_test.pl node2cpp --rtps # re-enable when fixed
-          REM perl run_test.pl node2node --rtps # re-enable when fixed
+          perl run_test.pl node2cpp --rtps
+          perl run_test.pl node2node --rtps
