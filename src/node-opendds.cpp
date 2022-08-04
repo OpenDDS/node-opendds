@@ -254,7 +254,7 @@ namespace {
     }
 
     Local<Value> cb = fci[fci.Length() - 1];
-    NodeDRListener* const ndrl = new NodeDRListener(dp, cb.As<Function>(), *tc);
+    NodeDRListener* const ndrl = new NodeDRListener(dp, cb.As<Function>());
     const DDS::DataReaderListener_var listen(ndrl);
 
     DDS::DataReaderQos dr_qos;
@@ -280,6 +280,11 @@ namespace {
       Nan::ThrowError("couldn't create DataReader");
       fci.GetReturnValue().SetUndefined();
       return;
+    }
+
+    OpenDDS::DCPS::DataReaderImpl* dri= dynamic_cast<OpenDDS::DCPS::DataReaderImpl*>(dr.in());
+    if (dri) {
+      ndrl->set_value_writer_dispatcher(dri->get_value_writer_dispatcher());
     }
 
     const Local<ObjectTemplate> ot = Nan::New<ObjectTemplate>();
