@@ -150,7 +150,11 @@ void NodeValueWriter::write_int64(ACE_CDR::LongLong value)
 {
   // If we decide not to use BigInt
   char buff[21]; // 2^63 is 19 characters long in decimal representation, plus optional sign, plus null
+#ifdef ACE_WIN32
+  std::sprintf(buff, "%lld", value);
+#else
   std::sprintf(buff, "%ld", value);
+#endif
   v8::MaybeLocal<v8::String> v8_value = Nan::New<v8::String>(buff, std::strlen(buff));
   value_helper<v8::String>(v8_value);
 
@@ -163,7 +167,11 @@ void NodeValueWriter::write_uint64(ACE_CDR::ULongLong value)
 {
   // If we decide not to use BigInt
   char buff[21]; // 2^64 is 20 characters long in decimal representation, plus null
+#ifdef ACE_WIN32
+  std::sprintf(buff, "%llu", value);
+#else
   std::sprintf(buff, "%lu", value);
+#endif
   v8::MaybeLocal<v8::String> v8_value = Nan::New<v8::String>(buff, std::strlen(buff));
   value_helper<v8::String>(v8_value);
 
