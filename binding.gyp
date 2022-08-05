@@ -46,8 +46,12 @@
       'conditions': [
         ['OS in "linux mac"', {
           'link_settings': {
-            'libraries': [ '-lOpenDDS_Dcps', '-lTAO_PortableServer',
-                           '-lTAO_AnyTypeCode', '-lTAO', '-lACE' ],
+            'libraries': [ '-lOpenDDS_Dcps',
+                           '-lTAO_PortableServer',
+                           '-lTAO_AnyTypeCode',
+                           '-lTAO_Valuetype',
+                           '-lTAO',
+                           '-lACE' ],
             'ldflags': [ '-L$(ACE_ROOT)/lib', '-L$(DDS_ROOT)/lib',
                          "<!(node build.js libpaths)" ],
           },
@@ -71,7 +75,9 @@
             'libraries': [ 'OpenDDS_Dcps<(lib_suffix)',
                            'TAO_PortableServer<(lib_suffix)',
                            'TAO_AnyTypeCode<(lib_suffix)',
-                           'TAO<(lib_suffix)', 'ACE<(lib_suffix)' ],
+                           'TAO_Valuetype<(lib_suffix)',
+                           'TAO<(lib_suffix)',
+                           'ACE<(lib_suffix)' ],
           },
         }]
       ],
