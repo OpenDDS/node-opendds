@@ -24,7 +24,8 @@ jobs:
           - 14
           - 16
         opendds_branch:
-          - master
+          - cleanup_publication_handle_lock
+          # - master
         m:
           - {os: ubuntu-latest, dds_security: 1}
           - {os: ubuntu-latest, dds_security: 0}
@@ -52,7 +53,7 @@ jobs:
       - name: 'Checkout OpenDDS'
         uses: actions/checkout@v3
         with:
-          repository: objectcomputing/OpenDDS
+          repository: simpsont-oci/OpenDDS
           ref: ${{ matrix.opendds_branch }}
           path: OpenDDS
           fetch-depth: 1
