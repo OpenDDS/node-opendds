@@ -172,6 +172,7 @@ jobs:
         if: ${{ matrix.m.os == 'ubuntu-latest' || matrix.m.os == 'macos-latest' }}
         shell: bash
         run: |-
+          set -e
           cd ${{ env.NVM_DIR }}
           [ -s "./nvm.sh" ] && \. "./nvm.sh"  # loads nvm
           cd $GITHUB_WORKSPACE
@@ -267,10 +268,15 @@ jobs:
           echo "PATH = %PATH%"
           cd test
           perl run_test.pl cpp2node
+          if %errorlevel% neq 0 exit /b %errorlevel%
           perl run_test.pl node2cpp
+          if %errorlevel% neq 0 exit /b %errorlevel%
           perl run_test.pl node2node
+          if %errorlevel% neq 0 exit /b %errorlevel%
           perl run_test.pl cpp2node --rtps
+          if %errorlevel% neq 0 exit /b %errorlevel%
           perl run_test.pl node2cpp --rtps
+          if %errorlevel% neq 0 exit /b %errorlevel%
           perl run_test.pl node2node --rtps
       - name: 'Test Secure (windows)'
         if: ${{ matrix.m.os == 'windows-2019' && matrix.m.dds_security == 1 }}
@@ -286,5 +292,7 @@ jobs:
           echo "PATH = %PATH%"
           cd test
           perl run_test.pl cpp2node --rtps --secure
+          if %errorlevel% neq 0 exit /b %errorlevel%
           perl run_test.pl node2cpp --rtps --secure
+          if %errorlevel% neq 0 exit /b %errorlevel%
           perl run_test.pl node2node --rtps --secure

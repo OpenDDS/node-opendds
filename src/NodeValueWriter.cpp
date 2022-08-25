@@ -150,7 +150,7 @@ void NodeValueWriter::write_int64(ACE_CDR::LongLong value)
 {
   // If we decide not to use BigInt
   char buff[21]; // 2^63 is 19 characters long in decimal representation, plus optional sign, plus null
-#ifdef ACE_WIN32
+#ifndef ACE_LINUX
   std::sprintf(buff, "%lld", value);
 #else
   std::sprintf(buff, "%ld", value);
@@ -167,7 +167,7 @@ void NodeValueWriter::write_uint64(ACE_CDR::ULongLong value)
 {
   // If we decide not to use BigInt
   char buff[21]; // 2^64 is 20 characters long in decimal representation, plus null
-#ifdef ACE_WIN32
+#ifndef ACE_LINUX
   std::sprintf(buff, "%llu", value);
 #else
   std::sprintf(buff, "%lu", value);

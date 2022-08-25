@@ -642,4 +642,11 @@ namespace {
   }
 }
 
+#ifdef ACE_LINUX
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wcast-function-type"
+#endif
 NODE_MODULE(node_opendds, init_node_opendds);
+#ifdef ACE_LINUX
+#pragma GCC diagnostic pop
+#endif
