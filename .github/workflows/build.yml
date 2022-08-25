@@ -184,14 +184,18 @@ jobs:
           ${{ env.ACE_ROOT }}/bin/mwc.pl -type gnuace -exclude ACE_TAO,OpenDDS
           make -j2 || make
           echo "Test ========== ========== =========="
-          if [ ${{ matrix.m.dds_security }} == 1 ]; then TEST_OPTIONS+="--secure"; fi
           cd test
-          ./run_test.pl cpp2node $TEST_OPTIONS
-          ./run_test.pl node2cpp $TEST_OPTIONS
-          ./run_test.pl node2node $TEST_OPTIONS
+          ./run_test.pl cpp2node
+          ./run_test.pl node2cpp
+          ./run_test.pl node2node
           ./run_test.pl cpp2node --rtps
           ./run_test.pl node2cpp --rtps
           ./run_test.pl node2node --rtps
+          if [ ${{ matrix.m.dds_security }} == 1 ]; then
+          ./run_test.pl cpp2node --rtps --secure;
+          ./run_test.pl node2cpp --rtps --secure;
+          ./run_test.pl node2node --rtps --secure;
+          fi
       - name: 'Install (windows)'
         if: ${{ matrix.m.os == 'windows-2019' }}
         shell: cmd
@@ -236,7 +240,7 @@ jobs:
             build/**/*.vcxproj
             *.sln
             test/**/*.vcxproj
-      - name: 'Build, Test (windows)'
+      - name: 'Build (windows)'
         if: ${{ matrix.m.os == 'windows-2019' }}
         shell: cmd
         run: |-
@@ -249,6 +253,18 @@ jobs:
           set PATH=%PATH%;%GITHUB_WORKSPACE%\ACE_TAO\ACE\lib;%GITHUB_WORKSPACE%\OpenDDS\lib;%GITHUB_WORKSPACE%\tools\v8stubs"
           echo "PATH = %PATH%"
           msbuild -p:Configuration=Debug,Platform=x64 -m node_opendds.sln
+      - name: 'Test (windows)'
+        if: ${{ matrix.m.os == 'windows-2019' }}
+        shell: cmd
+        run: |-
+          cd OpenDDS
+          call setenv.cmd
+          cd ..
+          set /p V8_ROOT=<v8_path.txt
+          set V8_ROOT=%V8_ROOT%\..\..
+          echo "V8_ROOT = %V8_ROOT%"
+          set PATH=%PATH%;%GITHUB_WORKSPACE%\ACE_TAO\ACE\lib;%GITHUB_WORKSPACE%\OpenDDS\lib;%GITHUB_WORKSPACE%\tools\v8stubs"
+          echo "PATH = %PATH%"
           cd test
           perl run_test.pl cpp2node
           perl run_test.pl node2cpp
@@ -256,3 +272,19 @@ jobs:
           perl run_test.pl cpp2node --rtps
           perl run_test.pl node2cpp --rtps
           perl run_test.pl node2node --rtps
+      - name: 'Test Secure (windows)'
+        if: ${{ matrix.m.os == 'windows-2019' && matrix.m.dds_security == 1 }}
+        shell: cmd
+        run: |-
+          cd OpenDDS
+          call setenv.cmd
+          cd ..
+          set /p V8_ROOT=<v8_path.txt
+          set V8_ROOT=%V8_ROOT%\..\..
+          echo "V8_ROOT = %V8_ROOT%"
+          set PATH=%PATH%;%GITHUB_WORKSPACE%\ACE_TAO\ACE\lib;%GITHUB_WORKSPACE%\OpenDDS\lib;%GITHUB_WORKSPACE%\tools\v8stubs"
+          echo "PATH = %PATH%"
+          cd test
+          perl run_test.pl cpp2node --rtps --secure
+          perl run_test.pl node2cpp --rtps --secure
+          perl run_test.pl node2node --rtps --secure
