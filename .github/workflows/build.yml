@@ -24,7 +24,7 @@ jobs:
           - 14
           - 16
         opendds_branch:
-          - cleanup_publication_handle_lock
+          - v8_no_stringstream
           # - master
         m:
           - {os: ubuntu-latest, dds_security: 1}
