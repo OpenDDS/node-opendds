@@ -30,7 +30,7 @@ if (secure) {
 }
 
 function init_opendds(opendds_addon) {
-  return opendds_addon.initialize(process.argv.slice(2));
+  return opendds_addon.initialize(... process.argv.slice(2));
 }
 
 var opendds_addon = require('../lib/node-opendds'),
