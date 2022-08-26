@@ -77,8 +77,8 @@ if ($pub_node) {
   $pub_exec_name .= "test_publisher";
 }
 
-$pub_args .= " -DCPSDebugLevel 5";
-$sub_args .= " -DCPSDebugLevel 5";
+$pub_args .= " -DCPSDebugLevel 5 -DCPSTransportDebugLevel 5";
+$sub_args .= " -DCPSDebugLevel 5 -DCPSTransportDebugLevel 5";
 
 if ($secure) {
   $pub_args .= " --secure";
