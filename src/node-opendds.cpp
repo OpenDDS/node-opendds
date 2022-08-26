@@ -503,7 +503,7 @@ namespace {
     // TODO Handle non-infinite durations
 
 
-    ACE_DEBUG((LM_DEBUG, "(%P|%t) node_opendds::wait_for_acknowledgments() - calling dw's wait_for_acknowledgments %d\n", return_code));
+    ACE_DEBUG((LM_DEBUG, "(%P|%t) node_opendds::wait_for_acknowledgments() - calling dw's wait_for_acknowledgments\n"));
 
     const DDS::Duration_t delay = {DDS::DURATION_INFINITE_SEC, DDS::DURATION_INFINITE_NSEC};
     const DDS::ReturnCode_t return_code = dw->wait_for_acknowledgments(delay);
