@@ -9,8 +9,6 @@ use lib "$ACE_ROOT/bin";
 use PerlDDS::Run_Test;
 use strict;
 
-my $status = 0;
-
 my $test = new PerlDDS::TestFramework();
 
 print "\nTest: @ARGV\n";
@@ -96,6 +94,4 @@ $test->process("pub", $pub_exec_name, $pub_args);
 $test->start_process("sub");
 $test->start_process("pub");
 
-exit $test->finish(30);
-
-exit $status;
+exit $test->finish(60);
