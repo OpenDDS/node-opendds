@@ -113,6 +113,7 @@ namespace {
     Nan::SetMethod(ot, "create_datawriter", create_datawriter);
     const Local<Object> obj = ot->NewInstance(Nan::GetCurrentContext()).ToLocalChecked();
     Nan::SetInternalFieldPointer(obj, 0, dp._retn());
+    ACE_DEBUG((LM_DEBUG, "(%P|%t) node-opendds::create_participant() - create_participant returned successfully\n"));
     fci.GetReturnValue().Set(obj);
   }
 
@@ -138,7 +139,7 @@ namespace {
     part->delete_contained_entities();
     const DDS::DomainParticipantFactory_var dpf = TheParticipantFactory;
     dpf->delete_participant(part);
-    ACE_DEBUG((LM_DEBUG, "(%P|%t) node_opendds::delete_participant() - delete_participant returned successfully\n"));
+    ACE_DEBUG((LM_DEBUG, "(%P|%t) node-opendds::delete_participant() - delete_participant returned successfully\n"));
     fci.GetReturnValue().SetUndefined();
   }
 
@@ -293,6 +294,7 @@ namespace {
     const Local<Object> obj = ot->NewInstance(Nan::GetCurrentContext()).ToLocalChecked();
     Nan::SetInternalFieldPointer(obj, 0, dr._retn());
     ndrl->set_javascript_datareader(obj);
+    ACE_DEBUG((LM_DEBUG, "(%P|%t) node-opendds::subscribe() - subscribe returned successfully\n"));
     fci.GetReturnValue().Set(obj);
   }
 
@@ -418,6 +420,7 @@ namespace {
     const Local<Object> obj = ot->NewInstance(Nan::GetCurrentContext()).ToLocalChecked();
     Nan::SetInternalFieldPointer(obj, 0, dw._retn());
     Nan::SetInternalFieldPointer(obj, 1, const_cast<OpenDDS::DCPS::V8TypeConverter*>(tc));
+    ACE_DEBUG((LM_DEBUG, "(%P|%t) node-opendds::create_datawriter() - create_datawriter returned successfully\n"));
     fci.GetReturnValue().Set(obj);
   }
 
@@ -484,7 +487,7 @@ namespace {
     void* sample_vp = tc->fromV8(sample_obj);
     DDS::ReturnCode_t return_code = tc->write_helper(dw, sample_vp, handle);
 
-    ACE_DEBUG((LM_DEBUG, "(%P|%t) node_opendds::write() - dw's write returned %d\n", return_code));
+    ACE_DEBUG((LM_DEBUG, "(%P|%t) node-opendds::write() - dw's write returned %d\n", return_code));
 
     tc->deleteFromV8Result(sample_vp);
     if (return_code != DDS::RETCODE_OK) {
@@ -503,12 +506,12 @@ namespace {
     // TODO Handle non-infinite durations
 
 
-    ACE_DEBUG((LM_DEBUG, "(%P|%t) node_opendds::wait_for_acknowledgments() - calling dw's wait_for_acknowledgments\n"));
+    ACE_DEBUG((LM_DEBUG, "(%P|%t) node-opendds::wait_for_acknowledgments() - calling dw's wait_for_acknowledgments\n"));
 
     const DDS::Duration_t delay = {DDS::DURATION_INFINITE_SEC, DDS::DURATION_INFINITE_NSEC};
     const DDS::ReturnCode_t return_code = dw->wait_for_acknowledgments(delay);
 
-    ACE_DEBUG((LM_DEBUG, "(%P|%t) node_opendds::wait_for_acknowledgments() - dw's wait_for_acknowledgments returned %d\n", return_code));
+    ACE_DEBUG((LM_DEBUG, "(%P|%t) node-opendds::wait_for_acknowledgments() - dw's wait_for_acknowledgments returned %d\n", return_code));
 
     if (return_code != DDS::RETCODE_OK) {
       Nan::ThrowError("couldn't wait for acknowledgments");

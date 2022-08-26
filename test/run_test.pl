@@ -78,7 +78,7 @@ if ($pub_node) {
 }
 
 $pub_args .= " -ORBVerboseLogging 1 -DCPSDebugLevel 5 -DCPSTransportDebugLevel 5";
-$sub_args .= " -DCPSDebugLevel 5 -DCPSTransportDebugLevel 5";
+$sub_args .= " -ORBVerboseLogging 1 -DCPSDebugLevel 5 -DCPSTransportDebugLevel 5";
 
 if ($secure) {
   $pub_args .= " --secure";
