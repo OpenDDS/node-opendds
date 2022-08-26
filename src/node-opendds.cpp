@@ -138,6 +138,7 @@ namespace {
     part->delete_contained_entities();
     const DDS::DomainParticipantFactory_var dpf = TheParticipantFactory;
     dpf->delete_participant(part);
+    ACE_DEBUG((LM_DEBUG, "(%P|%t) node_opendds::delete_participant() - delete_participant returned successfully\n"));
     fci.GetReturnValue().SetUndefined();
   }
 
@@ -482,6 +483,9 @@ namespace {
 
     void* sample_vp = tc->fromV8(sample_obj);
     DDS::ReturnCode_t return_code = tc->write_helper(dw, sample_vp, handle);
+
+    ACE_DEBUG((LM_DEBUG, "(%P|%t) node_opendds::write() - dw's write returned %d\n", return_code));
+
     tc->deleteFromV8Result(sample_vp);
     if (return_code != DDS::RETCODE_OK) {
       Nan::ThrowError("couldn't write sample");
@@ -498,8 +502,13 @@ namespace {
 
     // TODO Handle non-infinite durations
 
+
+    ACE_DEBUG((LM_DEBUG, "(%P|%t) node_opendds::wait_for_acknowledgments() - calling dw's wait_for_acknowledgments %d\n", return_code));
+
     const DDS::Duration_t delay = {DDS::DURATION_INFINITE_SEC, DDS::DURATION_INFINITE_NSEC};
     const DDS::ReturnCode_t return_code = dw->wait_for_acknowledgments(delay);
+
+    ACE_DEBUG((LM_DEBUG, "(%P|%t) node_opendds::wait_for_acknowledgments() - dw's wait_for_acknowledgments returned %d\n", return_code));
 
     if (return_code != DDS::RETCODE_OK) {
       Nan::ThrowError("couldn't wait for acknowledgments");

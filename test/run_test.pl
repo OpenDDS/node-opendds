@@ -36,7 +36,7 @@ if (exists($args{"node2cpp"})) {
   $sub_node = 0;
 }
 
-$test->setup_discovery("-ORBDebugLevel 1 -ORBLogFile DCPSInfoRepo.log") unless $rtps;
+$test->setup_discovery("-ORBVerboseLogging 1 -ORBDebugLevel 1 -ORBLogFile DCPSInfoRepo.log") unless $rtps;
 
 sub which {
   my $file = shift;
@@ -77,7 +77,7 @@ if ($pub_node) {
   $pub_exec_name .= "test_publisher";
 }
 
-$pub_args .= " -DCPSDebugLevel 5 -DCPSTransportDebugLevel 5";
+$pub_args .= " -ORBVerboseLogging 1 -DCPSDebugLevel 5 -DCPSTransportDebugLevel 5";
 $sub_args .= " -DCPSDebugLevel 5 -DCPSTransportDebugLevel 5";
 
 if ($secure) {
