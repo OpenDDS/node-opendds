@@ -34,7 +34,7 @@ if (exists($args{"node2cpp"})) {
   $sub_node = 0;
 }
 
-$test->setup_discovery("-ORBVerboseLogging 1 -ORBDebugLevel 1 -ORBLogFile DCPSInfoRepo.log") unless $rtps;
+$test->setup_discovery("-ORBDebugLevel 1 -ORBLogFile DCPSInfoRepo.log") unless $rtps;
 
 sub which {
   my $file = shift;
