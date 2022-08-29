@@ -155,7 +155,7 @@ jobs:
         run: |-
           cd OpenDDS
           call setenv.cmd
-          msbuild -p:Configuration=Debug,Platform=x64 -m DDS_TAOv2.sln
+          msbuild -p:Configuration=Debug,Platform=x64 -t:${{ env.BUILD_TARGETS }} -m DDS_TAOv2.sln
       - name: 'Checkout nvm'
         uses: actions/checkout@v3
         with:
