@@ -113,7 +113,7 @@ try {
     }
   });
 
-  setTimeout(function () { doStuff(writer); }, 3000);
+  setTimeout(function () { doStuff(writer); }, 10000);
 
 } catch (e) {
   console.log(e);

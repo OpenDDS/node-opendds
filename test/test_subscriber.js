@@ -155,7 +155,7 @@ try {
           process.exitCode = 1;
         }
         if (sample.id == last_sample_id) {
-          setTimeout(function () { doStuff(participant, dr); }, 3000);
+          setTimeout(function () { doStuff(participant, dr); }, 10000);
         }
       }
     } catch (e) {
