@@ -246,16 +246,6 @@ jobs:
           set PATH
           perl ${{ env.ACE_ROOT }}\bin\mwc.pl -type vs2019 -exclude ACE_TAO,OpenDDS
           msbuild -p:Configuration=Debug,Platform=x64 -m node_opendds.sln
-      - name: 'Upload Project Files Artifact (windows)'
-        if: ${{ matrix.m.os == 'windows-2019' }} && false # not currently required (&& false), but keep for future windows debugging
-        uses: actions/upload-artifact@v3
-        with:
-          name: node_${{ matrix.node_version }}_${{ matrix.opendds_branch }}_${{ matrix.m.dds_security }}_vs2019_project_files
-          path: |
-            build/**/*.sln
-            build/**/*.vcxproj
-            *.sln
-            test/**/*.vcxproj
       - name: 'Build (windows)'
         if: ${{ matrix.m.os == 'windows-2019' }}
         shell: cmd
