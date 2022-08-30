@@ -282,7 +282,7 @@ namespace {
       return;
     }
 
-    OpenDDS::DCPS::DataReaderImpl* dri= dynamic_cast<OpenDDS::DCPS::DataReaderImpl*>(dr.in());
+    OpenDDS::DCPS::DataReaderImpl* dri = dynamic_cast<OpenDDS::DCPS::DataReaderImpl*>(dr.in());
     if (dri) {
       ndrl->set_value_writer_dispatcher(dri->get_value_writer_dispatcher());
     }

@@ -163,7 +163,7 @@ jobs:
           path: ${{ env.NVM_DIR }}
           ref: v0.39.0
           fetch-depth: 1
-      - name: 'Install node, Build, Test (ubuntu / macos)'
+      - name: 'Install node, Build (ubuntu / macos)'
         if: ${{ matrix.m.os == 'ubuntu-latest' || matrix.m.os == 'macos-latest' }}
         shell: bash
         run: |-
@@ -179,7 +179,17 @@ jobs:
           npm install
           ${{ env.ACE_ROOT }}/bin/mwc.pl -type gnuace -exclude ACE_TAO,OpenDDS
           make -j2 || make
-          echo "Test ========== ========== =========="
+      - name: 'Test (ubuntu / macos)'
+        if: ${{ matrix.m.os == 'ubuntu-latest' || matrix.m.os == 'macos-latest' }}
+        shell: bash
+        run: |-
+          set -e
+          cd ${{ env.NVM_DIR }}
+          [ -s "./nvm.sh" ] && \. "./nvm.sh"  # loads nvm
+          cd $GITHUB_WORKSPACE
+          nvm use ${{ matrix.node_version }}
+          echo "node:$(node -v) npm:$(npm -v)"
+          export V8_ROOT=$NVM_INC/../..
           cd test
           ./run_test.pl cpp2node
           ./run_test.pl node2cpp
@@ -187,11 +197,21 @@ jobs:
           ./run_test.pl cpp2node --rtps
           ./run_test.pl node2cpp --rtps
           ./run_test.pl node2node --rtps
-          if [ ${{ matrix.m.dds_security }} == 1 ]; then
-          ./run_test.pl cpp2node --rtps --secure;
-          ./run_test.pl node2cpp --rtps --secure;
-          ./run_test.pl node2node --rtps --secure;
-          fi
+      - name: 'Test Secure (ubuntu / macos)'
+        if: ${{ (matrix.m.os == 'ubuntu-latest' || matrix.m.os == 'macos-latest') && matrix.m.dds_security == 1 }}
+        shell: bash
+        run: |-
+          set -e
+          cd ${{ env.NVM_DIR }}
+          [ -s "./nvm.sh" ] && \. "./nvm.sh"  # loads nvm
+          cd $GITHUB_WORKSPACE
+          nvm use ${{ matrix.node_version }}
+          echo "node:$(node -v) npm:$(npm -v)"
+          export V8_ROOT=$NVM_INC/../..
+          cd test
+          ./run_test.pl cpp2node --rtps --secure
+          ./run_test.pl node2cpp --rtps --secure
+          ./run_test.pl node2node --rtps --secure
       - name: 'Install (windows)'
         if: ${{ matrix.m.os == 'windows-2019' }}
         shell: cmd
@@ -221,9 +241,9 @@ jobs:
           cd ..
           set /p V8_ROOT=<v8_path.txt
           set V8_ROOT=%V8_ROOT%\..\..
-          echo "V8_ROOT = %V8_ROOT%"
+          set V8
           set PATH=%PATH%;%GITHUB_WORKSPACE%\ACE_TAO\ACE\lib;%GITHUB_WORKSPACE%\OpenDDS\lib;%GITHUB_WORKSPACE%\tools\v8stubs"
-          echo "PATH = %PATH%"
+          set PATH
           perl ${{ env.ACE_ROOT }}\bin\mwc.pl -type vs2019 -exclude ACE_TAO,OpenDDS
           msbuild -p:Configuration=Debug,Platform=x64 -m node_opendds.sln
       - name: 'Upload Project Files Artifact (windows)'
@@ -245,9 +265,9 @@ jobs:
           cd ..
           set /p V8_ROOT=<v8_path.txt
           set V8_ROOT=%V8_ROOT%\..\..
-          echo "V8_ROOT = %V8_ROOT%"
+          set V8
           set PATH=%PATH%;%GITHUB_WORKSPACE%\ACE_TAO\ACE\lib;%GITHUB_WORKSPACE%\OpenDDS\lib;%GITHUB_WORKSPACE%\tools\v8stubs"
-          echo "PATH = %PATH%"
+          set PATH
           msbuild -p:Configuration=Debug,Platform=x64 -m node_opendds.sln
       - name: 'Test (windows)'
         if: ${{ matrix.m.os == 'windows-2019' }}
@@ -258,9 +278,9 @@ jobs:
           cd ..
           set /p V8_ROOT=<v8_path.txt
           set V8_ROOT=%V8_ROOT%\..\..
-          echo "V8_ROOT = %V8_ROOT%"
+          set V8
           set PATH=%PATH%;%GITHUB_WORKSPACE%\ACE_TAO\ACE\lib;%GITHUB_WORKSPACE%\OpenDDS\lib;%GITHUB_WORKSPACE%\tools\v8stubs"
-          echo "PATH = %PATH%"
+          set PATH
           cd test
           REM perl run_test.pl cpp2node # re-enable when fixed
           REM if %errorlevel% neq 0 exit /b %errorlevel% # re-enable when fixed
@@ -282,9 +302,9 @@ jobs:
           cd ..
           set /p V8_ROOT=<v8_path.txt
           set V8_ROOT=%V8_ROOT%\..\..
-          echo "V8_ROOT = %V8_ROOT%"
+          set V8
           set PATH=%PATH%;%GITHUB_WORKSPACE%\ACE_TAO\ACE\lib;%GITHUB_WORKSPACE%\OpenDDS\lib;%GITHUB_WORKSPACE%\tools\v8stubs"
-          echo "PATH = %PATH%"
+          set PATH
           cd test
           perl run_test.pl cpp2node --rtps --secure
           if %errorlevel% neq 0 exit /b %errorlevel%
