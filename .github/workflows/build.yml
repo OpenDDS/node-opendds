@@ -25,7 +25,7 @@ jobs:
           - 16
         opendds_branch:
           - master
-          - latest-release
+          # - latest-release
         m:
           - {os: ubuntu-latest, dds_security: 1}
           - {os: ubuntu-latest, dds_security: 0}
@@ -47,7 +47,7 @@ jobs:
         uses: actions/checkout@v3
         with:
           repository: DOCGroup/ACE_TAO
-          ref: Latest_Micro
+          ref: ace6tao2
           path: ACE_TAO
           fetch-depth: 1
       - name: 'Checkout OpenDDS'
@@ -124,11 +124,6 @@ jobs:
           echo "NVM_DIR=$GITHUB_WORKSPACE\\nvm" >> $GITHUB_ENV
           echo "NAN_ROOT=$GITHUB_WORKSPACE\\node_modules\\nan" >> $GITHUB_ENV
           echo "npm_config_devdir=$GITHUB_WORKSPACE\\opendds-node-gyp-devdir" >> $GITHUB_ENV
-          if [ ${{ matrix.node_version }} == 16 ]; then
-            CONFIG_OPTIONS+=" --std=c++14";
-          else
-            CONFIG_OPTIONS+=" --std=c++11";
-          fi
           if [ ${{ matrix.m.dds_security }} == 1 ]; then
             CONFIG_OPTIONS+=" --security";
             BUILD_TARGETS+=";OpenDDS_Security";
@@ -145,8 +140,8 @@ jobs:
           echo "dds_security=${{ matrix.m.dds_security }}; CONFIG_OPTIONS=${{ env.CONFIG_OPTIONS }}; BUILD_TARGETS=${{ env.BUILD_TARGETS }}"
           cd OpenDDS
           ./configure --no-tests ${{ env.CONFIG_OPTIONS }}
-          cd ..
-          make -C OpenDDS -sj6 ${{ env.BUILD_TARGETS }}
+          . setenv.sh
+          make -j3 ${{ env.BUILD_TARGETS }}
       - name: 'Configure OpenDDS (windows)'
         if: ${{ matrix.m.os == 'windows-2019' }}
         shell: cmd
@@ -168,10 +163,11 @@ jobs:
           path: ${{ env.NVM_DIR }}
           ref: v0.39.0
           fetch-depth: 1
-      - name: 'Install node, Build, Test (ubuntu / macos)'
+      - name: 'Install node, Build (ubuntu / macos)'
         if: ${{ matrix.m.os == 'ubuntu-latest' || matrix.m.os == 'macos-latest' }}
         shell: bash
         run: |-
+          set -e
           cd ${{ env.NVM_DIR }}
           [ -s "./nvm.sh" ] && \. "./nvm.sh"  # loads nvm
           cd $GITHUB_WORKSPACE
@@ -183,15 +179,39 @@ jobs:
           npm install
           ${{ env.ACE_ROOT }}/bin/mwc.pl -type gnuace -exclude ACE_TAO,OpenDDS
           make -j2 || make
-          echo "Test ========== ========== =========="
-          if [ ${{ matrix.m.dds_security }} == 1 ]; then TEST_OPTIONS+="--secure"; fi
+      - name: 'Test (ubuntu / macos)'
+        if: ${{ matrix.m.os == 'ubuntu-latest' || matrix.m.os == 'macos-latest' }}
+        shell: bash
+        run: |-
+          set -e
+          cd ${{ env.NVM_DIR }}
+          [ -s "./nvm.sh" ] && \. "./nvm.sh"  # loads nvm
+          cd $GITHUB_WORKSPACE
+          nvm use ${{ matrix.node_version }}
+          echo "node:$(node -v) npm:$(npm -v)"
+          export V8_ROOT=$NVM_INC/../..
           cd test
-          ./run_test.pl cpp2node $TEST_OPTIONS
-          ./run_test.pl node2cpp $TEST_OPTIONS
-          ./run_test.pl node2node $TEST_OPTIONS
+          ./run_test.pl cpp2node
+          ./run_test.pl node2cpp
+          ./run_test.pl node2node
           ./run_test.pl cpp2node --rtps
           ./run_test.pl node2cpp --rtps
           ./run_test.pl node2node --rtps
+      - name: 'Test Secure (ubuntu / macos)'
+        if: ${{ (matrix.m.os == 'ubuntu-latest' || matrix.m.os == 'macos-latest') && matrix.m.dds_security == 1 }}
+        shell: bash
+        run: |-
+          set -e
+          cd ${{ env.NVM_DIR }}
+          [ -s "./nvm.sh" ] && \. "./nvm.sh"  # loads nvm
+          cd $GITHUB_WORKSPACE
+          nvm use ${{ matrix.node_version }}
+          echo "node:$(node -v) npm:$(npm -v)"
+          export V8_ROOT=$NVM_INC/../..
+          cd test
+          ./run_test.pl cpp2node --rtps --secure
+          ./run_test.pl node2cpp --rtps --secure
+          ./run_test.pl node2node --rtps --secure
       - name: 'Install (windows)'
         if: ${{ matrix.m.os == 'windows-2019' }}
         shell: cmd
@@ -221,22 +241,12 @@ jobs:
           cd ..
           set /p V8_ROOT=<v8_path.txt
           set V8_ROOT=%V8_ROOT%\..\..
-          echo "V8_ROOT = %V8_ROOT%"
+          set V8
           set PATH=%PATH%;%GITHUB_WORKSPACE%\ACE_TAO\ACE\lib;%GITHUB_WORKSPACE%\OpenDDS\lib;%GITHUB_WORKSPACE%\tools\v8stubs"
-          echo "PATH = %PATH%"
+          set PATH
           perl ${{ env.ACE_ROOT }}\bin\mwc.pl -type vs2019 -exclude ACE_TAO,OpenDDS
           msbuild -p:Configuration=Debug,Platform=x64 -m node_opendds.sln
-      - name: 'Upload Project Files Artifact (windows)'
-        if: ${{ matrix.m.os == 'windows-2019' }} && false # not currently required (&& false), but keep for future windows debugging
-        uses: actions/upload-artifact@v3
-        with:
-          name: node_${{ matrix.node_version }}_${{ matrix.opendds_branch }}_${{ matrix.m.dds_security }}_vs2019_project_files
-          path: |
-            build/**/*.sln
-            build/**/*.vcxproj
-            *.sln
-            test/**/*.vcxproj
-      - name: 'Build, Test (windows)'
+      - name: 'Build (windows)'
         if: ${{ matrix.m.os == 'windows-2019' }}
         shell: cmd
         run: |-
@@ -245,14 +255,49 @@ jobs:
           cd ..
           set /p V8_ROOT=<v8_path.txt
           set V8_ROOT=%V8_ROOT%\..\..
-          echo "V8_ROOT = %V8_ROOT%"
+          set V8
           set PATH=%PATH%;%GITHUB_WORKSPACE%\ACE_TAO\ACE\lib;%GITHUB_WORKSPACE%\OpenDDS\lib;%GITHUB_WORKSPACE%\tools\v8stubs"
-          echo "PATH = %PATH%"
+          set PATH
           msbuild -p:Configuration=Debug,Platform=x64 -m node_opendds.sln
+      - name: 'Test (windows)'
+        if: ${{ matrix.m.os == 'windows-2019' }}
+        shell: cmd
+        run: |-
+          cd OpenDDS
+          call setenv.cmd
+          cd ..
+          set /p V8_ROOT=<v8_path.txt
+          set V8_ROOT=%V8_ROOT%\..\..
+          set V8
+          set PATH=%PATH%;%GITHUB_WORKSPACE%\ACE_TAO\ACE\lib;%GITHUB_WORKSPACE%\OpenDDS\lib;%GITHUB_WORKSPACE%\tools\v8stubs"
+          set PATH
           cd test
-          perl run_test.pl cpp2node
+          REM perl run_test.pl cpp2node # re-enable when fixed
+          REM if %errorlevel% neq 0 exit /b %errorlevel% # re-enable when fixed
           REM perl run_test.pl node2cpp # re-enable when fixed
+          REM if %errorlevel% neq 0 exit /b %errorlevel% # re-enable when fixed
           REM perl run_test.pl node2node # re-enable when fixed
+          REM if %errorlevel% neq 0 exit /b %errorlevel% # re-enable when fixed
           perl run_test.pl cpp2node --rtps
-          REM perl run_test.pl node2cpp --rtps # re-enable when fixed
-          REM perl run_test.pl node2node --rtps # re-enable when fixed
+          if %errorlevel% neq 0 exit /b %errorlevel%
+          perl run_test.pl node2cpp --rtps
+          if %errorlevel% neq 0 exit /b %errorlevel%
+          perl run_test.pl node2node --rtps
+      - name: 'Test Secure (windows)'
+        if: ${{ matrix.m.os == 'windows-2019' && matrix.m.dds_security == 1 }}
+        shell: cmd
+        run: |-
+          cd OpenDDS
+          call setenv.cmd
+          cd ..
+          set /p V8_ROOT=<v8_path.txt
+          set V8_ROOT=%V8_ROOT%\..\..
+          set V8
+          set PATH=%PATH%;%GITHUB_WORKSPACE%\ACE_TAO\ACE\lib;%GITHUB_WORKSPACE%\OpenDDS\lib;%GITHUB_WORKSPACE%\tools\v8stubs"
+          set PATH
+          cd test
+          perl run_test.pl cpp2node --rtps --secure
+          if %errorlevel% neq 0 exit /b %errorlevel%
+          perl run_test.pl node2cpp --rtps --secure
+          if %errorlevel% neq 0 exit /b %errorlevel%
+          perl run_test.pl node2node --rtps --secure

@@ -9,15 +9,13 @@ use lib "$ACE_ROOT/bin";
 use PerlDDS::Run_Test;
 use strict;
 
-my $status = 0;
-
 my $test = new PerlDDS::TestFramework();
 
 print "\nTest: @ARGV\n";
 
 my %args = map { $_ => 1 } @ARGV;
 my $secure = exists($args{"--secure"});
-my $rtps = exists($args{"--rtps"});
+my $rtps = $secure || exists($args{"--rtps"});
 
 my $scenario = "cpp2node";
 my $pub_node = 0;
@@ -36,7 +34,7 @@ if (exists($args{"node2cpp"})) {
   $sub_node = 0;
 }
 
-$test->setup_discovery("-ORBDebugLevel 1 -ORBLogFile DCPSInfoRepo.log") unless $secure || $rtps;
+$test->setup_discovery("-ORBDebugLevel 1 -ORBLogFile DCPSInfoRepo.log") unless $rtps;
 
 sub which {
   my $file = shift;
@@ -64,46 +62,36 @@ my $sub_args = "";
 if ($sub_node) {
   $sub_exec_name .= which("node");
   $sub_args .= "test_subscriber.js";
-  if ($secure) {
-    $sub_args .= " --secure";
-  } elsif ($rtps) {
-    $sub_args .= " --rtps";
-  }
 } else {
   $sub_exec_name .= "test_subscriber";
-  if ($secure) {
-    $sub_args .= " --secure -DCPSConfigFile rtps_disc.ini";
-  } elsif ($rtps) {
-    $sub_args .= " -DCPSConfigFile rtps_disc.ini";
-  }
 }
-
-$test->process("sub", $sub_exec_name, $sub_args);
 
 my $pub_exec_name = "";
 my $pub_args = "";
 if ($pub_node) {
   $pub_exec_name .= which("node");
   $pub_args .= "test_publisher.js";
-  if ($secure) {
-    $pub_args .= " --secure";
-  } elsif ($rtps) {
-    $pub_args .= " --rtps";
-  }
 } else {
   $pub_exec_name .= "test_publisher";
-  if ($secure) {
-    $pub_args .= " --secure -DCPSConfigFile rtps_disc.ini";
-  } elsif ($rtps) {
-    $pub_args .= " -DCPSConfigFile rtps_disc.ini";
-  }
 }
 
+$pub_args .= " -ORBVerboseLogging 1 -DCPSDebugLevel 5 -DCPSTransportDebugLevel 5";
+$sub_args .= " -ORBVerboseLogging 1 -DCPSDebugLevel 5 -DCPSTransportDebugLevel 5";
+
+if ($secure) {
+  $pub_args .= " --secure";
+  $sub_args .= " --secure";
+}
+
+if ($rtps) {
+  $pub_args .= " -DCPSConfigFile rtps_disc.ini";
+  $sub_args .= " -DCPSConfigFile rtps_disc.ini";
+}
+
+$test->process("sub", $sub_exec_name, $sub_args);
 $test->process("pub", $pub_exec_name, $pub_args);
 
 $test->start_process("sub");
 $test->start_process("pub");
 
-exit $test->finish(30);
-
-exit $status;
+exit $test->finish(60);

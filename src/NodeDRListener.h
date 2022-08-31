@@ -3,9 +3,11 @@
 
 #include <nan.h>
 
+#include "NodeValueWriter.h"
+
 #include <dds/DdsDcpsSubscriptionC.h>
 
-#include <dds/DCPS/V8TypeConverter.h>
+#include <dds/DCPS/ValueWriter.h>
 #include <dds/DCPS/LocalObject.h>
 #include <dds/DCPS/DataReaderImpl.h>
 
@@ -18,10 +20,11 @@ namespace NodeOpenDDS {
     , private OpenDDS::DCPS::AbstractSamples {
   public:
     NodeDRListener(DDS::DomainParticipant* dp,
-                   const v8::Local<v8::Function>& callback,
-                   const OpenDDS::DCPS::V8TypeConverter& conv);
+                   const v8::Local<v8::Function>& callback);
     ~NodeDRListener();
+
     void set_javascript_datareader(const v8::Local<v8::Object>& js_dr);
+    void set_value_writer_dispatcher(const OpenDDS::DCPS::ValueWriterDispatcher* vwd);
 
     /**
      * If receiving samples, ignore any more samples and unsubscribe
@@ -57,7 +60,8 @@ namespace NodeOpenDDS {
     DDS::DomainParticipant* dp_;
     Nan::Persistent<v8::Function> callback_;
     Nan::Persistent<v8::Object> js_dr_;
-    const OpenDDS::DCPS::V8TypeConverter& conv_;
+    const OpenDDS::DCPS::ValueWriterDispatcher* vwd_;
+    NodeValueWriter nvw_;
 
     struct AsyncUv : uv_async_t {
       explicit AsyncUv(NodeDRListener* outer) : outer_(outer) {}

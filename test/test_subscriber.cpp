@@ -388,7 +388,7 @@ int ACE_TMAIN(int argc, ACE_TCHAR* argv[])
     dpf->delete_participant(participant);
     TheServiceParticipant->shutdown();
 
-    std::cout << "Success!" << std::endl;
+    std::cout << "Success!\n" << std::flush;
 
   } catch (...) {
     std::cerr << "ERROR!\n";

@@ -38,11 +38,10 @@ Local<Object> copyToV8(const DDS::SampleInfo& src)
 }
 
 NodeDRListener::NodeDRListener(DDS::DomainParticipant* dp,
-                               const Local<Function>& callback,
-                               const OpenDDS::DCPS::V8TypeConverter& conv)
+                               const Local<Function>& callback)
   : dp_(dp)
   , callback_(callback)
-  , conv_(conv)
+  , vwd_(0)
   , async_uv_(this)
   , unsubscribing_(false)
   , unsubscribed_(false)
@@ -109,6 +108,12 @@ void NodeDRListener::set_javascript_datareader(const Local<v8::Object>& js_dr)
   js_dr_.Reset(js_dr);
 }
 
+void NodeDRListener::set_value_writer_dispatcher(const OpenDDS::DCPS::ValueWriterDispatcher* vwd)
+{
+  std::unique_lock<std::mutex> lock(mutex_);
+  vwd_ = vwd;
+}
+
 void NodeDRListener::reserve(CORBA::ULong)
 {
 }
@@ -120,10 +125,14 @@ void NodeDRListener::push_back(const DDS::SampleInfo& src, const void* sample)
     return;
   }
 
+  if (src.valid_data && vwd_) {
+    vwd_->write(nvw_, sample);
+  }
+
   Local<Value> argv[] = {
     Nan::New(js_dr_),
     copyToV8(src),
-    src.valid_data ? conv_.toV8(sample).As<Value>() : Nan::Undefined().As<Value>()
+    (src.valid_data && vwd_) ? nvw_.get_result().As<Value>() : Nan::Undefined().As<Value>()
   };
 
   Local<Function> callback = Nan::New(callback_);
