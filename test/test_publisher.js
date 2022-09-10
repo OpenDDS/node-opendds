@@ -80,10 +80,10 @@ function doStuff(writer) {
   }
 
   var sample2 = JSON.parse(JSON.stringify(sample1));
-  sample1.mu = { _d: "one", a: 6 };
+  sample1.mu = { "$discriminator": "one", a: 6 };
 
   sample2.id = 24;
-  sample2.mu = { _d: "four", s: [ ["string1", "string2", "string3", "string4"], ["string5"] ] };
+  sample2.mu = { "$discriminator": "four", s: [ ["string1", "string2", "string3", "string4"], ["string5"] ] };
 
   var handle = 0, retcode = 0;
 

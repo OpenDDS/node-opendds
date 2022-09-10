@@ -149,8 +149,8 @@ try {
             sample.sa[1] != "east" ||
             sample.sa[2] != "south" ||
             sample.sa[3] != "west" ||
-            (sample.id == 23 && (sample.mu._d != "one" || sample.mu.a != 6)) ||
-            (sample.id == 24 && (sample.mu._d != "four" || sample.mu.s.length != 2 || sample.mu.s[0].length != 4 || sample.mu.s[1].length != 1))) {
+            (sample.id == 23 && (sample.mu.$discriminator != "one" || sample.mu.a != 6)) ||
+            (sample.id == 24 && (sample.mu.$discriminator != "four" || sample.mu.s.length != 2 || sample.mu.s[0].length != 4 || sample.mu.s[1].length != 1))) {
           console.log("Error in data!");
           process.exitCode = 1;
         }

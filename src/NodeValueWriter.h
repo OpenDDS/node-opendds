@@ -9,8 +9,6 @@
 
 #include <nan.h>
 
-#include <sstream>
-
 namespace NodeOpenDDS {
 
 class NodeValueWriter : public OpenDDS::DCPS::ValueWriter {

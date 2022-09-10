@@ -1,5 +1,6 @@
 #include "NodeDRListener.h"
 #include "NodeQosConversion.h"
+#include "NodeValueReader.h"
 
 #include <nan.h>
 
@@ -18,6 +19,7 @@
 using namespace v8;
 using OpenDDS::DCPS::Data_Types_Register;
 using NodeOpenDDS::NodeDRListener;
+using NodeOpenDDS::NodeValueReader;
 using NodeOpenDDS::convertQos;
 
 #define V8STR(str) Nan::New<String>((str)).ToLocalChecked()
@@ -282,11 +284,6 @@ namespace {
       return;
     }
 
-    OpenDDS::DCPS::DataReaderImpl* dri = dynamic_cast<OpenDDS::DCPS::DataReaderImpl*>(dr.in());
-    if (dri) {
-      ndrl->set_value_writer_dispatcher(dri->get_value_writer_dispatcher());
-    }
-
     const Local<ObjectTemplate> ot = Nan::New<ObjectTemplate>();
     ot->SetInternalFieldCount(1);
     const Local<Object> obj = ot->NewInstance(Nan::GetCurrentContext()).ToLocalChecked();
@@ -343,13 +340,6 @@ namespace {
         return;
       }
       Registered_Data_Types->register_type(dp, *topic_type, ts);
-    }
-    const OpenDDS::DCPS::V8TypeConverter* const tc =
-      dynamic_cast<const OpenDDS::DCPS::V8TypeConverter*>(ts);
-    if (!tc) {
-      Nan::ThrowError("TypeSupport was not built with support for V8.");
-      fci.GetReturnValue().SetUndefined();
-      return;
     }
 
     DDS::Topic_var topic =
@@ -416,7 +406,7 @@ namespace {
     Nan::SetMethod(ot, "dispose", dispose);
     const Local<Object> obj = ot->NewInstance(Nan::GetCurrentContext()).ToLocalChecked();
     Nan::SetInternalFieldPointer(obj, 0, dw._retn());
-    Nan::SetInternalFieldPointer(obj, 1, const_cast<OpenDDS::DCPS::V8TypeConverter*>(tc));
+    Nan::SetInternalFieldPointer(obj, 1, ts);
     fci.GetReturnValue().Set(obj);
   }
 
@@ -432,15 +422,35 @@ namespace {
       fci.GetReturnValue().SetUndefined();
       return;
     }
+
     void* const dw_i = Nan::GetInternalFieldPointer(fci.This(), 0);
-    const void* const tc_i = Nan::GetInternalFieldPointer(fci.This(), 1);
     DDS::DataWriter* const dw = static_cast<DDS::DataWriter*>(dw_i);
-    const OpenDDS::DCPS::V8TypeConverter* const tc = reinterpret_cast<const OpenDDS::DCPS::V8TypeConverter*>(tc_i);
+
+    const void* const ts_i = Nan::GetInternalFieldPointer(fci.This(), 1);
+    const OpenDDS::DCPS::TypeSupport* const ts = reinterpret_cast<const OpenDDS::DCPS::TypeSupport*>(ts_i);
+    const OpenDDS::DCPS::ValueDispatcher* const vd = dynamic_cast<const OpenDDS::DCPS::ValueDispatcher* const>(ts);
+
+    if (!vd) {
+      Nan::ThrowError("invalid typesupport attached to writer");
+      fci.GetReturnValue().SetUndefined();
+      return;
+    }
 
     const Local<Object> sample_obj = fci[0]->ToObject(Nan::GetCurrentContext()).ToLocalChecked();
-    void* sample_vp = tc->fromV8(sample_obj);
-    DDS::InstanceHandle_t handle = tc->register_instance_helper(dw, sample_vp);
-    tc->deleteFromV8Result(sample_vp);
+
+    void* sample_vp = vd->new_value();
+    NodeValueReader nvr(sample_obj);
+    bool read_result = vd->read(nvr, sample_vp);
+
+    if (!read_result) {
+      vd->delete_value(sample_vp);
+      Nan::ThrowError("couldn't convert instance");
+      fci.GetReturnValue().SetUndefined();
+      return;
+    }
+
+    DDS::InstanceHandle_t handle = vd->register_instance_helper(dw, sample_vp);
+    vd->delete_value(sample_vp);
 
     if (handle == DDS::HANDLE_NIL) {
       Nan::ThrowError("couldn't register instance");
@@ -464,9 +474,17 @@ namespace {
     }
 
     void* const dw_i = Nan::GetInternalFieldPointer(fci.This(), 0);
-    const void* const tc_i = Nan::GetInternalFieldPointer(fci.This(), 1);
     DDS::DataWriter* const dw = static_cast<DDS::DataWriter*>(dw_i);
-    const OpenDDS::DCPS::V8TypeConverter* const tc = reinterpret_cast<const OpenDDS::DCPS::V8TypeConverter*>(tc_i);
+
+    const void* const ts_i = Nan::GetInternalFieldPointer(fci.This(), 1);
+    const OpenDDS::DCPS::TypeSupport* const ts = reinterpret_cast<const OpenDDS::DCPS::TypeSupport*>(ts_i);
+    const OpenDDS::DCPS::ValueDispatcher* const vd = dynamic_cast<const OpenDDS::DCPS::ValueDispatcher* const>(ts);
+
+    if (!vd) {
+      Nan::ThrowError("invalid typesupport attached to writer");
+      fci.GetReturnValue().SetUndefined();
+      return;
+    }
 
     const Local<Object> sample_obj = fci[0]->ToObject(Nan::GetCurrentContext()).ToLocalChecked();
 
@@ -480,9 +498,20 @@ namespace {
       handle = fci[1]->ToInteger(Nan::GetCurrentContext()).ToLocalChecked()->Value();
     }
 
-    void* sample_vp = tc->fromV8(sample_obj);
-    DDS::ReturnCode_t return_code = tc->write_helper(dw, sample_vp, handle);
-    tc->deleteFromV8Result(sample_vp);
+    void* sample_vp = vd->new_value();
+    NodeValueReader nvr(sample_obj);
+    bool read_result = vd->read(nvr, sample_vp);
+
+    if (!read_result) {
+      vd->delete_value(sample_vp);
+      Nan::ThrowError("couldn't convert instance");
+      fci.GetReturnValue().SetUndefined();
+      return;
+    }
+
+    DDS::ReturnCode_t return_code = vd->write_helper(dw, sample_vp, handle);
+    vd->delete_value(sample_vp);
+
     if (return_code != DDS::RETCODE_OK) {
       Nan::ThrowError("couldn't write sample");
       fci.GetReturnValue().SetUndefined();
@@ -523,9 +552,17 @@ namespace {
     }
 
     void* const dw_i = Nan::GetInternalFieldPointer(fci.This(), 0);
-    const void* const tc_i = Nan::GetInternalFieldPointer(fci.This(), 1);
     DDS::DataWriter* const dw = static_cast<DDS::DataWriter*>(dw_i);
-    const OpenDDS::DCPS::V8TypeConverter* const tc = reinterpret_cast<const OpenDDS::DCPS::V8TypeConverter*>(tc_i);
+
+    const void* const ts_i = Nan::GetInternalFieldPointer(fci.This(), 1);
+    const OpenDDS::DCPS::TypeSupport* const ts = reinterpret_cast<const OpenDDS::DCPS::TypeSupport*>(ts_i);
+    const OpenDDS::DCPS::ValueDispatcher* const vd = dynamic_cast<const OpenDDS::DCPS::ValueDispatcher* const>(ts);
+
+    if (!vd) {
+      Nan::ThrowError("invalid typesupport attached to writer");
+      fci.GetReturnValue().SetUndefined();
+      return;
+    }
 
     const Local<Object> sample_obj = fci[0]->ToObject(Nan::GetCurrentContext()).ToLocalChecked();
 
@@ -539,9 +576,20 @@ namespace {
       handle = fci[1]->ToInteger(Nan::GetCurrentContext()).ToLocalChecked()->Value();
     }
 
-    void* sample_vp = tc->fromV8(sample_obj);
-    DDS::ReturnCode_t return_code = tc->unregister_instance_helper(dw, sample_vp, handle);
-    tc->deleteFromV8Result(sample_vp);
+    void* sample_vp = vd->new_value();
+    NodeValueReader nvr(sample_obj);
+    bool read_result = vd->read(nvr, sample_vp);
+
+    if (!read_result) {
+      vd->delete_value(sample_vp);
+      Nan::ThrowError("couldn't convert instance");
+      fci.GetReturnValue().SetUndefined();
+      return;
+    }
+
+    DDS::ReturnCode_t return_code = vd->unregister_instance_helper(dw, sample_vp, handle);
+    vd->delete_value(sample_vp);
+
     if (return_code != DDS::RETCODE_OK) {
       Nan::ThrowError("couldn't unregister instance");
       fci.GetReturnValue().SetUndefined();
@@ -564,9 +612,17 @@ namespace {
     }
 
     void* const dw_i = Nan::GetInternalFieldPointer(fci.This(), 0);
-    const void* const tc_i = Nan::GetInternalFieldPointer(fci.This(), 1);
     DDS::DataWriter* const dw = static_cast<DDS::DataWriter*>(dw_i);
-    const OpenDDS::DCPS::V8TypeConverter* const tc = reinterpret_cast<const OpenDDS::DCPS::V8TypeConverter*>(tc_i);
+
+    const void* const ts_i = Nan::GetInternalFieldPointer(fci.This(), 1);
+    const OpenDDS::DCPS::TypeSupport* const ts = reinterpret_cast<const OpenDDS::DCPS::TypeSupport*>(ts_i);
+    const OpenDDS::DCPS::ValueDispatcher* const vd = dynamic_cast<const OpenDDS::DCPS::ValueDispatcher* const>(ts);
+
+    if (!vd) {
+      Nan::ThrowError("invalid typesupport attached to writer");
+      fci.GetReturnValue().SetUndefined();
+      return;
+    }
 
     const Local<Object> sample_obj = fci[0]->ToObject(Nan::GetCurrentContext()).ToLocalChecked();
 
@@ -580,9 +636,20 @@ namespace {
       handle = fci[1]->ToInteger(Nan::GetCurrentContext()).ToLocalChecked()->Value();
     }
 
-    void* sample_vp = tc->fromV8(sample_obj);
-    DDS::ReturnCode_t return_code = tc->dispose_helper(dw, sample_vp, handle);
-    tc->deleteFromV8Result(sample_vp);
+    void* sample_vp = vd->new_value();
+    NodeValueReader nvr(sample_obj);
+    bool read_result = vd->read(nvr, sample_vp);
+
+    if (!read_result) {
+      vd->delete_value(sample_vp);
+      Nan::ThrowError("couldn't convert instance");
+      fci.GetReturnValue().SetUndefined();
+      return;
+    }
+
+    DDS::ReturnCode_t return_code = vd->dispose_helper(dw, sample_vp, handle);
+    vd->delete_value(sample_vp);
+
     if (return_code != DDS::RETCODE_OK) {
       Nan::ThrowError("couldn't dispose instance");
       fci.GetReturnValue().SetUndefined();

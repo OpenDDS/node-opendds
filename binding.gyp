@@ -38,6 +38,7 @@
       'target_name': 'node_opendds',
       'sources': [ 'src/node-opendds.cpp',
                    'src/NodeDRListener.cpp',
+                   'src/NodeValueReader.cpp',
                    'src/NodeValueWriter.cpp',
                    'src/NodeQosConversion.cpp' ],
       'include_dirs': [ "<!(node -e \"require('nan')\")",
