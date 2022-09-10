@@ -11,6 +11,18 @@
 
 namespace NodeOpenDDS {
 
+template <typename T, typename U>
+void safe_assign(T& out, const U& in)
+{
+  out = static_cast<T>(in);
+}
+
+template <typename U>
+void safe_assign(ACE_CDR::LongDouble& out, const U& in)
+{
+  ACE_CDR_LONG_DOUBLE_ASSIGNMENT(out, in);
+}
+
 class NodeValueReader : public OpenDDS::DCPS::ValueReader {
 public:
   explicit NodeValueReader(v8::Local<v8::Object> obj);
@@ -94,7 +106,7 @@ private:
       if (((*lvai)->*checker)()) {
         v8::Local<V> tov = v8::Local<V>::Cast(lvai);
         if (!tov.IsEmpty()) {
-          value = static_cast<T>(tov->Value());
+          safe_assign(value, tov->Value());
           return true;
         }
       }
@@ -118,7 +130,7 @@ private:
       if (((*lvai)->*checker)()) {
         v8::Local<V> tov = v8::Local<V>::Cast(lvai);
         if (!tov.IsEmpty()) {
-          value = static_cast<T>(tov->Value());
+          safe_assign(value, tov->Value());
           return true;
         }
       }
