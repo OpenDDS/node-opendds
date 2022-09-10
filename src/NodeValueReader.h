@@ -89,7 +89,7 @@ private:
       if (((*lvai)->*checker)()) {
         v8::Local<V> tov = v8::Local<V>::Cast(lvai);
         if (!tov.IsEmpty()) {
-          value = static_cast<T>(tov->Value());
+          safe_assign(value, tov->Value());
           return true;
         }
       }
@@ -114,7 +114,7 @@ private:
         v8::Local<v8::String> ls = v8::Local<v8::String>::Cast(lvai);
         std::string str(ls->Utf8Length(v8::Isolate::GetCurrent()), 0);
         ls->WriteUtf8(v8::Isolate::GetCurrent(), &str[0]);
-        value = static_cast<T>((*str_conv)(str.c_str(), 0, str.find("0x") != std::string::npos ? 16 : 10));
+        safe_assign(value, (*str_conv)(str.c_str(), 0, str.find("0x") != std::string::npos ? 16 : 10));
         return true;
       }
     }
@@ -138,7 +138,7 @@ private:
         v8::Local<v8::String> ls = v8::Local<v8::String>::Cast(lvai);
         std::string str(ls->Utf8Length(v8::Isolate::GetCurrent()), 0);
         ls->WriteUtf8(v8::Isolate::GetCurrent(), &str[0]);
-        value = static_cast<T>((*str_conv)(str.c_str(), 0));
+        safe_assign(value, (*str_conv)(str.c_str(), 0));
         return true;
       }
     }
