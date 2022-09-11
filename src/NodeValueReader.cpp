@@ -484,8 +484,8 @@ bool NodeValueReader::read_string(std::string& value)
   if (!mlvai.IsEmpty()) {
     Nan::MaybeLocal<v8::String> tov = Nan::To<v8::String>(mlvai.ToLocalChecked());
     if (!tov.IsEmpty()) {
-      value = std::string(tov.ToLocalChecked()->Utf8Length(v8::Isolate::GetCurrent()), 0);
-      tov.ToLocalChecked()->WriteUtf8(v8::Isolate::GetCurrent(), &value[0]);
+      value.resize(tov.ToLocalChecked()->Utf8Length(v8::Isolate::GetCurrent()), 0);
+      tov.ToLocalChecked()->WriteUtf8(v8::Isolate::GetCurrent(), &value[0], -1, 0, v8::String::NO_NULL_TERMINATION);
       //std::cout << indent(0) << " - found value '" << value << "'" << std::endl;
       return true;
     }
@@ -501,11 +501,12 @@ bool NodeValueReader::read_wstring(std::wstring& value)
     Nan::MaybeLocal<v8::String> tov = Nan::To<v8::String>(mlvai.ToLocalChecked());
     if (!tov.IsEmpty()) {
       std::vector<uint16_t> temp(tov.ToLocalChecked()->Length(), 0);
-      tov.ToLocalChecked()->Write(v8::Isolate::GetCurrent(), &temp[0]);
-      value = std::wstring(temp.size(), 0);
+      tov.ToLocalChecked()->Write(v8::Isolate::GetCurrent(), &temp[0], 0, -1, v8::String::NO_NULL_TERMINATION);
+      value.resize(temp.size(), 0);
       for (size_t i = 0; i < temp.size(); ++i) {
         value[i] = static_cast<wchar_t>(temp[i]);
       }
+      //std::cout << indent(0) << " - found value '" << value << "'" << std::endl;
       return true;
     }
   }

@@ -438,6 +438,12 @@ namespace {
 
     const Local<Object> sample_obj = fci[0]->ToObject(Nan::GetCurrentContext()).ToLocalChecked();
 
+    if (sample_obj.IsEmpty()) {
+      Nan::ThrowError("invalid sample passed to writer");
+      fci.GetReturnValue().SetUndefined();
+      return;
+    }
+
     void* sample_vp = vd->new_value();
     NodeValueReader nvr(sample_obj);
     bool read_result = vd->read(nvr, sample_vp);
