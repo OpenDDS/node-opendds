@@ -36,56 +36,16 @@ NodeValueReader::NodeValueReader(v8::Local<v8::Object> obj)
   use_name_ = false;
 }
 
-std::string NodeValueReader::indent(int mod)
-{
-  // If decreasing indent, adjust before generating indent string
-  if (mod < 0) {
-    indent_ += mod;
-  }
-
-  std::string result(indent_, ' ');
-
-  // If increasing indent, adjust after generating indent string
-  if (mod > 0) {
-    indent_ += mod;
-  }
-
-  return result;
-}
-
 bool NodeValueReader::begin_struct()
 {
   //std::cout << indent(1) << "NodeValueReader::begin_struct()" << std::endl;
-  object_stack_.push_back(current_object_);
-  index_stack_.push_back(current_index_);
-
-  Nan::MaybeLocal<v8::Value> mlvai = use_name_ ? Nan::Get(current_object_, current_property_name_) : Nan::Get(current_object_, current_index_);
-  if (!mlvai.IsEmpty()) {
-    if (mlvai.ToLocalChecked()->IsObject()) {
-      current_object_ = v8::Local<v8::Object>::Cast(mlvai.ToLocalChecked());
-      current_index_ = 0;
-      use_name_ = !current_object_->IsArray();
-      property_names_ = Nan::GetPropertyNames(current_object_);
-      current_property_name_.Clear();
-      return true;
-    }
-  }
-  return false;
+  return begin_nested();
 }
 
 bool NodeValueReader::end_struct()
 {
   //std::cout << indent(-1) << "NodeValueReader::end_struct()" << std::endl;
-  current_object_ = object_stack_.back();
-  object_stack_.pop_back();
-  current_index_ = index_stack_.back();
-  index_stack_.pop_back();
-  use_name_ = !current_object_->IsArray();
-
-  property_names_ = Nan::GetPropertyNames(current_object_);
-  current_property_name_.Clear();
-
-  return true;
+  return end_nested();
 }
 
 bool NodeValueReader::begin_struct_member(OpenDDS::XTypes::MemberId& member_id, const OpenDDS::DCPS::MemberHelper& helper)
@@ -122,34 +82,13 @@ bool NodeValueReader::end_struct_member()
 bool NodeValueReader::begin_union()
 {
   //std::cout << indent(1) << "NodeValueReader::begin_union()" << std::endl;
-  object_stack_.push_back(current_object_);
-  index_stack_.push_back(current_index_);
-
-  Nan::MaybeLocal<v8::Value> mlvai = use_name_ ? Nan::Get(current_object_, current_property_name_) : Nan::Get(current_object_, current_index_);
-  if (!mlvai.IsEmpty() && mlvai.ToLocalChecked()->IsObject()) {
-    current_object_ = v8::Local<v8::Object>::Cast(mlvai.ToLocalChecked());
-    current_index_ = 0;
-    use_name_ = !current_object_->IsArray();
-    property_names_ = Nan::GetPropertyNames(current_object_);
-    current_property_name_.Clear();
-    return true;
-  }
-  return false;
+  return begin_nested();
 }
 
 bool NodeValueReader::end_union()
 {
   //std::cout << indent(-1) << "NodeValueReader::end_union()" << std::endl;
-  current_object_ = object_stack_.back();
-  object_stack_.pop_back();
-  current_index_ = index_stack_.back();
-  index_stack_.pop_back();
-  use_name_ = !current_object_->IsArray();
-
-  property_names_ = Nan::GetPropertyNames(current_object_);
-  current_property_name_.Clear();
-
-  return true;
+  return end_nested();
 }
 
 bool NodeValueReader::begin_discriminator()
@@ -216,53 +155,19 @@ bool NodeValueReader::end_union_member()
 bool NodeValueReader::begin_array()
 {
   //std::cout << indent(1) << "NodeValueReader::begin_array()" << std::endl;
-  object_stack_.push_back(current_object_);
-  index_stack_.push_back(current_index_);
-
-  Nan::MaybeLocal<v8::Value> mlvai = use_name_ ? Nan::Get(current_object_, current_property_name_) : Nan::Get(current_object_, current_index_);
-  if (!mlvai.IsEmpty() && mlvai.ToLocalChecked()->IsObject()) {
-    current_object_ = v8::Local<v8::Object>::Cast(mlvai.ToLocalChecked());
-    current_index_ = 0;
-    use_name_ = !current_object_->IsArray();
-    property_names_ = Nan::GetPropertyNames(current_object_);
-    current_property_name_.Clear();
-    return true;
-  }
-  return false;
+  return begin_nested();
 }
 
 bool NodeValueReader::end_array()
 {
   //std::cout << indent(-1) << "NodeValueReader::end_array()" << std::endl;
-  current_object_ = object_stack_.back();
-  object_stack_.pop_back();
-  current_index_ = index_stack_.back();
-  index_stack_.pop_back();
-  use_name_ = !current_object_->IsArray();
-
-  property_names_ = Nan::GetPropertyNames(current_object_);
-  current_property_name_.Clear();
-
-  return true;
+  return end_nested();
 }
 
 bool NodeValueReader::begin_sequence()
 {
   //std::cout << indent(1) << "NodeValueReader::begin_sequence() current_property_name_.IsEmpty() = " << current_property_name_.IsEmpty() << ", current_index_ = " << current_index_ << std::endl;
-  object_stack_.push_back(current_object_);
-  index_stack_.push_back(current_index_);
-
-  Nan::MaybeLocal<v8::Value> mlvai = use_name_ ? Nan::Get(current_object_, current_property_name_) : Nan::Get(current_object_, current_index_);
-  if (!mlvai.IsEmpty() && mlvai.ToLocalChecked()->IsObject()) {
-    current_object_ = v8::Local<v8::Object>::Cast(mlvai.ToLocalChecked());
-    current_index_ = 0;
-    use_name_ = !current_object_->IsArray();
-    property_names_ = Nan::GetPropertyNames(current_object_);
-    current_property_name_.Clear();
-    //std::cout << "current_object_ == " << json_stringify(current_object_) << std::endl;
-    return true;
-  }
-  return false;
+  return begin_nested();
 }
 
 bool NodeValueReader::elements_remaining()
@@ -278,16 +183,7 @@ bool NodeValueReader::elements_remaining()
 bool NodeValueReader::end_sequence()
 {
   //std::cout << indent(-1) << "NodeValueReader::end_sequence()" << std::endl;
-  current_object_ = object_stack_.back();
-  object_stack_.pop_back();
-  current_index_ = index_stack_.back();
-  index_stack_.pop_back();
-  use_name_ = !current_object_->IsArray();
-
-  property_names_ = Nan::GetPropertyNames(current_object_);
-  current_property_name_.Clear();
-
-  return true;
+  return end_nested();
 }
 
 bool NodeValueReader::begin_element()
@@ -516,10 +412,6 @@ bool NodeValueReader::read_wstring(std::wstring& value)
 bool NodeValueReader::read_long_enum(ACE_CDR::Long& value, const OpenDDS::DCPS::EnumHelper& helper)
 {
   //std::cout << indent(0) << "NodeValueReader::read_long_enum()" << std::endl;
-  if (primitive_helper<v8::Integer>(value, &v8::Value::IsNumber, strtol)) {
-    //std::cout << indent(0) << " - found enum with value '" << value << "'" << std::endl;
-  }
-
   Nan::MaybeLocal<v8::Value> mlvai = use_name_ ? Nan::Get(current_object_, current_property_name_) : Nan::Get(current_object_, current_index_);
   if (!mlvai.IsEmpty()) {
     {
@@ -527,13 +419,67 @@ bool NodeValueReader::read_long_enum(ACE_CDR::Long& value, const OpenDDS::DCPS::
       if (read_string(temp)) {
         //std::cout << indent(0) << " - found enum with string '" << temp << "'" << std::endl;
         bool result = helper.get_value(value, temp.c_str());
-        //std::cout << indent(0) << " - found enum with string '" << temp << "'" << " returning " << result << " with value " << value << std::endl;
         return result;
       }
     }
   }
 
+  if (primitive_helper<v8::Integer>(value, &v8::Value::IsNumber, strtol)) {
+    //std::cout << indent(0) << " - found enum with integer value '" << value << "'" << std::endl;
+    return true;
+  }
+
   return false;
+}
+
+std::string NodeValueReader::indent(int mod)
+{
+  // If decreasing indent, adjust before generating indent string
+  if (mod < 0) {
+    indent_ += mod;
+  }
+
+  std::string result(indent_, ' ');
+
+  // If increasing indent, adjust after generating indent string
+  if (mod > 0) {
+    indent_ += mod;
+  }
+
+  return result;
+}
+
+bool NodeValueReader::begin_nested()
+{
+  Nan::MaybeLocal<v8::Value> mlvai = use_name_ ? Nan::Get(current_object_, current_property_name_) : Nan::Get(current_object_, current_index_);
+  if (!mlvai.IsEmpty() && mlvai.ToLocalChecked()->IsObject()) {
+    object_stack_.push_back(current_object_);
+    index_stack_.push_back(current_index_);
+
+    current_object_ = v8::Local<v8::Object>::Cast(mlvai.ToLocalChecked());
+    current_index_ = 0;
+    use_name_ = !current_object_->IsArray();
+
+    property_names_ = Nan::GetPropertyNames(current_object_);
+    current_property_name_.Clear();
+
+    return true;
+  }
+  return false;
+}
+
+bool NodeValueReader::end_nested()
+{
+  current_object_ = object_stack_.back();
+  object_stack_.pop_back();
+  current_index_ = index_stack_.back();
+  index_stack_.pop_back();
+  use_name_ = !current_object_->IsArray();
+
+  property_names_ = Nan::GetPropertyNames(current_object_);
+  current_property_name_.Clear();
+
+  return true;
 }
 
 } // namespace NodeOpenDDS

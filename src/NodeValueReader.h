@@ -80,6 +80,9 @@ private:
 
   std::string indent(int mod);
 
+  bool begin_nested();
+  bool end_nested();
+
   template <typename V, typename T>
   bool primitive_helper(T& value, bool (v8::Value::*checker)() const)
   {
