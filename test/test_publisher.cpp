@@ -11,12 +11,14 @@
 
 const int DOMAIN_ID = 32;
 
+#ifdef SECURE
 const char DDSSEC_PROP_IDENTITY_CA[] = "dds.sec.auth.identity_ca";
 const char DDSSEC_PROP_IDENTITY_CERT[] = "dds.sec.auth.identity_certificate";
 const char DDSSEC_PROP_IDENTITY_PRIVKEY[] = "dds.sec.auth.private_key";
 const char DDSSEC_PROP_PERM_CA[] = "dds.sec.access.permissions_ca";
 const char DDSSEC_PROP_PERM_GOV_DOC[] = "dds.sec.access.governance";
 const char DDSSEC_PROP_PERM_DOC[] = "dds.sec.access.permissions";
+#endif
 
 void append(DDS::PropertySeq& props, const char* name, const std::string& value)
 {
