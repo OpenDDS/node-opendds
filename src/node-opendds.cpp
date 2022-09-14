@@ -7,7 +7,6 @@
 #include <dds/DCPS/Service_Participant.h>
 #include <dds/DCPS/Registered_Data_Types.h>
 #include <dds/DCPS/Marked_Default_Qos.h>
-#include <dds/DCPS/V8TypeConverter.h>
 
 #include <ace/DLL_Manager.h>
 #include <ace/Init_ACE.h>
@@ -171,13 +170,6 @@ namespace {
         return;
       }
       Registered_Data_Types->register_type(dp, *topic_type, ts);
-    }
-    const OpenDDS::DCPS::V8TypeConverter* const tc =
-      dynamic_cast<const OpenDDS::DCPS::V8TypeConverter*>(ts);
-    if (!tc) {
-      Nan::ThrowError("TypeSupport was not built with support for V8.");
-      fci.GetReturnValue().SetUndefined();
-      return;
     }
 
     DDS::Topic_var real_topic =

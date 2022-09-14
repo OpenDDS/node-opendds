@@ -1,10 +1,6 @@
 project: dcpsexe, dcps_v8 {
   exename = test_subscriber
 
-  libs += v8stubs
-  after += v8stubs
-  libpaths += ../tools/v8stubs
-
   libs += NodeJSTest
   after += NodeJSTest
   libpaths += idl
