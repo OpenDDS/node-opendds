@@ -419,7 +419,7 @@ namespace {
     DDS::DataWriter* const dw = static_cast<DDS::DataWriter*>(dw_i);
 
     const void* const ts_i = Nan::GetInternalFieldPointer(fci.This(), 1);
-    const OpenDDS::DCPS::TypeSupport* const ts = reinterpret_cast<const OpenDDS::DCPS::TypeSupport*>(ts_i);
+    const OpenDDS::DCPS::TypeSupport* const ts = static_cast<const OpenDDS::DCPS::TypeSupport*>(ts_i);
     const OpenDDS::DCPS::ValueDispatcher* const vd = dynamic_cast<const OpenDDS::DCPS::ValueDispatcher* const>(ts);
 
     if (!vd) {
@@ -475,7 +475,7 @@ namespace {
     DDS::DataWriter* const dw = static_cast<DDS::DataWriter*>(dw_i);
 
     const void* const ts_i = Nan::GetInternalFieldPointer(fci.This(), 1);
-    const OpenDDS::DCPS::TypeSupport* const ts = reinterpret_cast<const OpenDDS::DCPS::TypeSupport*>(ts_i);
+    const OpenDDS::DCPS::TypeSupport* const ts = static_cast<const OpenDDS::DCPS::TypeSupport*>(ts_i);
     const OpenDDS::DCPS::ValueDispatcher* const vd = dynamic_cast<const OpenDDS::DCPS::ValueDispatcher* const>(ts);
 
     if (!vd) {
@@ -553,7 +553,7 @@ namespace {
     DDS::DataWriter* const dw = static_cast<DDS::DataWriter*>(dw_i);
 
     const void* const ts_i = Nan::GetInternalFieldPointer(fci.This(), 1);
-    const OpenDDS::DCPS::TypeSupport* const ts = reinterpret_cast<const OpenDDS::DCPS::TypeSupport*>(ts_i);
+    const OpenDDS::DCPS::TypeSupport* const ts = static_cast<const OpenDDS::DCPS::TypeSupport*>(ts_i);
     const OpenDDS::DCPS::ValueDispatcher* const vd = dynamic_cast<const OpenDDS::DCPS::ValueDispatcher* const>(ts);
 
     if (!vd) {
@@ -613,7 +613,7 @@ namespace {
     DDS::DataWriter* const dw = static_cast<DDS::DataWriter*>(dw_i);
 
     const void* const ts_i = Nan::GetInternalFieldPointer(fci.This(), 1);
-    const OpenDDS::DCPS::TypeSupport* const ts = reinterpret_cast<const OpenDDS::DCPS::TypeSupport*>(ts_i);
+    const OpenDDS::DCPS::TypeSupport* const ts = static_cast<const OpenDDS::DCPS::TypeSupport*>(ts_i);
     const OpenDDS::DCPS::ValueDispatcher* const vd = dynamic_cast<const OpenDDS::DCPS::ValueDispatcher* const>(ts);
 
     if (!vd) {

@@ -78,13 +78,13 @@ public:
 private:
   NodeValueReader();
 
-  std::string indent(int mod);
-
   bool begin_nested();
   bool end_nested();
 
+  typedef bool (v8::Value::*ValueChecker)() const;
+
   template <typename V, typename T>
-  bool primitive_helper(T& value, bool (v8::Value::*checker)() const)
+  bool primitive_helper(T& value, ValueChecker checker)
   {
     Nan::MaybeLocal<v8::Value> mlvai = current_property_name_.IsEmpty() ? Nan::Get(current_object_, current_index_) : Nan::Get(current_object_, current_property_name_);
     if (!mlvai.IsEmpty()) {
@@ -101,7 +101,7 @@ private:
   }
 
   template <typename V, typename T, typename U>
-  bool primitive_helper(T& value, bool (v8::Value::*checker)() const, U (*str_conv)(const char*, char**, int base))
+  bool primitive_helper(T& value, ValueChecker checker, U (*str_conv)(const char*, char**, int base))
   {
     Nan::MaybeLocal<v8::Value> mlvai = current_property_name_.IsEmpty() ? Nan::Get(current_object_, current_index_) : Nan::Get(current_object_, current_property_name_);
     if (!mlvai.IsEmpty()) {
@@ -125,7 +125,7 @@ private:
   }
 
   template <typename V, typename T, typename U>
-  bool primitive_helper(T& value, bool (v8::Value::*checker)() const, U (*str_conv)(const char*, char**))
+  bool primitive_helper(T& value, ValueChecker checker, U (*str_conv)(const char*, char**))
   {
     Nan::MaybeLocal<v8::Value> mlvai = current_property_name_.IsEmpty() ? Nan::Get(current_object_, current_index_) : Nan::Get(current_object_, current_property_name_);
     if (!mlvai.IsEmpty()) {
@@ -157,7 +157,6 @@ private:
   OPENDDS_VECTOR(v8::Local<v8::Object>) object_stack_;
   OPENDDS_VECTOR(uint32_t) index_stack_;
 
-  size_t indent_;
   bool use_name_;
 };
 
