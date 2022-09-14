@@ -24,7 +24,7 @@ jobs:
           - 14
           - 16
         opendds_branch:
-          - remove_v8_generation
+          - master
           # - latest-release
         m:
           - {os: ubuntu-latest, dds_security: 1}
@@ -53,7 +53,7 @@ jobs:
       - name: 'Checkout OpenDDS'
         uses: actions/checkout@v3
         with:
-          repository: simpsont-oci/OpenDDS
+          repository: objectcomputing/OpenDDS
           ref: ${{ matrix.opendds_branch }}
           path: OpenDDS
           fetch-depth: 1
