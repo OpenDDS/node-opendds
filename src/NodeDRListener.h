@@ -7,7 +7,6 @@
 
 #include <dds/DdsDcpsSubscriptionC.h>
 
-#include <dds/DCPS/ValueWriter.h>
 #include <dds/DCPS/LocalObject.h>
 #include <dds/DCPS/DataReaderImpl.h>
 
@@ -24,7 +23,6 @@ namespace NodeOpenDDS {
     ~NodeDRListener();
 
     void set_javascript_datareader(const v8::Local<v8::Object>& js_dr);
-    void set_value_writer_dispatcher(const OpenDDS::DCPS::ValueWriterDispatcher* vwd);
 
     /**
      * If receiving samples, ignore any more samples and unsubscribe
@@ -60,7 +58,7 @@ namespace NodeOpenDDS {
     DDS::DomainParticipant* dp_;
     Nan::Persistent<v8::Function> callback_;
     Nan::Persistent<v8::Object> js_dr_;
-    const OpenDDS::DCPS::ValueWriterDispatcher* vwd_;
+    const OpenDDS::DCPS::ValueDispatcher* vd_;
     NodeValueWriter nvw_;
 
     struct AsyncUv : uv_async_t {

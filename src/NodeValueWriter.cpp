@@ -5,7 +5,7 @@
 namespace NodeOpenDDS {
 
 namespace {
-
+  const int64_t NODE_MAX_SAFE_INT = 9007199254740991;
 }
 
 NodeValueWriter::NodeValueWriter() : next_index_(0)
@@ -49,10 +49,7 @@ void NodeValueWriter::end_union()
 
 void NodeValueWriter::begin_discriminator()
 {
-  next_key_ = "_d";
-
-  // For whenever we switch to JSON spec compliance and/or have NodeValueReader up and running
-  //next_key_ = "$discriminator";
+  next_key_ = "$discriminator";
 }
 
 void NodeValueWriter::end_discriminator()
@@ -148,6 +145,11 @@ void NodeValueWriter::write_uint32(ACE_CDR::ULong value)
 
 void NodeValueWriter::write_int64(ACE_CDR::LongLong value)
 {
+  if (value <= NODE_MAX_SAFE_INT) {
+    primitive_helper<ACE_CDR::LongLong, v8::Number>(value);
+    return;
+  }
+
   // If we decide not to use BigInt
   char buff[21]; // 2^63 is 19 characters long in decimal representation, plus optional sign, plus null
 #ifndef ACE_LINUX
@@ -165,6 +167,11 @@ void NodeValueWriter::write_int64(ACE_CDR::LongLong value)
 
 void NodeValueWriter::write_uint64(ACE_CDR::ULongLong value)
 {
+  if (value <= static_cast<ACE_CDR::ULongLong>(NODE_MAX_SAFE_INT)) {
+    primitive_helper<ACE_CDR::ULongLong, v8::Number>(value);
+    return;
+  }
+
   // If we decide not to use BigInt
   char buff[21]; // 2^64 is 20 characters long in decimal representation, plus null
 #ifndef ACE_LINUX
