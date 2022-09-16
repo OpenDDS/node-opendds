@@ -124,14 +124,14 @@ void NodeDRListener::push_back(const DDS::SampleInfo& src, const void* sample)
     return;
   }
 
-  if (src.valid_data && vd_) {
+  if (vd_) {
     vd_->write(nvw_, sample);
   }
 
   Local<Value> argv[] = {
     Nan::New(js_dr_),
     copyToV8(src),
-    (src.valid_data && vd_) ? nvw_.get_result().As<Value>() : Nan::Undefined().As<Value>()
+    vd_ ? nvw_.get_result().As<Value>() : Nan::Undefined().As<Value>()
   };
 
   Local<Function> callback = Nan::New(callback_);
