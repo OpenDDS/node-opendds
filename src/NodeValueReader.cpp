@@ -224,11 +224,7 @@ bool NodeValueReader::read_int64(ACE_CDR::LongLong& value)
       if (!tov.IsEmpty()) {
         std::string temp;
         read_string(temp);
-#if ACE_SIZEOF_LONG == 8
-        int result = std::sscanf(temp.c_str(), "%ld", &value);
-#else
-        int result = std::sscanf(temp.c_str(), "%lld", &value);
-#endif
+        int result = std::sscanf(temp.c_str(), ACE_INT64_FORMAT_SPECIFIER_ASCII, &value);
         return result != 0;
       }
     }
@@ -254,11 +250,7 @@ bool NodeValueReader::read_uint64(ACE_CDR::ULongLong& value)
       if (!tov.IsEmpty()) {
         std::string temp;
         read_string(temp);
-#if ACE_SIZEOF_LONG == 8
-        int result = std::sscanf(temp.c_str(), "%lu", &value);
-#else
-        int result = std::sscanf(temp.c_str(), "%llu", &value);
-#endif
+        int result = std::sscanf(temp.c_str(), ACE_UINT64_FORMAT_SPECIFIER_ASCII, &value);
         return result != 0;
       }
     }
