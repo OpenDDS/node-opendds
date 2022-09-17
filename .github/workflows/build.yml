@@ -25,7 +25,7 @@ jobs:
           - 16
         opendds_branch:
           - master
-          # - latest-release
+          - latest-release
         m:
           - {os: ubuntu-latest, dds_security: 1}
           - {os: ubuntu-latest, dds_security: 0}
