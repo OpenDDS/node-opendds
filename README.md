@@ -21,8 +21,6 @@ This assumes you are using nvm.
 $ # In OpenDDS directory.
 $ source setenv.sh
 $ # In node-opendds directory
-$ export V8_ROOT=$NVM_INC/../..
-$ export NAN_ROOT=$PWD/node_modules/nan
 $ npm install
 $ mwc.pl -type gnuace
 $ make
