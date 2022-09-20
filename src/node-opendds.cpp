@@ -1,5 +1,4 @@
 #include "NodeDRListener.h"
-#include "NodeQosConversion.h"
 #include "NodeValueReader.h"
 
 #include <nan.h>
@@ -19,7 +18,6 @@ using namespace v8;
 using OpenDDS::DCPS::Data_Types_Register;
 using NodeOpenDDS::NodeDRListener;
 using NodeOpenDDS::NodeValueReader;
-using NodeOpenDDS::convertQos;
 
 #define V8STR(str) Nan::New<String>((str)).ToLocalChecked()
 #define RUN(str) \
@@ -93,7 +91,13 @@ namespace {
     if (fci.Length() > 1 && !fci[1]->ToObject(Nan::GetCurrentContext()).IsEmpty()) {
       const Local<Object> qos_js = fci[1]->ToObject(Nan::GetCurrentContext()).ToLocalChecked();
       try {
-        convertQos(qos, qos_js);
+        NodeValueReader nvr(qos_js);
+        if (!OpenDDS::DCPS::vread(nvr, qos)) {
+          throw std::runtime_error("Unable to convert participant qos policy");
+        }
+        for (size_t i = 0; i < qos.property.value.length(); i++) {
+          std::cout << "Found DomainParticipantQos Property: { " << qos.property.value[i].name.in() << ": " << qos.property.value[i].value.in() << " }" << std::endl;
+        }
       } catch (const std::runtime_error& e) {
         Nan::ThrowError(e.what());
         fci.GetReturnValue().SetUndefined();
@@ -231,7 +235,10 @@ namespace {
       const Local<Value> subqos_lv = Nan::Get(qos_js, subqos_lstr).ToLocalChecked();
       if (subqos_lv->IsObject()) {
         try {
-          convertQos(sub_qos, subqos_lv->ToObject(Nan::GetCurrentContext()).ToLocalChecked());
+          NodeValueReader nvr(subqos_lv->ToObject(Nan::GetCurrentContext()).ToLocalChecked());
+          if (!OpenDDS::DCPS::vread(nvr, sub_qos)) {
+            throw std::runtime_error("Unable to convert subscriber qos policy");
+          }
         } catch (const std::runtime_error& e) {
           Nan::ThrowError(e.what());
           fci.GetReturnValue().SetUndefined();
@@ -259,7 +266,10 @@ namespace {
       Local<Value> drqos_lv = Nan::Get(qos_js, drqos_lstr).ToLocalChecked();
       if (drqos_lv->IsObject()) {
         try {
-          convertQos(dr_qos, drqos_lv->ToObject(Nan::GetCurrentContext()).ToLocalChecked());
+          NodeValueReader nvr(drqos_lv->ToObject(Nan::GetCurrentContext()).ToLocalChecked());
+          if (!OpenDDS::DCPS::vread(nvr, dr_qos)) {
+            throw std::runtime_error("Unable to convert datareader qos policy");
+          }
         } catch (const std::runtime_error& e) {
           Nan::ThrowError(e.what());
           fci.GetReturnValue().SetUndefined();
@@ -350,7 +360,10 @@ namespace {
       const Local<Value> pubqos_lv = Nan::Get(qos_js, pubqos_lstr).ToLocalChecked();
       if (pubqos_lv->IsObject()) {
         try {
-          convertQos(pub_qos, pubqos_lv->ToObject(Nan::GetCurrentContext()).ToLocalChecked());
+          NodeValueReader nvr(pubqos_lv->ToObject(Nan::GetCurrentContext()).ToLocalChecked());
+          if (!OpenDDS::DCPS::vread(nvr, pub_qos)) {
+            throw std::runtime_error("Unable to convert publisher qos policy");
+          }
         } catch (const std::runtime_error& e) {
           Nan::ThrowError(e.what());
           fci.GetReturnValue().SetUndefined();
@@ -373,7 +386,10 @@ namespace {
       const Local<Value> dwqos_lv = Nan::Get(qos_js, dwqos_lstr).ToLocalChecked();
       if (dwqos_lv->IsObject()) {
         try {
-          convertQos(dw_qos, dwqos_lv->ToObject(Nan::GetCurrentContext()).ToLocalChecked());
+          NodeValueReader nvr(dwqos_lv->ToObject(Nan::GetCurrentContext()).ToLocalChecked());
+          if (!OpenDDS::DCPS::vread(nvr, dw_qos)) {
+            throw std::runtime_error("Unable to convert datawriter qos policy");
+          }
         } catch (const std::runtime_error& e) {
           Nan::ThrowError(e.what());
           fci.GetReturnValue().SetUndefined();

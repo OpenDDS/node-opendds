@@ -3,30 +3,41 @@
 var DOMAIN_ID = 32;
 var ddsCerts = process.env.DDS_ROOT + "/tests/security/certs/identity";
 
-var qos = {user_data: 'foo'};
+function str2arr(input) {
+  return input.split('');
+}
+
+var qos = { user_data: { value: str2arr('foo') } };
 var secure = process.argv.includes('--secure');
 if (secure) {
-  qos.property = { value: [
-
-    {name: "dds.sec.auth.identity_ca", value: "file:" +
-      ddsCerts + "/identity_ca_cert.pem"},
-
-    {name: "dds.sec.access.permissions_ca", value: "file:" +
-      ddsCerts + "/identity_ca_cert.pem"},
-
-    {name: "dds.sec.access.governance", value: "file:" +
-      "security/governance_signed.p7s"},
-
-    {name: "dds.sec.auth.identity_certificate", value: "file:" +
-      ddsCerts + "/test_participant_02_cert.pem"}, 
-
-    {name: "dds.sec.auth.private_key", value: "file:" +
-      ddsCerts + "/test_participant_02_private_key.pem"}, 
-
-    {name: "dds.sec.access.permissions", value: "file:" +
-      "security/sub_permissions_signed.p7s"},
-
-  ]};
+  qos.property = {
+    value: [
+      {
+        name: "dds.sec.auth.identity_ca",
+        value: "file:" + ddsCerts + "/identity_ca_cert.pem"
+      },
+      {
+        name: "dds.sec.access.permissions_ca",
+        value: "file:" + ddsCerts + "/identity_ca_cert.pem"
+      },
+      {
+        name: "dds.sec.access.governance",
+        value: "file:" + "security/governance_signed.p7s"
+      },
+      {
+        name: "dds.sec.auth.identity_certificate",
+        value: "file:" + ddsCerts + "/test_participant_02_cert.pem"
+      },
+      {
+        name: "dds.sec.auth.private_key",
+        value: "file:" + ddsCerts + "/test_participant_02_private_key.pem"
+      },
+      {
+        name: "dds.sec.access.permissions",
+        value: "file:" + "security/sub_permissions_signed.p7s"
+      }
+    ]
+  };
 }
 
 function init_opendds(opendds_addon) {
@@ -40,7 +51,7 @@ var opendds_addon = require('../lib/node-opendds'),
   reader,
   last_sample_id = 24,
   dds_inf = 0x7fffffff,
-  infinite = {sec: dds_inf, nanosec: dds_inf};
+  infinite = { sec: dds_inf, nanosec: dds_inf };
 
 function log(label, object) {
   console.log(label + ': ' + JSON.stringify(object, (key, value) => typeof value === 'bigint' ? value.toString() : value, 2));
@@ -66,21 +77,20 @@ try {
         coherent_access: false,
         ordered_access: false
       },
-      partition: ['*'],
-      group_data: 'test'
+      group_data: { value: str2arr('test') }
     },
     DataReaderQos: {
-      durability: 'VOLATILE_DURABILITY_QOS',
-      latency_budget: {sec: 1, nanosec: 0},
+      durability: { kind: 'VOLATILE_DURABILITY_QOS' },
+      latency_budget: { duration: { sec: 1, nanosec: 0 } },
       liveliness: {
         kind: 'AUTOMATIC_LIVELINESS_QOS',
         lease_duration: infinite
       },
       reliability: {
         kind: 'RELIABLE_RELIABILITY_QOS',
-        max_blocking_time: {sec: 1, nanosec: 0}
+        max_blocking_time: { sec: 1, nanosec: 0 }
       },
-      destination_order: 'BY_RECEPTION_TIMESTAMP_DESTINATIONORDER_QOS',
+      destination_order: { kind: 'BY_RECEPTION_TIMESTAMP_DESTINATIONORDER_QOS' },
       history: {
         kind: 'KEEP_LAST_HISTORY_QOS',
         depth: 10
@@ -90,9 +100,9 @@ try {
         max_instances: 100,
         max_samples_per_instance: 10
       },
-      user_data: 'arbitrary string',
-      ownership: 'SHARED_OWNERSHIP_QOS',
-      time_based_filter: {sec: 0, nanosec: 0},
+      user_data: { value: str2arr('arbitrary string') },
+      ownership: { kind: 'SHARED_OWNERSHIP_QOS' },
+      time_based_filter: { minimum_separation: { sec: 0, nanosec: 0 } },
       reader_data_lifecycle: {
         autopurge_nowriter_samples_delay: infinite,
         autopurge_disposed_samples_delay: infinite
