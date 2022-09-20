@@ -5,7 +5,7 @@
 * Make sure all of the OpenDDS development environment variables are set before running npm to install this module.  If you use the OpenDDS configure script, these variables can be set using "setenv.sh" or "setenv.cmd" depending on your platform.
 ** The OpenDDS development environment can use either the source tree or the installed tree (the one created by "make install").
 ** If using the installed tree, set the DDS_ROOT environment variable using the installed dds-devel.sh script.
-** If using security, you may need to ensure that OpenDDS is built with the same version of openssl used by Node.js
+** If using security, you may need to ensure that OpenDDS is built with the same version of OpenSSL used by Node.js
 
 ## Tested platforms:
 * Node LTS versions 12, 14, 16
