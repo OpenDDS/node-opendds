@@ -5,24 +5,25 @@
 * Make sure all of the OpenDDS development environment variables are set before running npm to install this module.  If you use the OpenDDS configure script, these variables can be set using "setenv.sh" or "setenv.cmd" depending on your platform.
 ** The OpenDDS development environment can use either the source tree or the installed tree (the one created by "make install").
 ** If using the installed tree, set the DDS_ROOT environment variable using the installed dds-devel.sh script.
+** If using security, you may need to ensure that OpenDDS is built with the same version of openssl used by Node.js
 
 ## Tested platforms:
 * Node LTS versions 12, 14, 16
-* Linux (Ubuntu18.04, CentOS7) x86_64 using the distro-supplied GCC and c++11=1
-* Windows 10 x86_64 using Visual Studio 2015
-* macOS using Xcode 9.x clang C++ compiler
+* Linux (Ubuntu 20.04) x86_64 using gcc 9.4.0
+* Linux (Ubuntu 22.04) x86_64 using gcc 11.2.0 (w/ openssl-1.1.1q)
+* Windows (Server 2022) x86_64 using Visual Studio Enterprise 2022
+* macOS (11.7) x86_54 using clang 13.0
 * Other OpenDDS-supported platforms should work, but may required changes to binding.gyp
 
 ## Building and running the tests
-
-This assumes you are using nvm.
-
+* In OpenDDS directory:
 ```
-$ # In OpenDDS directory.
 $ source setenv.sh
-$ # In node-opendds directory
+```
+* In node-opendds directory:
+```
 $ npm install
-$ mwc.pl -type gnuace
+$ mwc.pl -type gnuace .
 $ make
 $ cd tests
 $ ./run_test.pl
@@ -34,6 +35,14 @@ $ node-gyp configure build
 ```
 
 ## Changelog
+
+### Version 0.2
+
+* Remove requirement for V8 TypeSupport generation and NodeQosConversion
+** uses ValueReader/Writer Implementation for NaN / Node.js
+** requires OpenDDS 3.22
+** slightly changes QoS object formatting to align with IDL types
+* Adds support and test coverage for Linux / MacOS / Windows
 
 ### Version 0.1.1
 

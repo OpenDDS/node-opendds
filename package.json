@@ -1,6 +1,6 @@
 {
   "name": "opendds",
-  "version": "0.1.1",
+  "version": "0.2",
   "description": "OpenDDS module for Node.js",
   "main": "lib/node-opendds.js",
   "directories": {
@@ -18,10 +18,15 @@
     "opendds",
     "addon"
   ],
-  "author": "Adam Mitz (Object Computing, Inc.)",
+  "contributors": [
+    "Adam Mitz <mitza@objectcomputing.com> (https://github.com/mitza-oci)",
+    "Fred Hornsety <hornseyf@objectcomputing.com> (https://github.com/iguessthislldo)",
+    "Justin R. Wilson <wilsonj@objectcomputing.com> (https://github.com/jrw972)",
+    "Timothy Simpson <simpsont@objectcomputing.com> (https://github.com/simpsont-oci)"
+  ],
   "license": "BSD-3-Clause",
   "gypfile": true,
   "dependencies": {
-    "nan": "^2.14.2"
+    "nan": "^2.16.0"
   }
 }
