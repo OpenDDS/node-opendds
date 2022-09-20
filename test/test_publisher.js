@@ -3,30 +3,41 @@
 var DOMAIN_ID = 32;
 var ddsCerts = process.env.DDS_ROOT + "/tests/security/certs/identity";
 
-var qos = {user_data: 'foo'};
+function str2arr(input) {
+  return input.split('');
+}
+
+var qos = { user_data: { value: str2arr('foo') } };
 var secure = process.argv.includes('--secure');
 if (secure) {
-  qos.property = { value: [
-
-    {name: "dds.sec.auth.identity_ca", value: "file:" +
-      ddsCerts + "/identity_ca_cert.pem"},
-
-    {name: "dds.sec.access.permissions_ca", value: "file:" +
-      ddsCerts + "/identity_ca_cert.pem"},
-
-    {name: "dds.sec.access.governance", value: "file:" +
-      "security/governance_signed.p7s"},
-
-    {name: "dds.sec.auth.identity_certificate", value: "file:" +
-      ddsCerts + "/test_participant_01_cert.pem"},
-
-    {name: "dds.sec.auth.private_key", value: "file:" +
-      ddsCerts + "/test_participant_01_private_key.pem"},
-
-    {name: "dds.sec.access.permissions", value: "file:" +
-      "security/pub_permissions_signed.p7s"},
-
-  ]};
+  qos.property = {
+    value: [
+      {
+        name: "dds.sec.auth.identity_ca",
+        value: "file:" + ddsCerts + "/identity_ca_cert.pem"
+      },
+      {
+        name: "dds.sec.access.permissions_ca",
+        value: "file:" + ddsCerts + "/identity_ca_cert.pem"
+      },
+      {
+        name: "dds.sec.access.governance",
+        value: "file:" + "security/governance_signed.p7s"
+      },
+      {
+        name: "dds.sec.auth.identity_certificate",
+        value: "file:" + ddsCerts + "/test_participant_01_cert.pem"
+      },
+      {
+        name: "dds.sec.auth.private_key",
+        value: "file:" + ddsCerts + "/test_participant_01_private_key.pem"
+      },
+      {
+        name: "dds.sec.access.permissions",
+        value: "file:" + "security/pub_permissions_signed.p7s"
+      }
+    ]
+  };
 }
 
 function init_opendds(opendds_addon) {
@@ -42,7 +53,7 @@ var opendds_addon = require('../lib/node-opendds'),
   writer,
   last_sample_id = 24,
   dds_inf = 0x7fffffff,
-  infinite = {sec: dds_inf, nanosec: dds_inf};
+  infinite = { sec: dds_inf, nanosec: dds_inf };
 
 function log(label, object) {
   console.log(label + ': ' + JSON.stringify(object, null, 2));
@@ -108,8 +119,8 @@ try {
   }
   writer = participant.create_datawriter('topic', 'Mod::Sample', {
     DataWriterQos: {
-      latency_budget: {sec: 1, nanosec: 0},
-      liveliness: { lease_duration: {sec: 5, nanosec: 0} }
+      latency_budget: { sec: 1, nanosec: 0 },
+      liveliness: { lease_duration: { sec: 5, nanosec: 0 } }
     }
   });
 

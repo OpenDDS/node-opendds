@@ -1,8 +1,5 @@
 #include "NodeValueReader.h"
 
-#include <string>
-#include <iostream>
-
 namespace NodeOpenDDS {
 
 NodeValueReader::NodeValueReader(v8::Local<v8::Object> obj)
