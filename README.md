@@ -23,7 +23,7 @@ $ source setenv.sh
 * In node-opendds directory:
 ```
 $ npm install
-$ mwc.pl -type gnuace .
+$ mwc.pl -type gnuace
 $ make
 $ cd tests
 $ ./run_test.pl
