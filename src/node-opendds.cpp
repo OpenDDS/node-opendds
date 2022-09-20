@@ -19,10 +19,6 @@ using OpenDDS::DCPS::Data_Types_Register;
 using NodeOpenDDS::NodeDRListener;
 using NodeOpenDDS::NodeValueReader;
 
-#define V8STR(str) Nan::New<String>((str)).ToLocalChecked()
-#define RUN(str) \
-  Nan::RunScript(Nan::CompileScript(V8STR((str))).ToLocalChecked())
-
 namespace {
   std::vector<DDS::DomainParticipant_var> participants_;
   std::string cft_name("CFT000001"); // unique names for ContentFilteredTopic
@@ -94,9 +90,6 @@ namespace {
         NodeValueReader nvr(qos_js);
         if (!OpenDDS::DCPS::vread(nvr, qos)) {
           throw std::runtime_error("Unable to convert participant qos policy");
-        }
-        for (size_t i = 0; i < qos.property.value.length(); i++) {
-          std::cout << "Found DomainParticipantQos Property: { " << qos.property.value[i].name.in() << ": " << qos.property.value[i].value.in() << " }" << std::endl;
         }
       } catch (const std::runtime_error& e) {
         Nan::ThrowError(e.what());
