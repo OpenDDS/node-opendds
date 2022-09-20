@@ -1,7 +1,5 @@
 #include "NodeValueWriter.h"
 
-#include <dds/DCPS/ValueHelper.h>
-
 namespace NodeOpenDDS {
 
 namespace {
