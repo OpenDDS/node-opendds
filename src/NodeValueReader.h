@@ -114,10 +114,8 @@ private:
         }
       }
       if (lvai->IsString()) {
-        v8::Local<v8::String> ls = v8::Local<v8::String>::Cast(lvai);
-        std::string str(ls->Utf8Length(v8::Isolate::GetCurrent()), 0);
-        ls->WriteUtf8(v8::Isolate::GetCurrent(), &str[0]);
-        safe_assign(value, (*str_conv)(str.c_str(), 0, str.find("0x") != std::string::npos ? 16 : 10));
+        Nan::Utf8String str(lvai);
+        safe_assign(value, (*str_conv)(*str, 0, std::string(*str).find("0x") != std::string::npos ? 16 : 10));
         return true;
       }
     }
@@ -138,10 +136,8 @@ private:
         }
       }
       if (lvai->IsString()) {
-        v8::Local<v8::String> ls = v8::Local<v8::String>::Cast(lvai);
-        std::string str(ls->Utf8Length(v8::Isolate::GetCurrent()), 0);
-        ls->WriteUtf8(v8::Isolate::GetCurrent(), &str[0]);
-        safe_assign(value, (*str_conv)(str.c_str(), 0));
+        Nan::Utf8String str(lvai);
+        safe_assign(value, (*str_conv)(*str, 0));
         return true;
       }
     }

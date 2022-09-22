@@ -1,5 +1,31 @@
 #include "NodeValueReader.h"
 
+#include <codecvt>
+#include <locale>
+
+#if NODE_MAJOR_VERSION > 10 || (NODE_MAJOR_VERSION == 10 && NODE_MINOR_VERSION >= 4)
+#define HAS_BIGINT
+#endif
+
+#ifdef HAS_BIGINT
+// This is a bit of a hack to make Nan::To work for BigInt
+// It should be OK as long as we avoid trying to reference BigInt before 10.4
+namespace Nan {
+namespace imp {
+
+template<>
+struct ToFactory<v8::BigInt> : ToFactoryBase<v8::BigInt> {
+  static inline return_t convert(v8::Local<v8::Value> val) {
+    v8::Isolate *isolate = v8::Isolate::GetCurrent();
+    v8::EscapableHandleScope scope(isolate);
+    return scope.Escape(val->ToBigInt(isolate->GetCurrentContext()).FromMaybe(v8::Local<v8::BigInt>()));
+  }
+};
+
+}
+}
+#endif
+
 namespace NodeOpenDDS {
 
 NodeValueReader::NodeValueReader(v8::Local<v8::Object> obj)
@@ -29,13 +55,9 @@ bool NodeValueReader::begin_struct_member(OpenDDS::XTypes::MemberId& member_id, 
       Nan::MaybeLocal<v8::Value> mlv = Nan::Get(property_names_.ToLocalChecked(), current_index_);
       if (!mlv.IsEmpty()) {
         current_property_name_ = mlv.ToLocalChecked();
-        v8::Local<v8::String> name = v8::Local<v8::String>::Cast(current_property_name_);
-        if (!name.IsEmpty()) {
-          std::string str(name->Utf8Length(v8::Isolate::GetCurrent()), 0);
-          name->WriteUtf8(v8::Isolate::GetCurrent(), &str[0]);
-          if (helper.get_value(member_id, str.c_str())) {
-            return true;
-          }
+        Nan::Utf8String name(current_property_name_);
+        if (helper.get_value(member_id, *name)) {
+          return true;
         }
       }
       ++current_index_;
@@ -67,13 +89,9 @@ bool NodeValueReader::begin_discriminator()
       Nan::MaybeLocal<v8::Value> mlv = Nan::Get(property_names_.ToLocalChecked(), current_index_);
       if (!mlv.IsEmpty()) {
         current_property_name_ = mlv.ToLocalChecked();
-        v8::Local<v8::String> name = v8::Local<v8::String>::Cast(current_property_name_);
-        if (!name.IsEmpty()) {
-          std::string str(name->Utf8Length(v8::Isolate::GetCurrent()), 0);
-          name->WriteUtf8(v8::Isolate::GetCurrent(), &str[0]);
-          if (str == "$discriminator") {
-            return true;
-          }
+        Nan::Utf8String name(current_property_name_);
+        if (std::strcmp(*name, "$discriminator") == 0) {
+          return true;
         }
       }
       ++current_index_;
@@ -95,13 +113,9 @@ bool NodeValueReader::begin_union_member()
       Nan::MaybeLocal<v8::Value> mlv = Nan::Get(property_names_.ToLocalChecked(), current_index_);
       if (!mlv.IsEmpty()) {
         current_property_name_ = mlv.ToLocalChecked();
-        v8::Local<v8::String> name = v8::Local<v8::String>::Cast(current_property_name_);
-        if (!name.IsEmpty()) {
-          std::string str(name->Utf8Length(v8::Isolate::GetCurrent()), 0);
-          name->WriteUtf8(v8::Isolate::GetCurrent(), &str[0]);
-          if (str != "$discriminator") {
-            return true;
-          }
+        Nan::Utf8String name(current_property_name_);
+        if (std::strcmp(*name, "$discriminator") != 0) {
+          return true;
         }
       }
       ++current_index_;
@@ -192,10 +206,7 @@ bool NodeValueReader::read_uint16(ACE_CDR::UShort& value)
 
 bool NodeValueReader::read_int32(ACE_CDR::Long& value)
 {
-  bool result = primitive_helper<v8::Integer>(value, &v8::Value::IsNumber, strtol);
-  if (result) {
-  }
-  return result;
+  return primitive_helper<v8::Integer>(value, &v8::Value::IsNumber, strtol);
 }
 
 bool NodeValueReader::read_uint32(ACE_CDR::ULong& value)
@@ -207,15 +218,15 @@ bool NodeValueReader::read_int64(ACE_CDR::LongLong& value)
 {
   Nan::MaybeLocal<v8::Value> mlvai = use_name_ ? Nan::Get(current_object_, current_property_name_) : Nan::Get(current_object_, current_index_);
   if (!mlvai.IsEmpty()) {
-    // This doesn't work because NaN seems to lack conversion support to BigInt
-    // Not super surprising, since BigInt support wasn't introduced until Node.js 10.4
-    //{
-    //  Nan::MaybeLocal<v8::BigInt> tov = Nan::To<v8::BigInt>(mlvai.ToLocalChecked());
-    //  if (!tov.IsEmpty()) {
-    //    value = static_cast<ACE_CDR::LongLong>(tov.ToLocalChecked()->Int64Value());
-    //    return true;
-    //  }
-    //}
+#ifdef HAS_BIGINT
+    if (!mlvai.ToLocalChecked()->IsNumber()) {
+      Nan::MaybeLocal<v8::BigInt> tov = Nan::To<v8::BigInt>(mlvai.ToLocalChecked());
+      if (!tov.IsEmpty()) {
+        value = static_cast<ACE_CDR::LongLong>(tov.ToLocalChecked()->Int64Value());
+        return true;
+      }
+    }
+#endif
     {
       Nan::MaybeLocal<v8::String> tov = Nan::To<v8::String>(mlvai.ToLocalChecked());
       if (!tov.IsEmpty()) {
@@ -233,15 +244,15 @@ bool NodeValueReader::read_uint64(ACE_CDR::ULongLong& value)
 {
   Nan::MaybeLocal<v8::Value> mlvai = use_name_ ? Nan::Get(current_object_, current_property_name_) : Nan::Get(current_object_, current_index_);
   if (!mlvai.IsEmpty()) {
-    // This doesn't work because NaN seems to lack conversion support to BigInt
-    // Not super surprising, since BigInt support wasn't introduced until Node.js 10.4
-    //{
-    //  Nan::MaybeLocal<v8::BigInt> tov = Nan::To<v8::BigInt>(mlvai.ToLocalChecked());
-    //  if (!tov.IsEmpty()) {
-    //    value = static_cast<ACE_CDR::LongLong>(tov.ToLocalChecked()->UInt64Value());
-    //    return true;
-    //  }
-    //}
+#ifdef HAS_BIGINT
+    if (!mlvai.ToLocalChecked()->IsNumber()) {
+      Nan::MaybeLocal<v8::BigInt> tov = Nan::To<v8::BigInt>(mlvai.ToLocalChecked());
+      if (!tov.IsEmpty()) {
+        value = static_cast<ACE_CDR::LongLong>(tov.ToLocalChecked()->Uint64Value());
+        return true;
+      }
+    }
+#endif
     {
       Nan::MaybeLocal<v8::String> tov = Nan::To<v8::String>(mlvai.ToLocalChecked());
       if (!tov.IsEmpty()) {
@@ -310,8 +321,8 @@ bool NodeValueReader::read_string(std::string& value)
   if (!mlvai.IsEmpty()) {
     Nan::MaybeLocal<v8::String> tov = Nan::To<v8::String>(mlvai.ToLocalChecked());
     if (!tov.IsEmpty()) {
-      value.resize(tov.ToLocalChecked()->Utf8Length(v8::Isolate::GetCurrent()), 0);
-      tov.ToLocalChecked()->WriteUtf8(v8::Isolate::GetCurrent(), &value[0], -1, 0, v8::String::NO_NULL_TERMINATION);
+      Nan::Utf8String str(tov.ToLocalChecked());
+      value = *str;
       return true;
     }
   }
@@ -324,12 +335,9 @@ bool NodeValueReader::read_wstring(std::wstring& value)
   if (!mlvai.IsEmpty()) {
     Nan::MaybeLocal<v8::String> tov = Nan::To<v8::String>(mlvai.ToLocalChecked());
     if (!tov.IsEmpty()) {
-      std::vector<uint16_t> temp(tov.ToLocalChecked()->Length(), 0);
-      tov.ToLocalChecked()->Write(v8::Isolate::GetCurrent(), &temp[0], 0, -1, v8::String::NO_NULL_TERMINATION);
-      value.resize(temp.size(), 0);
-      for (size_t i = 0; i < temp.size(); ++i) {
-        value[i] = static_cast<wchar_t>(temp[i]);
-      }
+      Nan::Utf8String str(tov.ToLocalChecked());
+      std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> wconv;
+      value = wconv.from_bytes(*str);
       return true;
     }
   }

@@ -15,6 +15,8 @@ class NodeValueWriter : public OpenDDS::DCPS::ValueWriter {
 public:
   NodeValueWriter();
 
+  void use_bigint(bool value);
+
   void begin_struct();
   void end_struct();
   void begin_struct_member(const DDS::MemberDescriptor& descriptor);
@@ -115,6 +117,7 @@ private:
   OPENDDS_VECTOR(v8::Local<v8::Object>) object_stack_;
   std::string next_key_;
   size_t next_index_;
+  bool use_bigint_;
 };
 
 } // NodeOpenDDS
