@@ -1,13 +1,24 @@
 #include "NodeValueWriter.h"
 
+#if NODE_MAJOR_VERSION > 10 || (NODE_MAJOR_VERSION == 10 && NODE_MINOR_VERSION >= 4)
+#define HAS_BIGINT
+#endif
+
 namespace NodeOpenDDS {
 
 namespace {
   const int64_t NODE_MAX_SAFE_INT = 9007199254740991;
 }
 
-NodeValueWriter::NodeValueWriter() : next_index_(0)
+NodeValueWriter::NodeValueWriter()
+  : next_index_(0)
+  , use_bigint_(true)
 {
+}
+
+void NodeValueWriter::use_bigint(bool value)
+{
+  use_bigint_ = value;
 }
 
 void NodeValueWriter::begin_struct()
@@ -148,19 +159,19 @@ void NodeValueWriter::write_int64(ACE_CDR::LongLong value)
     return;
   }
 
-  // If we decide not to use BigInt
-  char buff[21]; // 2^63 is 19 characters long in decimal representation, plus optional sign, plus null
-#ifndef ACE_LINUX
-  std::sprintf(buff, "%lld", value);
-#else
-  std::sprintf(buff, "%ld", value);
+#ifdef HAS_BIGINT
+  if (use_bigint_) {
+    v8::MaybeLocal<v8::BigInt> v8_value = v8::BigInt::New(v8::Isolate::GetCurrent(), static_cast<int64_t>(value));
+    value_helper<v8::BigInt>(v8_value);
+  } else {
 #endif
-  v8::MaybeLocal<v8::String> v8_value = Nan::New<v8::String>(buff, std::strlen(buff));
-  value_helper<v8::String>(v8_value);
-
-  // If we decide to use BigInt
-  //v8::MaybeLocal<v8::BigInt> v8_value = v8::BigInt::New(v8::Isolate::GetCurrent(), static_cast<int64_t>(value));
-  //value_helper<v8::BigInt>(v8_value);
+    char buff[21]; // 2^63 is 19 characters long in decimal representation, plus optional sign, plus null
+    std::sprintf(buff, ACE_INT64_FORMAT_SPECIFIER_ASCII, value);
+    v8::MaybeLocal<v8::String> v8_value = Nan::New<v8::String>(buff, std::strlen(buff));
+    value_helper<v8::String>(v8_value);
+#ifdef HAS_BIGINT
+  }
+#endif
 }
 
 void NodeValueWriter::write_uint64(ACE_CDR::ULongLong value)
@@ -170,19 +181,19 @@ void NodeValueWriter::write_uint64(ACE_CDR::ULongLong value)
     return;
   }
 
-  // If we decide not to use BigInt
-  char buff[21]; // 2^64 is 20 characters long in decimal representation, plus null
-#ifndef ACE_LINUX
-  std::sprintf(buff, "%llu", value);
-#else
-  std::sprintf(buff, "%lu", value);
+#ifdef HAS_BIGINT
+  if (use_bigint_) {
+    v8::MaybeLocal<v8::BigInt> v8_value = v8::BigInt::NewFromUnsigned(v8::Isolate::GetCurrent(), static_cast<uint64_t>(value));
+    value_helper<v8::BigInt>(v8_value);
+  } else {
 #endif
-  v8::MaybeLocal<v8::String> v8_value = Nan::New<v8::String>(buff, std::strlen(buff));
-  value_helper<v8::String>(v8_value);
-
-  // If we decide to use BigInt
-  //v8::MaybeLocal<v8::BigInt> v8_value = v8::BigInt::NewFromUnsigned(v8::Isolate::GetCurrent(), static_cast<uint64_t>(value));
-  //value_helper<v8::BigInt>(v8_value);
+    char buff[21]; // 2^64 is 20 characters long in decimal representation, plus null
+    std::sprintf(buff, ACE_UINT64_FORMAT_SPECIFIER_ASCII, value);
+    v8::MaybeLocal<v8::String> v8_value = Nan::New<v8::String>(buff, std::strlen(buff));
+    value_helper<v8::String>(v8_value);
+#ifdef HAS_BIGINT
+  }
+#endif
 }
 
 void NodeValueWriter::write_float32(ACE_CDR::Float value)
