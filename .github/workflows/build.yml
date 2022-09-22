@@ -39,19 +39,19 @@ jobs:
             m: {os: ubuntu-latest, security: 0}
           - node_version: 8
             opendds_branch: latest-release
-            m: {os: windows-latest, security: 0}
+            m: {os: windows-2019, security: 0}
           - node_version: 10
             opendds_branch: latest-release
             m: {os: ubuntu-latest, security: 1}
           - node_version: 10
             opendds_branch: latest-release
-            m: {os: windows-latest, security: 1}
+            m: {os: windows-2019, security: 1}
           - node_version: 12
             opendds_branch: latest-release
             m: {os: ubuntu-latest, security: 1}
           - node_version: 12
             opendds_branch: latest-release
-            m: {os: windows-latest, security: 1}
+            m: {os: windows-2019, security: 1}
 
     runs-on: ${{ matrix.m.os }}
     steps:
