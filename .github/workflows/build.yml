@@ -20,9 +20,9 @@ jobs:
       fail-fast: false
       matrix:
         node_version:
-          - 12
           - 14
           - 16
+          - 18
         opendds_branch:
           - master
           - latest-release
@@ -33,6 +33,25 @@ jobs:
           - {os: macos-latest, dds_security: 0}
           - {os: windows-2019, dds_security: 1}
           - {os: windows-2019, dds_security: 0}
+        include:
+          - node_version: 8
+            opendds_branch: latest-release
+            m: {os: ubuntu-latest, security: 0}
+          - node_version: 8
+            opendds_branch: latest-release
+            m: {os: windows-latest, security: 0}
+          - node_version: 10
+            opendds_branch: latest-release
+            m: {os: ubuntu-latest, security: 1}
+          - node_version: 10
+            opendds_branch: latest-release
+            m: {os: windows-latest, security: 1}
+          - node_version: 12
+            opendds_branch: latest-release
+            m: {os: ubuntu-latest, security: 1}
+          - node_version: 12
+            opendds_branch: latest-release
+            m: {os: windows-latest, security: 1}
 
     runs-on: ${{ matrix.m.os }}
     steps:
@@ -57,6 +76,10 @@ jobs:
           ref: ${{ matrix.opendds_branch }}
           path: OpenDDS
           fetch-depth: 1
+      - name: 'Set Up node'
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node_version }}
       - name: 'Install ssl and xerces (ubuntu)'
         if: ${{ matrix.m.dds_security == 1 && matrix.m.os == 'ubuntu-latest' }}
         run: |-
@@ -82,11 +105,6 @@ jobs:
       - name: 'Set Up Problem Matcher (ubuntu / macos)'
         if: ${{ matrix.m.os == 'ubuntu-latest' || matrix.m.os == 'macos-latest' }}
         uses: ammaraskar/gcc-problem-matcher@0.1
-      - name: 'Set Up node (windows)'
-        if: ${{ matrix.m.os == 'windows-2019' }}
-        uses: actions/setup-node@v3
-        with:
-          node-version: ${{ matrix.node_version }}
       - name: 'Set environment variables (ubuntu / macos)'
         if: ${{ matrix.m.os == 'ubuntu-latest' || matrix.m.os == 'macos-latest' }}
         shell: bash
@@ -95,7 +113,6 @@ jobs:
           echo "TAO_ROOT=$GITHUB_WORKSPACE/ACE_TAO/TAO" >> $GITHUB_ENV
           echo "DDS_ROOT=$GITHUB_WORKSPACE/OpenDDS" >> $GITHUB_ENV
           echo "MPC_ROOT=$GITHUB_WORKSPACE/MPC" >> $GITHUB_ENV
-          echo "NVM_DIR=$GITHUB_WORKSPACE/nvm" >> $GITHUB_ENV
           echo "npm_config_devdir=$GITHUB_WORKSPACE/opendds-node-gyp-devdir" >> $GITHUB_ENV
           echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$GITHUB_WORKSPACE/ACE_TAO/ACE/lib:$GITHUB_WORKSPACE/OpenDDS/lib" >> $GITHUB_ENV
           if [ ${{ matrix.node_version }} == 16 ]; then
@@ -120,7 +137,6 @@ jobs:
           echo "TAO_ROOT=$GITHUB_WORKSPACE\\ACE_TAO\\TAO" >> $GITHUB_ENV
           echo "DDS_ROOT=$GITHUB_WORKSPACE\\OpenDDS" >> $GITHUB_ENV
           echo "MPC_ROOT=$GITHUB_WORKSPACE\\MPC" >> $GITHUB_ENV
-          echo "NVM_DIR=$GITHUB_WORKSPACE\\nvm" >> $GITHUB_ENV
           echo "npm_config_devdir=$GITHUB_WORKSPACE\\opendds-node-gyp-devdir" >> $GITHUB_ENV
           if [ ${{ matrix.m.dds_security }} == 1 ]; then
             CONFIG_OPTIONS+=" --security";
@@ -154,25 +170,10 @@ jobs:
           cd OpenDDS
           call setenv.cmd
           msbuild -p:Configuration=Debug,Platform=x64 -t:${{ env.BUILD_TARGETS }} -m DDS_TAOv2.sln
-      - name: 'Checkout nvm'
-        uses: actions/checkout@v3
-        with:
-          repository: nvm-sh/nvm.git
-          path: ${{ env.NVM_DIR }}
-          ref: v0.39.0
-          fetch-depth: 1
-      - name: 'Install node, Build (ubuntu / macos)'
+      - name: 'Install (ubuntu / macos)'
         if: ${{ matrix.m.os == 'ubuntu-latest' || matrix.m.os == 'macos-latest' }}
         shell: bash
         run: |-
-          set -e
-          cd ${{ env.NVM_DIR }}
-          [ -s "./nvm.sh" ] && \. "./nvm.sh"  # loads nvm
-          cd $GITHUB_WORKSPACE
-          nvm install ${{ matrix.node_version }}
-          nvm use ${{ matrix.node_version }}
-          echo "node:$(node -v) npm:$(npm -v)"
-          echo "Build ========== ========== =========="
           npm install
           ${{ env.ACE_ROOT }}/bin/mwc.pl -type gnuace -exclude ACE_TAO,OpenDDS
           make -j2 || make
@@ -180,12 +181,6 @@ jobs:
         if: ${{ matrix.m.os == 'ubuntu-latest' || matrix.m.os == 'macos-latest' }}
         shell: bash
         run: |-
-          set -e
-          cd ${{ env.NVM_DIR }}
-          [ -s "./nvm.sh" ] && \. "./nvm.sh"  # loads nvm
-          cd $GITHUB_WORKSPACE
-          nvm use ${{ matrix.node_version }}
-          echo "node:$(node -v) npm:$(npm -v)"
           cd test
           ./run_test.pl cpp2node
           ./run_test.pl node2cpp
@@ -197,12 +192,6 @@ jobs:
         if: ${{ (matrix.m.os == 'ubuntu-latest' || matrix.m.os == 'macos-latest') && matrix.m.dds_security == 1 }}
         shell: bash
         run: |-
-          set -e
-          cd ${{ env.NVM_DIR }}
-          [ -s "./nvm.sh" ] && \. "./nvm.sh"  # loads nvm
-          cd $GITHUB_WORKSPACE
-          nvm use ${{ matrix.node_version }}
-          echo "node:$(node -v) npm:$(npm -v)"
           cd test
           ./run_test.pl cpp2node --rtps --secure
           ./run_test.pl node2cpp --rtps --secure
