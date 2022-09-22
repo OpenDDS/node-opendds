@@ -36,7 +36,7 @@ $ node-gyp configure build
 
 ## Changelog
 
-### Version 0.2.0
+### Version 0.2.1
 
 * Remove requirement for V8 TypeSupport generation and NodeQosConversion
 ** uses ValueReader/Writer Implementation for NaN / Node.js
