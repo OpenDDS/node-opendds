@@ -25,7 +25,7 @@ $ source setenv.sh
 $ npm install
 $ mwc.pl -type gnuace
 $ make
-$ cd tests
+$ cd test
 $ ./run_test.pl
 ```
 
