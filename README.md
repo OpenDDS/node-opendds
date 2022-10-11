@@ -34,6 +34,10 @@ $ ./run_test.pl
 $ node-gyp configure build
 ```
 
+## Other Resources
+* An article about [using node-opendds to bridge between OpenDDS and RESTful web](https://objectcomputing.com/resources/publications/sett/custom-bridges-between-restful-web-services-and-dds).
+    * A link to the [repository of the demo discussed in the article](https://github.com/oci-labs/node-opendds-rest-demo).
+
 ## Changelog
 
 ### Version 0.2.1
