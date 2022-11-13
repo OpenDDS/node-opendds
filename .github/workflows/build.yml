@@ -124,7 +124,7 @@ jobs:
             CONFIG_OPTIONS+=" --security";
             BUILD_TARGETS+=" OpenDDS_Security";
             if [ '${{ matrix.m.os }}' == 'macos-latest' ]; then
-              CONFIG_OPTIONS+=" --xerces3=/usr/local/Cellar/xerces-c/3.2.3 --openssl=/usr/local/opt/openssl@1.1"
+              CONFIG_OPTIONS+=" --xerces3=$(brew --prefix xerces-c) --openssl=/usr/local/opt/openssl@1.1"
             fi
           fi
           echo "CONFIG_OPTIONS=$CONFIG_OPTIONS" >> $GITHUB_ENV
