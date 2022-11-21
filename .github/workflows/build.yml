@@ -147,6 +147,7 @@ jobs:
           fi
           echo "CONFIG_OPTIONS=$CONFIG_OPTIONS" >> $GITHUB_ENV
           echo "BUILD_TARGETS=DCPSInfoRepo_Main;OpenDDS_Rtps_Udp$BUILD_TARGETS" >> $GITHUB_ENV
+          echo "ACE_TEST_LOG_STUCK_STACKS=1" >> $GITHUB_ENV
       - name: 'Configure & Build OpenDDS (ubuntu / macos)'
         if: ${{ matrix.m.os == 'ubuntu-latest' || matrix.m.os == 'macos-latest' }}
         shell: bash
@@ -177,10 +178,23 @@ jobs:
           npm install
           ${{ env.ACE_ROOT }}/bin/mwc.pl -type gnuace -exclude ACE_TAO,OpenDDS
           make -j2 || make
+      - name: 'Change Core File Pattern (ubuntu)'
+        if: ${{ matrix.m.os == 'ubuntu-latest' }}
+        shell: bash
+        run: |
+          sudo sysctl -w kernel.core_pattern=core.%e.%p
+          echo Core file pattern set to:
+          cat /proc/sys/kernel/core_pattern
+      - name: 'Change Cores Directory Permissions (macos)'
+        if: ${{ matrix.m.os == 'macos-latest' }}
+        shell: bash
+        run: |
+          sudo chmod o+w /cores
       - name: 'Test (ubuntu / macos)'
         if: ${{ matrix.m.os == 'ubuntu-latest' || matrix.m.os == 'macos-latest' }}
         shell: bash
         run: |-
+          ulimit -c unlimited
           cd test
           ./run_test.pl cpp2node
           ./run_test.pl node2cpp
@@ -192,6 +206,7 @@ jobs:
         if: ${{ (matrix.m.os == 'ubuntu-latest' || matrix.m.os == 'macos-latest') && matrix.m.dds_security == 1 }}
         shell: bash
         run: |-
+          ulimit -c unlimited
           cd test
           ./run_test.pl cpp2node --rtps --secure
           ./run_test.pl node2cpp --rtps --secure
