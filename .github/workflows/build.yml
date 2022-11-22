@@ -115,7 +115,7 @@ jobs:
           echo "MPC_ROOT=$GITHUB_WORKSPACE/MPC" >> $GITHUB_ENV
           echo "npm_config_devdir=$GITHUB_WORKSPACE/opendds-node-gyp-devdir" >> $GITHUB_ENV
           echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$GITHUB_WORKSPACE/ACE_TAO/ACE/lib:$GITHUB_WORKSPACE/OpenDDS/lib" >> $GITHUB_ENV
-          if [ ${{ matrix.node_version }} == 16 ]; then
+          if [ ${{ matrix.node_version }} >= 16 ]; then
             CONFIG_OPTIONS+=" --std=c++14";
           else
             CONFIG_OPTIONS+=" --std=c++11";
