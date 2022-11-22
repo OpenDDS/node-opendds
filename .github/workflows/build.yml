@@ -177,7 +177,7 @@ jobs:
         run: |-
           npm install
           if [ '${{ matrix.m.os }}' == 'ubuntu-latest' ]; then
-            npx -y node-gyp rebuild --debug
+            npm exec -y node-gyp rebuild --debug
           fi
           ${{ env.ACE_ROOT }}/bin/mwc.pl -type gnuace -exclude ACE_TAO,OpenDDS
           make -j2 || make
