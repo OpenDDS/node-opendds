@@ -101,10 +101,10 @@ jobs:
         uses: ilammy/msvc-dev-cmd@v1
       - name: 'Set Up Problem Matcher (windows)'
         if: ${{ matrix.m.os == 'windows-2019' }}
-        uses: ammaraskar/msvc-problem-matcher@0.1
+        uses: ammaraskar/msvc-problem-matcher@0.2
       - name: 'Set Up Problem Matcher (ubuntu / macos)'
         if: ${{ matrix.m.os == 'ubuntu-latest' || matrix.m.os == 'macos-latest' }}
-        uses: ammaraskar/gcc-problem-matcher@0.1
+        uses: ammaraskar/gcc-problem-matcher@0.2
       - name: 'Set environment variables (ubuntu / macos)'
         if: ${{ matrix.m.os == 'ubuntu-latest' || matrix.m.os == 'macos-latest' }}
         shell: bash
@@ -176,6 +176,9 @@ jobs:
         shell: bash
         run: |-
           npm install
+          if [ '${{ matrix.m.os }}' == 'ubuntu-latest' ]; then
+            npx -y node-gyp rebuild --debug
+          fi
           ${{ env.ACE_ROOT }}/bin/mwc.pl -type gnuace -exclude ACE_TAO,OpenDDS
           make -j2 || make
       - name: 'Change Core File Pattern (ubuntu)'
