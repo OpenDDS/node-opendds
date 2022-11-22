@@ -176,9 +176,6 @@ jobs:
         shell: bash
         run: |-
           npm install
-          if [ '${{ matrix.m.os }}' == 'ubuntu-20.04' ]; then
-            npm exec -y node-gyp rebuild --debug
-          fi
           ${{ env.ACE_ROOT }}/bin/mwc.pl -type gnuace -exclude ACE_TAO,OpenDDS
           make -j2 || make
       - name: 'Change Core File Pattern (ubuntu)'
