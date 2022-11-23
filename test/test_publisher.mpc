@@ -1,4 +1,4 @@
-project: dcpsexe {
+project: dcpsexe, node_library_user {
   exename = test_publisher
 
   libs += NodeJSTest
