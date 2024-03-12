@@ -38,7 +38,7 @@ NodeValueReader::NodeValueReader(v8::Local<v8::Object> obj)
   use_name_ = false;
 }
 
-bool NodeValueReader::begin_struct()
+bool NodeValueReader::begin_struct(OpenDDS::DCPS::Extensibility /*extensibility*/)
 {
   return begin_nested();
 }
@@ -66,13 +66,19 @@ bool NodeValueReader::begin_struct_member(OpenDDS::XTypes::MemberId& member_id, 
   return false;
 }
 
+bool NodeValueReader::members_remaining()
+{
+  // TODO(sonndinh):
+  return true;
+}
+
 bool NodeValueReader::end_struct_member()
 {
   ++current_index_;
   return true;
 }
 
-bool NodeValueReader::begin_union()
+bool NodeValueReader::begin_union(OpenDDS::DCPS::Extensibility /*extensibility*/)
 {
   return begin_nested();
 }
@@ -130,7 +136,7 @@ bool NodeValueReader::end_union_member()
   return true;
 }
 
-bool NodeValueReader::begin_array()
+bool NodeValueReader::begin_array(OpenDDS::XTypes::TypeKind /*elem_kind*/)
 {
   return begin_nested();
 }
@@ -140,7 +146,7 @@ bool NodeValueReader::end_array()
   return end_nested();
 }
 
-bool NodeValueReader::begin_sequence()
+bool NodeValueReader::begin_sequence(OpenDDS::XTypes::TypeKind /*elem_kind*/)
 {
   return begin_nested();
 }
@@ -360,6 +366,12 @@ bool NodeValueReader::read_long_enum(ACE_CDR::Long& value, const OpenDDS::DCPS::
   }
 
   return false;
+}
+
+bool NodeValueReader::read_bitmask(ACE_CDR::ULongLong& value, const OpenDDS::DCPS::BitmaskHelper& helper)
+{
+  // TODO(sonndinh):
+  return true;
 }
 
 bool NodeValueReader::begin_nested()

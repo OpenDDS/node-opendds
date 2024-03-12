@@ -27,21 +27,22 @@ class NodeValueReader : public OpenDDS::DCPS::ValueReader {
 public:
   explicit NodeValueReader(v8::Local<v8::Object> obj);
 
-  bool begin_struct();
+  bool begin_struct(OpenDDS::DCPS::Extensibility extensibility);
   bool end_struct();
   bool begin_struct_member(OpenDDS::XTypes::MemberId& member_id, const OpenDDS::DCPS::MemberHelper& helper);
+  bool members_remaining();
   bool end_struct_member();
 
-  bool begin_union();
+  bool begin_union(OpenDDS::DCPS::Extensibility extensibility);
   bool end_union();
   bool begin_discriminator();
   bool end_discriminator();
   bool begin_union_member();
   bool end_union_member();
 
-  bool begin_array();
+  bool begin_array(OpenDDS::XTypes::TypeKind elem_kind);
   bool end_array();
-  bool begin_sequence();
+  bool begin_sequence(OpenDDS::XTypes::TypeKind elem_kind);
   bool elements_remaining();
   bool end_sequence();
   bool begin_element();
@@ -67,13 +68,14 @@ public:
   bool read_float128(long double& value);
 #endif
 
-  bool read_fixed(OpenDDS::FaceTypes::Fixed& value);
+  bool read_fixed(ACE_CDR::Fixed& value);
   bool read_char8(ACE_CDR::Char& value);
   bool read_char16(ACE_CDR::WChar& value);
   bool read_string(std::string& value);
   bool read_wstring(std::wstring& value);
 
   bool read_long_enum(ACE_CDR::Long& value, const OpenDDS::DCPS::EnumHelper& helper);
+  bool read_bitmask(ACE_CDR::ULongLong& value, const OpenDDS::DCPS::BitmaskHelper& helper);
 
 private:
   NodeValueReader();
