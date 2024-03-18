@@ -72,6 +72,12 @@ bool NodeValueReader::members_remaining()
   return true;
 }
 
+// bool NodeValueReader::member_has_value()
+// {
+//   // TODO(sonndinh):
+//   return true;
+// }
+
 bool NodeValueReader::end_struct_member()
 {
   ++current_index_;
@@ -296,7 +302,7 @@ bool NodeValueReader::read_float128(long double& value)
 
 #endif
 
-bool NodeValueReader::read_fixed(OpenDDS::FaceTypes::Fixed& /*value*/)
+bool NodeValueReader::read_fixed(ACE_CDR::Fixed& /*value*/)
 {
   return false;
 }
@@ -370,8 +376,20 @@ bool NodeValueReader::read_long_enum(ACE_CDR::Long& value, const OpenDDS::DCPS::
 
 bool NodeValueReader::read_bitmask(ACE_CDR::ULongLong& value, const OpenDDS::DCPS::BitmaskHelper& helper)
 {
-  // TODO(sonndinh):
-  return true;
+  Nan::MaybeLocal<v8::Value> mlvai = use_name_ ? Nan::Get(current_object_, current_property_name_) : Nan::Get(current_object_, current_index_);
+  if (!mlvai.IsEmpty()) {
+    std::string temp;
+    if (read_string(temp)) {
+      value = string_to_bitmask(temp, helper);
+      return true;
+    }
+  }
+
+  if (primitive_helper<v8::Integer>(value, &v8::Value::IsNumber, strtoull)) {
+    return true;
+  }
+
+  return false;
 }
 
 bool NodeValueReader::begin_nested()
