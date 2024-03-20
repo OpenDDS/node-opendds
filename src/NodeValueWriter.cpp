@@ -302,4 +302,19 @@ bool NodeValueWriter::write_bitmask(ACE_CDR::ULongLong value, const OpenDDS::DCP
   return true;
 }
 
+bool NodeValueWriter::write_absent_value()
+{
+  if (object_stack_.empty()) {
+    return false;
+  }
+
+  v8::Local<v8::Primitive> null_value = Nan::Null();
+  v8::MaybeLocal<v8::String> key = Nan::New<v8::String>(next_key_.c_str());
+  if (!key.IsEmpty()) {
+    Nan::Set(object_stack_.back(), key.ToLocalChecked(), null_value);
+    return true;
+  }
+  return false;
+}
+
 } // NodeOpenDDS
