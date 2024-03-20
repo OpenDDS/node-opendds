@@ -57,12 +57,6 @@ jobs:
     runs-on: ${{ matrix.m.os }}
     steps:
       - uses: actions/checkout@v3
-      - name: Check debugger version
-        if: ${{ matrix.m.os == 'ubuntu-20.04' || matrix.m.os == 'macos-11' }}
-        shell: bash
-        run: |-
-          gdb --version
-          lldb --version
       - name: 'Checkout MPC'
         uses: actions/checkout@v3
         with:
