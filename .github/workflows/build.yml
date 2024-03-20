@@ -57,6 +57,11 @@ jobs:
     runs-on: ${{ matrix.m.os }}
     steps:
       - uses: actions/checkout@v3
+      - name: Check debugger version
+        if: ${{ matrix.m.os == 'ubuntu-20.04' || matrix.m.os == 'macos-11' }}
+        shell: |-
+          gdb --version
+          lldb --version
       - name: 'Checkout MPC'
         uses: actions/checkout@v3
         with:
@@ -157,7 +162,7 @@ jobs:
           cd OpenDDS
           ./configure --no-tests ${{ env.CONFIG_OPTIONS }}
           . setenv.sh
-          make -j3 ${{ env.BUILD_TARGETS }}
+          make -j4 ${{ env.BUILD_TARGETS }}
       - name: 'Configure OpenDDS (windows)'
         if: ${{ matrix.m.os == 'windows-2019' }}
         shell: cmd
@@ -178,7 +183,7 @@ jobs:
         run: |-
           npm install
           ${{ env.ACE_ROOT }}/bin/mwc.pl -type gnuace -exclude ACE_TAO,OpenDDS
-          make -j2 || make
+          make -j4 || make
       - name: 'Change Core File Pattern (ubuntu)'
         if: ${{ matrix.m.os == 'ubuntu-20.04' }}
         shell: bash
