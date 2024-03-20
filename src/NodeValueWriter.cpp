@@ -296,7 +296,7 @@ bool NodeValueWriter::write_enum(ACE_CDR::Long value, const OpenDDS::DCPS::EnumH
 
 bool NodeValueWriter::write_bitmask(ACE_CDR::ULongLong value, const OpenDDS::DCPS::BitmaskHelper& helper)
 {
-  const String flags = bitmask_to_string(value, helper);
+  const OpenDDS::DCPS::String flags = bitmask_to_string(value, helper);
   v8::MaybeLocal<v8::String> v8_value = Nan::New<v8::String>(flags.c_str());
   value_helper<v8::String>(v8_value);
   return true;

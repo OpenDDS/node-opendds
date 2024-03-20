@@ -29,13 +29,12 @@ struct ToFactory<v8::BigInt> : ToFactoryBase<v8::BigInt> {
 namespace NodeOpenDDS {
 
 NodeValueReader::NodeValueReader(v8::Local<v8::Object> obj)
+  : current_index_(0)
+  , use_name_(false)
 {
   // Nest initial object so first begin_struct behaves appropriately
   current_object_ = Nan::New<v8::Object>();
   Nan::Set(current_object_, 0, obj);
-
-  current_index_ = 0;
-  use_name_ = false;
 }
 
 bool NodeValueReader::begin_struct(OpenDDS::DCPS::Extensibility /*extensibility*/)
@@ -50,15 +49,26 @@ bool NodeValueReader::end_struct()
 
 bool NodeValueReader::begin_struct_member(OpenDDS::XTypes::MemberId& member_id, const OpenDDS::DCPS::MemberHelper& helper)
 {
+  while (members_remaining()) {
+    Nan::MaybeLocal<v8::Value> mlv = Nan::Get(property_names_.ToLocalChecked(), current_index_);
+    // mlv is not empty at this point.
+    current_property_name_ = mlv.ToLocalChecked();
+    Nan::Utf8String name(current_property_name_);
+    if (helper.get_value(member_id, *name)) {
+      return true;
+    }
+    ++current_index_;
+  }
+  return false;
+}
+
+bool NodeValueReader::members_remaining()
+{
   if (!property_names_.IsEmpty()) {
-    while (property_names_.ToLocalChecked()->Length() > current_index_) {
+    while (current_index_ < property_names_.ToLocalChecked()->Length()) {
       Nan::MaybeLocal<v8::Value> mlv = Nan::Get(property_names_.ToLocalChecked(), current_index_);
       if (!mlv.IsEmpty()) {
-        current_property_name_ = mlv.ToLocalChecked();
-        Nan::Utf8String name(current_property_name_);
-        if (helper.get_value(member_id, *name)) {
-          return true;
-        }
+        return true;
       }
       ++current_index_;
     }
@@ -66,17 +76,16 @@ bool NodeValueReader::begin_struct_member(OpenDDS::XTypes::MemberId& member_id, 
   return false;
 }
 
-bool NodeValueReader::members_remaining()
+bool NodeValueReader::member_has_value()
 {
-  // TODO(sonndinh):
-  return true;
+  Nan::MaybeLocal<v8::Value> mlvai = current_property_name_.IsEmpty() ?
+    Nan::Get(current_object_, current_index_) : Nan::Get(current_object_, current_property_name_);
+  if (!mlvai.IsEmpty()) {
+    v8::Local<v8::Value> lvai = mlvai.ToLocalChecked();
+    return !lvai->IsNull();
+  }
+  return false;
 }
-
-// bool NodeValueReader::member_has_value()
-// {
-//   // TODO(sonndinh):
-//   return true;
-// }
 
 bool NodeValueReader::end_struct_member()
 {

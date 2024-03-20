@@ -31,7 +31,7 @@ public:
   bool end_struct();
   bool begin_struct_member(OpenDDS::XTypes::MemberId& member_id, const OpenDDS::DCPS::MemberHelper& helper);
   bool members_remaining();
-  // bool member_has_value();
+  bool member_has_value();
   bool end_struct_member();
 
   bool begin_union(OpenDDS::DCPS::Extensibility extensibility);
