@@ -15,6 +15,9 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+# The jobs with latest-release configuration are disabled until OpenDDS 3.28
+# which will have the updated ValueReader and ValueWriter interfaces.
+
 jobs:
   build:
     strategy:
@@ -26,7 +29,7 @@ jobs:
           - 18
         opendds_branch:
           - master
-          - latest-release
+          #- latest-release
         m:
           - {os: ubuntu-20.04, dds_security: 1}
           - {os: ubuntu-20.04, dds_security: 0}
@@ -35,24 +38,24 @@ jobs:
           - {os: windows-2019, dds_security: 1}
           - {os: windows-2019, dds_security: 0}
         include:
-          - node_version: 8
-            opendds_branch: latest-release
-            m: {os: ubuntu-20.04, security: 0}
-          - node_version: 8
-            opendds_branch: latest-release
-            m: {os: windows-2019, security: 0}
-          - node_version: 10
-            opendds_branch: latest-release
-            m: {os: ubuntu-20.04, security: 1}
-          - node_version: 10
-            opendds_branch: latest-release
-            m: {os: windows-2019, security: 1}
-          - node_version: 12
-            opendds_branch: latest-release
-            m: {os: ubuntu-20.04, security: 1}
-          - node_version: 12
-            opendds_branch: latest-release
-            m: {os: windows-2019, security: 1}
+          #- node_version: 8
+          #  opendds_branch: latest-release
+          #  m: {os: ubuntu-20.04, security: 0}
+          #- node_version: 8
+          #  opendds_branch: latest-release
+          #  m: {os: windows-2019, security: 0}
+          #- node_version: 10
+          #  opendds_branch: latest-release
+          #  m: {os: ubuntu-20.04, security: 1}
+          #- node_version: 10
+          #  opendds_branch: latest-release
+          #  m: {os: windows-2019, security: 1}
+          #- node_version: 12
+          #  opendds_branch: latest-release
+          #  m: {os: ubuntu-20.04, security: 1}
+          #- node_version: 12
+          #  opendds_branch: latest-release
+          #  m: {os: windows-2019, security: 1}
 
     runs-on: ${{ matrix.m.os }}
     steps:
@@ -186,12 +189,6 @@ jobs:
           sudo apt-get update
           sudo apt-get install gdb
           echo 0 | sudo tee /proc/sys/kernel/yama/ptrace_scope
-      #- name: Install lldb
-      #  if: ${{ matrix.m.os == 'macos-11' }}
-      #  shell: bash
-      #  run: |
-      #    sudo apt-get update
-      #    sudo apt-get install lldb
       - name: 'Change Core File Pattern (ubuntu)'
         if: ${{ matrix.m.os == 'ubuntu-20.04' }}
         shell: bash

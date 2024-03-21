@@ -180,7 +180,7 @@ namespace {
     }
 
     Local<Object> qos_js;
-    if (fci.Length() > 2 && fci[2]->IsObject()) {
+    if (fci[2]->IsObject()) {
       qos_js = fci[2]->ToObject(Nan::GetCurrentContext()).ToLocalChecked();
     }
     Nan::MaybeLocal<String> cft_str = Nan::New<String>("ContentFilteredTopic");
