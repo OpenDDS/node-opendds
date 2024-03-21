@@ -37,7 +37,7 @@ jobs:
           - {os: macos-11, dds_security: 0}
           - {os: windows-2019, dds_security: 1}
           - {os: windows-2019, dds_security: 0}
-        include:
+        #include:
           #- node_version: 8
           #  opendds_branch: latest-release
           #  m: {os: ubuntu-20.04, security: 0}
