@@ -79,8 +79,6 @@ namespace NodeOpenDDS {
     /// True if Datareader Listener taking samples.
     bool receiving_samples_;
 
-    unsigned long count_samples_;
-
     mutable std::mutex mutex_;
   };
 

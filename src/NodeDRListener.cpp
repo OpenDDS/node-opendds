@@ -46,7 +46,6 @@ NodeDRListener::NodeDRListener(DDS::DomainParticipant* dp,
   , unsubscribing_(false)
   , unsubscribed_(false)
   , receiving_samples_(false)
-  , count_samples_(0)
 {
   uv_async_init(uv_default_loop(), &async_uv_, async_cb);
 }
@@ -121,21 +120,7 @@ void NodeDRListener::reserve(CORBA::ULong)
 void NodeDRListener::push_back(const DDS::SampleInfo& src, const void* sample)
 {
   std::unique_lock<std::mutex> lock(mutex_);
-  ++count_samples_;
-  ACE_DEBUG((LM_DEBUG, "Receive sample number %u. Data pointer: %@\n", count_samples_, sample));
-  ACE_DEBUG((LM_DEBUG, "SampleInfo: {\n"));
-  ACE_DEBUG((LM_DEBUG, "sample_state: %d\n", src.sample_state));
-  ACE_DEBUG((LM_DEBUG, "view_state: %d\n", src.view_state));
-  ACE_DEBUG((LM_DEBUG, "instance_state: %d\n", src.instance_state));
-  ACE_DEBUG((LM_DEBUG, "instance_handle: %u\n", src.instance_handle));
-  ACE_DEBUG((LM_DEBUG, "publication_handle: %u\n", src.publication_handle));
-  ACE_DEBUG((LM_DEBUG, "disposed_generation_count: %u\n", src.disposed_generation_count));
-  ACE_DEBUG((LM_DEBUG, "no_writers_generation_count: %u\n", src.no_writers_generation_count));
-  ACE_DEBUG((LM_DEBUG, "valid_data: %d\n", src.valid_data));
-  ACE_DEBUG((LM_DEBUG, "}\n"));
-
   if (unsubscribing_) {
-    ACE_DEBUG((LM_DEBUG, "unsubscribing_ value: %d\n", unsubscribing_));
     return;
   }
 
@@ -144,9 +129,8 @@ void NodeDRListener::push_back(const DDS::SampleInfo& src, const void* sample)
   }
 
   if (vd_) {
-    ACE_DEBUG((LM_DEBUG, "Write sample using NodeValueWriter...\n"));
     if (!vd_->write(nvw_, sample)) {
-      ACE_ERROR((LM_ERROR, "ERROR: ValueDispatcher write failed\n"));
+      ACE_ERROR((LM_WARNING, "WARNING: ValueDispatcher write failed\n"));
       return;
     }
   }
