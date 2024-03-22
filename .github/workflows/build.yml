@@ -182,7 +182,7 @@ jobs:
           npm install
           ${{ env.ACE_ROOT }}/bin/mwc.pl -type gnuace -exclude ACE_TAO,OpenDDS
           make -j4 || make
-      - name: Install gdb
+      - name: Install gdb (ubuntu)
         if: ${{ matrix.m.os == 'ubuntu-20.04' }}
         shell: bash
         run: |
