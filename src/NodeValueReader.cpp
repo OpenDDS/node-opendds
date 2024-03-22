@@ -39,40 +39,49 @@ NodeValueReader::NodeValueReader(v8::Local<v8::Object> obj)
 
 bool NodeValueReader::begin_struct(OpenDDS::DCPS::Extensibility /*extensibility*/)
 {
+  ACE_DEBUG((LM_DEBUG, "begin_struct\n"));
   return begin_nested();
 }
 
 bool NodeValueReader::end_struct()
 {
+  ACE_DEBUG((LM_DEBUG, "end_struct\n"));
   return end_nested();
 }
 
 bool NodeValueReader::begin_struct_member(OpenDDS::XTypes::MemberId& member_id, const OpenDDS::DCPS::MemberHelper& helper)
 {
+  ACE_DEBUG((LM_DEBUG, "begin_struct_member...\n"));
   while (members_remaining()) {
     Nan::MaybeLocal<v8::Value> mlv = Nan::Get(property_names_.ToLocalChecked(), current_index_);
     // mlv is not empty at this point.
     current_property_name_ = mlv.ToLocalChecked();
     Nan::Utf8String name(current_property_name_);
+    ACE_DEBUG((LM_DEBUG, "Member name: %C\n", *name));
     if (helper.get_value(member_id, *name)) {
       return true;
     }
     ++current_index_;
   }
+  ACE_DEBUG((LM_DEBUG, "No members remaining\n"));
   return false;
 }
 
 bool NodeValueReader::members_remaining()
 {
+  ACE_DEBUG((LM_DEBUG, "members_remaining...\n"));
   if (!property_names_.IsEmpty()) {
     while (current_index_ < property_names_.ToLocalChecked()->Length()) {
+      ACE_DEBUG((LM_DEBUG, "current_index_: %u\n", current_index_));
       Nan::MaybeLocal<v8::Value> mlv = Nan::Get(property_names_.ToLocalChecked(), current_index_);
       if (!mlv.IsEmpty()) {
+        ACE_DEBUG((LM_DEBUG, "Returning true\n"));
         return true;
       }
       ++current_index_;
     }
   }
+  ACE_DEBUG((LM_DEBUG, "Returning false\n"));
   return false;
 }
 
@@ -89,6 +98,7 @@ bool NodeValueReader::member_has_value()
 
 bool NodeValueReader::end_struct_member()
 {
+  ACE_DEBUG((LM_DEBUG, "end_struct_member\n"));
   ++current_index_;
   return true;
 }
@@ -415,8 +425,10 @@ bool NodeValueReader::begin_nested()
     property_names_ = Nan::GetPropertyNames(current_object_);
     current_property_name_.Clear();
 
+    ACE_DEBUG((LM_DEBUG, "Returning true\n"));
     return true;
   }
+  ACE_DEBUG((LM_DEBUG, "Returning false\n"));
   return false;
 }
 

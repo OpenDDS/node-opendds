@@ -341,7 +341,7 @@ namespace {
       dp->create_topic(*topic_name, *topic_type, TOPIC_QOS_DEFAULT, 0, 0);
 
     Local<Object> qos_js;
-    if (fci.Length() > 2 && fci[2]->IsObject()) {
+    if (fci[2]->IsObject()) {
       qos_js = fci[2]->ToObject(Nan::GetCurrentContext()).ToLocalChecked();
     }
 
@@ -379,6 +379,19 @@ namespace {
       const Local<Value> dwqos_lv = Nan::Get(qos_js, dwqos_lstr).ToLocalChecked();
       if (dwqos_lv->IsObject()) {
         try {
+          v8::Local<v8::Object> tmp = dwqos_lv->ToObject(Nan::GetCurrentContext()).ToLocalChecked();
+          //v8::Local<v8::Array> property_names = tmp->GetOwnPropertyNames(Nan::GetCurrentContext()).ToLocalChecked();
+          v8::MaybeLocal<v8::Array> property_names = Nan::GetPropertyNames(tmp);
+          for (uint32_t i = 0; i < property_names.ToLocalChecked()->Length(); ++i) {
+            //v8::Local<v8::Value> key = property_names->Get(Nan::GetCurrentContext(), i).ToLocalChecked();
+            //v8::Local<v8::Value> value = obj->Get(isolate->GetCurrentContext(), key).ToLocalChecked();
+
+            //v8::String::Utf8Value utf8_key(Nan::GetCurrentContext, key);
+            //v8::String::Utf8Value utf8_value(isolate, value);
+            Nan::MaybeLocal<v8::Value> mlv = Nan::Get(property_names.ToLocalChecked(), i);
+            Nan::Utf8String name(mlv.ToLocalChecked());
+            ACE_DEBUG((LM_DEBUG, "DataWriterQos property name: %C\n", *name));
+          }
           NodeValueReader nvr(dwqos_lv->ToObject(Nan::GetCurrentContext()).ToLocalChecked());
           if (!OpenDDS::DCPS::vread(nvr, dw_qos)) {
             throw std::runtime_error("Unable to convert datawriter qos policy");
