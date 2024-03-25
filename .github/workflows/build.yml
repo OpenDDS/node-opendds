@@ -65,8 +65,12 @@ jobs:
         run: |-
           echo 'python3 --version'
           python3 --version
-          echo 'ls /bin | grep python'
-          ls /bin | grep python
+          #echo 'ls /bin | grep python'
+          #ls /bin | grep python
+          echo 'PATH'
+          echo $PATH
+          echo 'ls /'
+          ls /
           echo 'ls /usr/bin | grep python'
           ls /usr/bin | grep python
       - name: 'Checkout MPC'
@@ -184,10 +188,17 @@ jobs:
           cd OpenDDS
           call setenv.cmd
           msbuild -p:Configuration=Debug,Platform=x64 -t:${{ env.BUILD_TARGETS }} -m DDS_TAOv2.sln
+      - name: Use python 3.10 when node 14 is used
+        if: ${{ matrix.m.os == 'macos-11' && matrix.node_version == 14}}
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+        run: echo $PATH
       - name: 'Install (ubuntu / macos)'
         if: ${{ matrix.m.os == 'ubuntu-20.04' || matrix.m.os == 'macos-11' }}
         shell: bash
         run: |-
+          echo $PATH
           npm install
           ${{ env.ACE_ROOT }}/bin/mwc.pl -type gnuace -exclude ACE_TAO,OpenDDS
           make -j4 || make
