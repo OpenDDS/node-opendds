@@ -60,6 +60,15 @@ jobs:
     runs-on: ${{ matrix.m.os }}
     steps:
       - uses: actions/checkout@v3
+      - name: Check python version
+        if: ${{ matrix.m.os == 'macos-11' }}
+        run: |-
+          echo 'python3 --version'
+          python3 --version
+          echo 'ls /bin | grep python'
+          ls /bin | grep python
+          echo 'ls /usr/bin | grep python'
+          ls /usr/bin | grep python
       - name: 'Checkout MPC'
         uses: actions/checkout@v3
         with:
