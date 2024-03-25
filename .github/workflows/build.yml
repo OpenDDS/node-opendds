@@ -1,4 +1,3 @@
----
 name: "node-opendds CI"
 on:
   pull_request:
@@ -27,35 +26,17 @@ jobs:
           - 14
           - 16
           - 18
+          - 20
         opendds_branch:
           - master
           #- latest-release
         m:
-          - {os: ubuntu-20.04, dds_security: 1}
-          - {os: ubuntu-20.04, dds_security: 0}
-          - {os: macos-11, dds_security: 1}
-          - {os: macos-11, dds_security: 0}
-          - {os: windows-2019, dds_security: 1}
-          - {os: windows-2019, dds_security: 0}
-        #include:
-          #- node_version: 8
-          #  opendds_branch: latest-release
-          #  m: {os: ubuntu-20.04, security: 0}
-          #- node_version: 8
-          #  opendds_branch: latest-release
-          #  m: {os: windows-2019, security: 0}
-          #- node_version: 10
-          #  opendds_branch: latest-release
-          #  m: {os: ubuntu-20.04, security: 1}
-          #- node_version: 10
-          #  opendds_branch: latest-release
-          #  m: {os: windows-2019, security: 1}
-          #- node_version: 12
-          #  opendds_branch: latest-release
-          #  m: {os: ubuntu-20.04, security: 1}
-          #- node_version: 12
-          #  opendds_branch: latest-release
-          #  m: {os: windows-2019, security: 1}
+          - {os: ubuntu-22.04, dds_security: 1}
+          - {os: ubuntu-22.04, dds_security: 0}
+          - {os: macos-12, dds_security: 1}
+          - {os: macos-12, dds_security: 0}
+          - {os: windows-2022, dds_security: 1}
+          - {os: windows-2022, dds_security: 0}
 
     runs-on: ${{ matrix.m.os }}
     steps:
@@ -85,32 +66,39 @@ jobs:
         with:
           node-version: ${{ matrix.node_version }}
       - name: 'Install ssl and xerces (ubuntu)'
-        if: ${{ matrix.m.dds_security == 1 && matrix.m.os == 'ubuntu-20.04' }}
+        if: ${{ matrix.m.dds_security == 1 && matrix.m.os == 'ubuntu-22.04' }}
         run: |-
           sudo apt-get update
           sudo apt-get -y install libssl-dev libxerces-c-dev
       - name: 'Install xerces (macos)'
-        if: ${{ matrix.m.dds_security == 1 && matrix.m.os == 'macos-11' }}
+        if: ${{ matrix.m.dds_security == 1 && matrix.m.os == 'macos-12' }}
         run: |
           brew install xerces-c
+      - name: Setup for run-vcpkg
+        if: runner.os == 'Windows'
+        shell: cmd
+        run: |
+          echo { "name": "opendds", "version-string": "github-actions", "dependencies": [ "openssl", "xerces-c" ] } > vcpkg.json
+          echo VCPKG_DEFAULT_TRIPLET=x64-windows>> %GITHUB_ENV%
+          echo VCPKG_INSTALLED_DIR=${{ github.workspace }}\vcpkg\installed>> %GITHUB_ENV%
       - name: 'Install openssl and xerces (windows)'
-        if: ${{ matrix.m.dds_security == 1 && matrix.m.os == 'windows-2019' }}
-        uses: lukka/run-vcpkg@v7
+        if: ${{ matrix.m.dds_security == 1 && matrix.m.os == 'windows-2022' }}
+        uses: lukka/run-vcpkg@v11
         with:
-          vcpkgGitCommitId: b86c0c35b88e2bf3557ff49dc831689c2f085090
-          vcpkgArguments: --recurse openssl xerces-c
-          vcpkgTriplet: x64-windows
+          vcpkgDirectory: '${{ github.workspace }}/vcpkg'
+          vcpkgGitCommitId: 53bef8994c541b6561884a8395ea35715ece75db
+          runVcpkgInstall: true
       - name: 'Set Up MSVC Environment'
-        if: ${{ matrix.m.os == 'windows-2019' }}
+        if: ${{ matrix.m.os == 'windows-2022' }}
         uses: ilammy/msvc-dev-cmd@v1
       - name: 'Set Up Problem Matcher (windows)'
-        if: ${{ matrix.m.os == 'windows-2019' }}
-        uses: ammaraskar/msvc-problem-matcher@0.2.0
+        if: ${{ matrix.m.os == 'windows-2022' }}
+        uses: ammaraskar/msvc-problem-matcher@0.3.0
       - name: 'Set Up Problem Matcher (ubuntu / macos)'
-        if: ${{ matrix.m.os == 'ubuntu-20.04' || matrix.m.os == 'macos-11' }}
-        uses: ammaraskar/gcc-problem-matcher@0.2.0
+        if: ${{ matrix.m.os == 'ubuntu-22.04' || matrix.m.os == 'macos-12' }}
+        uses: ammaraskar/gcc-problem-matcher@0.3.0
       - name: 'Set environment variables (ubuntu / macos)'
-        if: ${{ matrix.m.os == 'ubuntu-20.04' || matrix.m.os == 'macos-11' }}
+        if: ${{ matrix.m.os == 'ubuntu-22.04' || matrix.m.os == 'macos-12' }}
         shell: bash
         run: |-
           echo "ACE_ROOT=$GITHUB_WORKSPACE/ACE_TAO/ACE" >> $GITHUB_ENV
@@ -119,22 +107,18 @@ jobs:
           echo "MPC_ROOT=$GITHUB_WORKSPACE/MPC" >> $GITHUB_ENV
           echo "npm_config_devdir=$GITHUB_WORKSPACE/opendds-node-gyp-devdir" >> $GITHUB_ENV
           echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$GITHUB_WORKSPACE/ACE_TAO/ACE/lib:$GITHUB_WORKSPACE/OpenDDS/lib" >> $GITHUB_ENV
-          if [ ${{ matrix.node_version }} >= 16 ]; then
-            CONFIG_OPTIONS+=" --std=c++14";
-          else
-            CONFIG_OPTIONS+=" --std=c++11";
-          fi
+          CONFIG_OPTIONS+=" --std=c++14"
           if [ ${{ matrix.m.dds_security }} == 1 ]; then
-            CONFIG_OPTIONS+=" --security";
-            BUILD_TARGETS+=" OpenDDS_Security";
-            if [ '${{ matrix.m.os }}' == 'macos-11' ]; then
+            CONFIG_OPTIONS+=" --security"
+            BUILD_TARGETS+=" OpenDDS_Security"
+            if [ '${{ matrix.m.os }}' == 'macos-12' ]; then
               CONFIG_OPTIONS+=" --xerces3=$(brew --prefix xerces-c) --openssl=/usr/local/opt/openssl@1.1"
             fi
           fi
           echo "CONFIG_OPTIONS=$CONFIG_OPTIONS" >> $GITHUB_ENV
           echo "BUILD_TARGETS=DCPSInfoRepo_Main OpenDDS_Rtps_Udp$BUILD_TARGETS" >> $GITHUB_ENV
       - name: 'Set environment variables (windows)'
-        if: ${{ matrix.m.os == 'windows-2019' }}
+        if: ${{ matrix.m.os == 'windows-2022' }}
         shell: bash
         run: |-
           echo "ACE_ROOT=$GITHUB_WORKSPACE\\ACE_TAO\\ACE" >> $GITHUB_ENV
@@ -143,76 +127,76 @@ jobs:
           echo "MPC_ROOT=$GITHUB_WORKSPACE\\MPC" >> $GITHUB_ENV
           echo "npm_config_devdir=$GITHUB_WORKSPACE\\opendds-node-gyp-devdir" >> $GITHUB_ENV
           if [ ${{ matrix.m.dds_security }} == 1 ]; then
-            CONFIG_OPTIONS+=" --security";
-            BUILD_TARGETS+=";OpenDDS_Security";
-            if [ '${{ matrix.m.os }}' == 'windows-2019' ]; then
-              CONFIG_OPTIONS+=" --xerces3=$VCPKG_ROOT\\installed\\x64-windows --openssl=$VCPKG_ROOT\\installed\\x64-windows"
-            fi
+            CONFIG_OPTIONS+=" --security"
+            CONFIG_OPTIONS+=" --xerces3=$VCPKG_ROOT\\installed\\x64-windows --openssl=$VCPKG_ROOT\\installed\\x64-windows"
+            BUILD_TARGETS+=";OpenDDS_Security"
           fi
           echo "CONFIG_OPTIONS=$CONFIG_OPTIONS" >> $GITHUB_ENV
           echo "BUILD_TARGETS=DCPSInfoRepo_Main;OpenDDS_Rtps_Udp$BUILD_TARGETS" >> $GITHUB_ENV
           echo "ACE_TEST_LOG_STUCK_STACKS=1" >> $GITHUB_ENV
       - name: 'Configure & Build OpenDDS (ubuntu / macos)'
-        if: ${{ matrix.m.os == 'ubuntu-20.04' || matrix.m.os == 'macos-11' }}
+        if: ${{ matrix.m.os == 'ubuntu-22.04' || matrix.m.os == 'macos-12' }}
         shell: bash
         run: |-
           echo "dds_security=${{ matrix.m.dds_security }}; CONFIG_OPTIONS=${{ env.CONFIG_OPTIONS }}; BUILD_TARGETS=${{ env.BUILD_TARGETS }}"
           cd OpenDDS
           ./configure --no-tests ${{ env.CONFIG_OPTIONS }}
+          tools/scripts/show_build_config.pl
           . setenv.sh
           make -j4 ${{ env.BUILD_TARGETS }}
       - name: 'Configure OpenDDS (windows)'
-        if: ${{ matrix.m.os == 'windows-2019' }}
+        if: ${{ matrix.m.os == 'windows-2022' }}
         shell: cmd
         run: |-
           echo "dds_security=${{ matrix.m.dds_security }}; CONFIG_OPTIONS=${{ env.CONFIG_OPTIONS }}; BUILD_TARGETS=${{ env.BUILD_TARGETS }}"
           cd OpenDDS
           configure --no-tests ${{ env.CONFIG_OPTIONS }}
+          perl tools/scripts/show_build_config.pl
       - name: 'Build OpenDDS (windows)'
-        if: ${{ matrix.m.os == 'windows-2019' }}
+        if: ${{ matrix.m.os == 'windows-2022' }}
         shell: cmd
         run: |-
           cd OpenDDS
           call setenv.cmd
           msbuild -p:Configuration=Debug,Platform=x64 -t:${{ env.BUILD_TARGETS }} -m DDS_TAOv2.sln
       - name: Use Python 3.10 for node 14 (macos)
-        if: ${{ matrix.m.os == 'macos-11' && matrix.node_version == 14 }}
+        if: ${{ matrix.m.os == 'macos-12' && matrix.node_version == 14 }}
         uses: actions/setup-python@v5
         with:
           python-version: '3.10'
       - name: Use Python 3.11 for node 16 (macos)
-        if: ${{ matrix.m.os == 'macos-11' && matrix.node_version == 16 }}
+        if: ${{ matrix.m.os == 'macos-12' && matrix.node_version == 16 }}
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
       - name: 'Install (ubuntu / macos)'
-        if: ${{ matrix.m.os == 'ubuntu-20.04' || matrix.m.os == 'macos-11' }}
+        if: ${{ matrix.m.os == 'ubuntu-22.04' || matrix.m.os == 'macos-12' }}
         shell: bash
         run: |-
           npm install
           ${{ env.ACE_ROOT }}/bin/mwc.pl -type gnuace -exclude ACE_TAO,OpenDDS
           make -j4 || make
       - name: Install gdb (ubuntu)
-        if: ${{ matrix.m.os == 'ubuntu-20.04' }}
+        if: ${{ matrix.m.os == 'ubuntu-22.04' }}
         shell: bash
         run: |
           sudo apt-get update
           sudo apt-get install gdb
           echo 0 | sudo tee /proc/sys/kernel/yama/ptrace_scope
       - name: 'Change Core File Pattern (ubuntu)'
-        if: ${{ matrix.m.os == 'ubuntu-20.04' }}
+        if: ${{ matrix.m.os == 'ubuntu-22.04' }}
         shell: bash
         run: |
           sudo sysctl -w kernel.core_pattern=core.%e.%p
           echo Core file pattern set to:
           cat /proc/sys/kernel/core_pattern
       - name: 'Change Cores Directory Permissions (macos)'
-        if: ${{ matrix.m.os == 'macos-11' }}
+        if: ${{ matrix.m.os == 'macos-12' }}
         shell: bash
         run: |
           sudo chmod o+w /cores
       - name: 'Test (ubuntu / macos)'
-        if: ${{ matrix.m.os == 'ubuntu-20.04' || matrix.m.os == 'macos-11' }}
+        if: ${{ matrix.m.os == 'ubuntu-22.04' || matrix.m.os == 'macos-12' }}
         shell: bash
         run: |-
           ulimit -c unlimited
@@ -224,7 +208,7 @@ jobs:
           ./run_test.pl node2cpp --rtps
           ./run_test.pl node2node --rtps
       - name: 'Test Secure (ubuntu / macos)'
-        if: ${{ (matrix.m.os == 'ubuntu-20.04' || matrix.m.os == 'macos-11') && matrix.m.dds_security == 1 }}
+        if: ${{ (matrix.m.os == 'ubuntu-22.04' || matrix.m.os == 'macos-12') && matrix.m.dds_security == 1 }}
         shell: bash
         run: |-
           ulimit -c unlimited
@@ -233,16 +217,15 @@ jobs:
           ./run_test.pl node2cpp --rtps --secure
           ./run_test.pl node2node --rtps --secure
       - name: 'Install (windows)'
-        if: ${{ matrix.m.os == 'windows-2019' }}
+        if: ${{ matrix.m.os == 'windows-2022' }}
         shell: cmd
         run: |-
           cd OpenDDS
           call setenv.cmd
           cd ..
-          call npm.cmd config set msvs_version 2019
           call npm.cmd install --debug --lib_suffix=d
       - name: 'Build (windows)'
-        if: ${{ matrix.m.os == 'windows-2019' }}
+        if: ${{ matrix.m.os == 'windows-2022' }}
         shell: cmd
         run: |-
           cd OpenDDS
@@ -250,10 +233,10 @@ jobs:
           cd ..
           set PATH=%PATH%;%GITHUB_WORKSPACE%\ACE_TAO\ACE\lib;%GITHUB_WORKSPACE%\OpenDDS\lib"
           set PATH
-          perl ${{ env.ACE_ROOT }}\bin\mwc.pl -type vs2019 -exclude ACE_TAO,OpenDDS
+          perl ${{ env.ACE_ROOT }}\bin\mwc.pl -type vs2022 -exclude ACE_TAO,OpenDDS
           msbuild -p:Configuration=Debug,Platform=x64 -m node_opendds.sln
       - name: 'Test (windows)'
-        if: ${{ matrix.m.os == 'windows-2019' }}
+        if: ${{ matrix.m.os == 'windows-2022' }}
         shell: cmd
         run: |-
           cd OpenDDS
@@ -274,7 +257,7 @@ jobs:
           if %errorlevel% neq 0 exit /b %errorlevel%
           perl run_test.pl node2node --rtps
       - name: 'Test Secure (windows)'
-        if: ${{ matrix.m.os == 'windows-2019' && matrix.m.dds_security == 1 }}
+        if: ${{ matrix.m.os == 'windows-2022' && matrix.m.dds_security == 1 }}
         shell: cmd
         run: |-
           cd OpenDDS
