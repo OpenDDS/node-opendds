@@ -23,8 +23,6 @@ jobs:
       fail-fast: false
       matrix:
         node_version:
-          - 14
-          - 16
           - 18
           - 20
         opendds_branch:
@@ -128,7 +126,7 @@ jobs:
           echo "npm_config_devdir=$GITHUB_WORKSPACE\\opendds-node-gyp-devdir" >> $GITHUB_ENV
           if [ ${{ matrix.m.dds_security }} == 1 ]; then
             CONFIG_OPTIONS+=" --security"
-            CONFIG_OPTIONS+=" --xerces3=$VCPKG_ROOT\\installed\\x64-windows --openssl=$VCPKG_ROOT\\installed\\x64-windows"
+            CONFIG_OPTIONS+=" --xerces3=$VCPKG_INSTALLED_DIR\\x64-windows --openssl=$VCPKG_INSTALLED_DIR\\x64-windows"
             BUILD_TARGETS+=";OpenDDS_Security"
           fi
           echo "CONFIG_OPTIONS=$CONFIG_OPTIONS" >> $GITHUB_ENV
@@ -159,16 +157,6 @@ jobs:
           cd OpenDDS
           call setenv.cmd
           msbuild -p:Configuration=Debug,Platform=x64 -t:${{ env.BUILD_TARGETS }} -m DDS_TAOv2.sln
-      - name: Use Python 3.10 for node 14 (macos)
-        if: ${{ matrix.m.os == 'macos-12' && matrix.node_version == 14 }}
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.10'
-      - name: Use Python 3.11 for node 16 (macos)
-        if: ${{ matrix.m.os == 'macos-12' && matrix.node_version == 16 }}
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
       - name: 'Install (ubuntu / macos)'
         if: ${{ matrix.m.os == 'ubuntu-22.04' || matrix.m.os == 'macos-12' }}
         shell: bash
