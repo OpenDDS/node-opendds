@@ -55,7 +55,7 @@ jobs:
       - name: 'Checkout OpenDDS'
         uses: actions/checkout@v3
         with:
-          repository: objectcomputing/OpenDDS
+          repository: OpenDDS/OpenDDS
           ref: ${{ matrix.opendds_branch }}
           path: OpenDDS
           fetch-depth: 1
