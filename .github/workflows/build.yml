@@ -65,17 +65,17 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node_version }}
-      - name: 'Install ssl and xerces (ubuntu)'
+      - name: 'Install xerces (ubuntu)'
         if: ${{ matrix.m.dds_security == 1 && matrix.m.os == 'ubuntu-22.04' }}
         run: |-
           sudo apt-get update
-          sudo apt-get -y install libssl-dev libxerces-c-dev
+          sudo apt-get -y install libxerces-c-dev
       - name: 'Install xerces (macos)'
         if: ${{ matrix.m.dds_security == 1 && matrix.m.os == 'macos-12' }}
         run: |
           brew install xerces-c
       - name: Setup for run-vcpkg
-        if: runner.os == 'Windows'
+        if: ${{ matrix.m.dds_security == 1 && matrix.m.os == 'windows-2022' }}
         shell: cmd
         run: |
           echo { "name": "opendds", "version-string": "github-actions", "dependencies": [ "openssl", "xerces-c" ] } > vcpkg.json
