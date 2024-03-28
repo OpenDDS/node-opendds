@@ -180,7 +180,7 @@ namespace {
     }
 
     Local<Object> qos_js;
-    if (fci.Length() > 2 && fci[2]->IsObject()) {
+    if (fci[2]->IsObject()) {
       qos_js = fci[2]->ToObject(Nan::GetCurrentContext()).ToLocalChecked();
     }
     Nan::MaybeLocal<String> cft_str = Nan::New<String>("ContentFilteredTopic");
@@ -341,7 +341,7 @@ namespace {
       dp->create_topic(*topic_name, *topic_type, TOPIC_QOS_DEFAULT, 0, 0);
 
     Local<Object> qos_js;
-    if (fci.Length() > 2 && fci[2]->IsObject()) {
+    if (fci[2]->IsObject()) {
       qos_js = fci[2]->ToObject(Nan::GetCurrentContext()).ToLocalChecked();
     }
 

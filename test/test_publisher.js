@@ -119,12 +119,12 @@ try {
   }
   writer = participant.create_datawriter('topic', 'Mod::Sample', {
     DataWriterQos: {
-      latency_budget: { sec: 1, nanosec: 0 },
+      latency_budget: { duration: { sec: 1, nanosec: 0 } },
       liveliness: { lease_duration: { sec: 5, nanosec: 0 } }
     }
   });
 
-  setTimeout(function () { doStuff(writer); }, 10000);
+  setTimeout(function () { doStuff(writer); }, 2000);
 
 } catch (e) {
   console.log(e);
