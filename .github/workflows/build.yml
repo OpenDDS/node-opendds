@@ -141,7 +141,7 @@ jobs:
           ./configure --no-tests ${{ env.CONFIG_OPTIONS }}
           tools/scripts/show_build_config.pl
           . setenv.sh
-          make -j4 ${{ env.BUILD_TARGETS }}
+          make -j$(getconf _NPROCESSORS_ONLN) ${{ env.BUILD_TARGETS }}
       - name: 'Configure OpenDDS (windows)'
         if: ${{ matrix.m.os == 'windows-2022' }}
         shell: cmd
@@ -163,7 +163,7 @@ jobs:
         run: |-
           npm install
           ${{ env.ACE_ROOT }}/bin/mwc.pl -type gnuace -exclude ACE_TAO,OpenDDS
-          make -j4 || make
+          make -j$(getconf _NPROCESSORS_ONLN) || make
       - name: Install gdb (ubuntu)
         if: ${{ matrix.m.os == 'ubuntu-22.04' }}
         shell: bash
