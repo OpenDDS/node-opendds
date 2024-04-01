@@ -386,16 +386,27 @@ bool NodeValueReader::read_long_enum(ACE_CDR::Long& value, const OpenDDS::DCPS::
 bool NodeValueReader::read_bitmask(ACE_CDR::ULongLong& value, const OpenDDS::DCPS::BitmaskHelper& helper)
 {
   Nan::MaybeLocal<v8::Value> mlvai = use_name_ ? Nan::Get(current_object_, current_property_name_) : Nan::Get(current_object_, current_index_);
-  if (!mlvai.IsEmpty()) {
-    std::string temp;
-    if (read_string(temp)) {
-      value = string_to_bitmask(temp, helper);
-      return true;
-    }
-  }
+  if (!mlvai.IsEmpty() && mlvai.ToLocalChecked()->IsObject()) {
+    v8::Local<v8::Array> array = v8::Local<v8::Array>::Cast(mlvai.ToLocalChecked());
+    if (!array.IsEmpty()) {
+      OPENDDS_VECTOR(OpenDDS::DCPS::String) flag_names(array->Length());
+      for (uint32_t i = 0; i < array->Length(); ++i) {
+        Nan::MaybeLocal<v8::Value> mlv = Nan::Get(array, i);
+        if (mlv.IsEmpty()) {
+          return false;
+        }
+        Nan::MaybeLocal<v8::String> mlstr = Nan::To<v8::String>(mlv.ToLocalChecked());
+        if (mlstr.IsEmpty()) {
+          return false;
+        }
+        Nan::Utf8String flag(mlstr.ToLocalChecked());
+        flag_names[i] = *flag;
+      }
 
-  if (primitive_helper<v8::Integer>(value, &v8::Value::IsNumber, strtoull)) {
-    return true;
+      if (helper.get_value(value, flag_names)) {
+        return true;
+      }
+    }
   }
 
   return false;

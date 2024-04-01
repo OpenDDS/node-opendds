@@ -61,14 +61,14 @@ public:
   bool write_absent_value();
 
   template <typename V>
-  void value_helper(v8::MaybeLocal<V>& v8_value)
+  bool value_helper(v8::MaybeLocal<V>& v8_value)
   {
     if (v8_value.IsEmpty()) {
-      return;
+      return false;
     }
 
     if (object_stack_.empty()) {
-      return;
+      return false;
     }
 
     if (object_stack_.back()->IsArray()) {
@@ -76,42 +76,59 @@ public:
       Nan::Set(object_stack_.back(), next_index, v8_value.ToLocalChecked());
     } else {
       v8::MaybeLocal<v8::String> key = Nan::New<v8::String>(next_key_.c_str());
-      if (!key.IsEmpty()) {
-        Nan::Set(object_stack_.back(), key.ToLocalChecked(), v8_value.ToLocalChecked());
+      if (key.IsEmpty()) {
+        return false;
       }
+      Nan::Set(object_stack_.back(), key.ToLocalChecked(), v8_value.ToLocalChecked());
     }
+    return true;
   }
 
   template <typename T, typename V>
-  void primitive_helper(T value)
+  bool primitive_helper(T value)
   {
     v8::MaybeLocal<V> v8_value = Nan::New<V>(value);
-    value_helper<V>(v8_value);
+    return value_helper<V>(v8_value);
+  }
+
+  bool insert_object(v8::MaybeLocal<v8::Object>& obj)
+  {
+    if (object_stack_.back()->IsArray()) {
+      uint32_t next_index = static_cast<uint32_t>(next_index_);
+      Nan::Set(object_stack_.back(), next_index, obj.ToLocalChecked());
+    } else {
+      v8::MaybeLocal<v8::String> key = Nan::New<v8::String>(next_key_.c_str());
+      if (key.IsEmpty()) {
+        return false;
+      }
+      Nan::Set(object_stack_.back(), key.ToLocalChecked(), obj.ToLocalChecked());
+    }
+    return true;
   }
 
   template <typename T>
-  void object_helper()
+  bool object_helper()
   {
     v8::MaybeLocal<v8::Object> temp = Nan::New<T>();
     if (temp.IsEmpty()) {
-      return;
+      return false;
     }
 
     if (!object_stack_.empty()) {
-      if (object_stack_.back()->IsArray()) {
-        uint32_t next_index = static_cast<uint32_t>(next_index_);
-        Nan::Set(object_stack_.back(), next_index, temp.ToLocalChecked());
-      } else {
-        v8::MaybeLocal<v8::String> key = Nan::New<v8::String>(next_key_.c_str());
-        if (!key.IsEmpty()) {
-          Nan::Set(object_stack_.back(), key.ToLocalChecked(), temp.ToLocalChecked());
-        }
+      if (!insert_object(temp)) {
+        return false;
       }
     }
     object_stack_.push_back(temp.ToLocalChecked());
+    return true;
   }
 
-  v8::Local<v8::Object> get_result() { v8::Local<v8::Object> result = result_; result_.Clear(); return result; }
+  v8::Local<v8::Object> get_result()
+  {
+    v8::Local<v8::Object> result = result_;
+    result_.Clear();
+    return result;
+  }
 
 private:
 
