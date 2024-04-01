@@ -29,16 +29,15 @@ struct ToFactory<v8::BigInt> : ToFactoryBase<v8::BigInt> {
 namespace NodeOpenDDS {
 
 NodeValueReader::NodeValueReader(v8::Local<v8::Object> obj)
+  : current_index_(0)
+  , use_name_(false)
 {
   // Nest initial object so first begin_struct behaves appropriately
   current_object_ = Nan::New<v8::Object>();
   Nan::Set(current_object_, 0, obj);
-
-  current_index_ = 0;
-  use_name_ = false;
 }
 
-bool NodeValueReader::begin_struct()
+bool NodeValueReader::begin_struct(OpenDDS::DCPS::Extensibility /*extensibility*/)
 {
   return begin_nested();
 }
@@ -50,18 +49,40 @@ bool NodeValueReader::end_struct()
 
 bool NodeValueReader::begin_struct_member(OpenDDS::XTypes::MemberId& member_id, const OpenDDS::DCPS::MemberHelper& helper)
 {
+  while (members_remaining()) {
+    Nan::MaybeLocal<v8::Value> mlv = Nan::Get(property_names_.ToLocalChecked(), current_index_);
+    // mlv is not empty at this point.
+    current_property_name_ = mlv.ToLocalChecked();
+    Nan::Utf8String name(current_property_name_);
+    if (helper.get_value(member_id, *name)) {
+      return true;
+    }
+    ++current_index_;
+  }
+  return false;
+}
+
+bool NodeValueReader::members_remaining()
+{
   if (!property_names_.IsEmpty()) {
-    while (property_names_.ToLocalChecked()->Length() > current_index_) {
+    while (current_index_ < property_names_.ToLocalChecked()->Length()) {
       Nan::MaybeLocal<v8::Value> mlv = Nan::Get(property_names_.ToLocalChecked(), current_index_);
       if (!mlv.IsEmpty()) {
-        current_property_name_ = mlv.ToLocalChecked();
-        Nan::Utf8String name(current_property_name_);
-        if (helper.get_value(member_id, *name)) {
-          return true;
-        }
+        return true;
       }
       ++current_index_;
     }
+  }
+  return false;
+}
+
+bool NodeValueReader::member_has_value()
+{
+  Nan::MaybeLocal<v8::Value> mlvai = current_property_name_.IsEmpty() ?
+    Nan::Get(current_object_, current_index_) : Nan::Get(current_object_, current_property_name_);
+  if (!mlvai.IsEmpty()) {
+    v8::Local<v8::Value> lvai = mlvai.ToLocalChecked();
+    return !lvai->IsNull();
   }
   return false;
 }
@@ -72,7 +93,7 @@ bool NodeValueReader::end_struct_member()
   return true;
 }
 
-bool NodeValueReader::begin_union()
+bool NodeValueReader::begin_union(OpenDDS::DCPS::Extensibility /*extensibility*/)
 {
   return begin_nested();
 }
@@ -130,7 +151,7 @@ bool NodeValueReader::end_union_member()
   return true;
 }
 
-bool NodeValueReader::begin_array()
+bool NodeValueReader::begin_array(OpenDDS::XTypes::TypeKind /*elem_kind*/)
 {
   return begin_nested();
 }
@@ -140,7 +161,7 @@ bool NodeValueReader::end_array()
   return end_nested();
 }
 
-bool NodeValueReader::begin_sequence()
+bool NodeValueReader::begin_sequence(OpenDDS::XTypes::TypeKind /*elem_kind*/)
 {
   return begin_nested();
 }
@@ -290,7 +311,7 @@ bool NodeValueReader::read_float128(long double& value)
 
 #endif
 
-bool NodeValueReader::read_fixed(OpenDDS::FaceTypes::Fixed& /*value*/)
+bool NodeValueReader::read_fixed(ACE_CDR::Fixed& /*value*/)
 {
   return false;
 }
@@ -357,6 +378,35 @@ bool NodeValueReader::read_long_enum(ACE_CDR::Long& value, const OpenDDS::DCPS::
 
   if (primitive_helper<v8::Integer>(value, &v8::Value::IsNumber, strtol)) {
     return true;
+  }
+
+  return false;
+}
+
+bool NodeValueReader::read_bitmask(ACE_CDR::ULongLong& value, const OpenDDS::DCPS::BitmaskHelper& helper)
+{
+  Nan::MaybeLocal<v8::Value> mlvai = use_name_ ? Nan::Get(current_object_, current_property_name_) : Nan::Get(current_object_, current_index_);
+  if (!mlvai.IsEmpty() && mlvai.ToLocalChecked()->IsObject()) {
+    v8::Local<v8::Array> array = v8::Local<v8::Array>::Cast(mlvai.ToLocalChecked());
+    if (!array.IsEmpty()) {
+      OPENDDS_VECTOR(OpenDDS::DCPS::String) flag_names(array->Length());
+      for (uint32_t i = 0; i < array->Length(); ++i) {
+        Nan::MaybeLocal<v8::Value> mlv = Nan::Get(array, i);
+        if (mlv.IsEmpty()) {
+          return false;
+        }
+        Nan::MaybeLocal<v8::String> mlstr = Nan::To<v8::String>(mlv.ToLocalChecked());
+        if (mlstr.IsEmpty()) {
+          return false;
+        }
+        Nan::Utf8String flag(mlstr.ToLocalChecked());
+        flag_names[i] = *flag;
+      }
+
+      if (helper.get_value(value, flag_names)) {
+        return true;
+      }
+    }
   }
 
   return false;

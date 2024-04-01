@@ -14,6 +14,9 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+# The jobs with latest-release configuration are disabled until OpenDDS 3.28
+# which will have the updated ValueReader and ValueWriter interfaces.
+
 jobs:
   build:
     strategy:
@@ -24,7 +27,7 @@ jobs:
           - 20
         opendds_branch:
           - master
-          - latest-release
+          #- latest-release
         m:
           - {os: ubuntu-22.04, dds_security: 1}
           - {os: ubuntu-22.04, dds_security: 0}
@@ -32,19 +35,6 @@ jobs:
           - {os: macos-12, dds_security: 0}
           - {os: windows-2022, dds_security: 1}
           - {os: windows-2022, dds_security: 0}
-        include:
-          - node_version: 18
-            opendds_branch: latest-release
-            m: {os: ubuntu-22.04, security: 0}
-          - node_version: 18
-            opendds_branch: latest-release
-            m: {os: windows-2022, security: 0}
-          - node_version: 20
-            opendds_branch: latest-release
-            m: {os: ubuntu-22.04, security: 1}
-          - node_version: 20
-            opendds_branch: latest-release
-            m: {os: windows-2022, security: 1}
 
     runs-on: ${{ matrix.m.os }}
     steps:
@@ -65,7 +55,7 @@ jobs:
       - name: 'Checkout OpenDDS'
         uses: actions/checkout@v3
         with:
-          repository: objectcomputing/OpenDDS
+          repository: OpenDDS/OpenDDS
           ref: ${{ matrix.opendds_branch }}
           path: OpenDDS
           fetch-depth: 1
@@ -73,17 +63,17 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node_version }}
-      - name: 'Install ssl and xerces (ubuntu)'
+      - name: 'Install xerces (ubuntu)'
         if: ${{ matrix.m.dds_security == 1 && matrix.m.os == 'ubuntu-22.04' }}
         run: |-
           sudo apt-get update
-          sudo apt-get -y install libssl-dev libxerces-c-dev
+          sudo apt-get -y install libxerces-c-dev
       - name: 'Install xerces (macos)'
         if: ${{ matrix.m.dds_security == 1 && matrix.m.os == 'macos-12' }}
         run: |
           brew install xerces-c
       - name: Setup for run-vcpkg
-        if: runner.os == 'Windows'
+        if: ${{ matrix.m.dds_security == 1 && matrix.m.os == 'windows-2022' }}
         shell: cmd
         run: |
           echo { "name": "opendds", "version-string": "github-actions", "dependencies": [ "openssl", "xerces-c" ] } > vcpkg.json
@@ -136,7 +126,7 @@ jobs:
           echo "npm_config_devdir=$GITHUB_WORKSPACE\\opendds-node-gyp-devdir" >> $GITHUB_ENV
           if [ ${{ matrix.m.dds_security }} == 1 ]; then
             CONFIG_OPTIONS+=" --security"
-            CONFIG_OPTIONS+=" --xerces3=$VCPKG_ROOT\\installed\\x64-windows --openssl=$VCPKG_ROOT\\installed\\x64-windows"
+            CONFIG_OPTIONS+=" --xerces3=$VCPKG_INSTALLED_DIR\\x64-windows --openssl=$VCPKG_INSTALLED_DIR\\x64-windows"
             BUILD_TARGETS+=";OpenDDS_Security"
           fi
           echo "CONFIG_OPTIONS=$CONFIG_OPTIONS" >> $GITHUB_ENV
@@ -151,7 +141,7 @@ jobs:
           ./configure --no-tests ${{ env.CONFIG_OPTIONS }}
           tools/scripts/show_build_config.pl
           . setenv.sh
-          make -j3 ${{ env.BUILD_TARGETS }}
+          make -j$(getconf _NPROCESSORS_ONLN) ${{ env.BUILD_TARGETS }}
       - name: 'Configure OpenDDS (windows)'
         if: ${{ matrix.m.os == 'windows-2022' }}
         shell: cmd
@@ -173,7 +163,14 @@ jobs:
         run: |-
           npm install
           ${{ env.ACE_ROOT }}/bin/mwc.pl -type gnuace -exclude ACE_TAO,OpenDDS
-          make -j2 || make
+          make -j$(getconf _NPROCESSORS_ONLN) || make
+      - name: Install gdb (ubuntu)
+        if: ${{ matrix.m.os == 'ubuntu-22.04' }}
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install gdb
+          echo 0 | sudo tee /proc/sys/kernel/yama/ptrace_scope
       - name: 'Change Core File Pattern (ubuntu)'
         if: ${{ matrix.m.os == 'ubuntu-22.04' }}
         shell: bash
