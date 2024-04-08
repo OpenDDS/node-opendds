@@ -14,9 +14,6 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-# The jobs with latest-release configuration are disabled until OpenDDS 3.28
-# which will have the updated ValueReader and ValueWriter interfaces.
-
 jobs:
   build:
     strategy:
@@ -27,7 +24,7 @@ jobs:
           - 20
         opendds_branch:
           - master
-          #- latest-release
+          - latest-release
         m:
           - {os: ubuntu-22.04, dds_security: 1}
           - {os: ubuntu-22.04, dds_security: 0}
