@@ -1,5 +1,7 @@
 #include "NodeDRListener.h"
 
+#include <dds/DCPS/Sample.h>
+
 #include <nan.h>
 #include <stdexcept>
 
@@ -124,10 +126,10 @@ void NodeDRListener::push_back(const DDS::SampleInfo& src, const void* sample)
     return;
   }
 
-  const bool key_only = !src.valid_data;
+  const Sample::Extent ext = src.valid_data ? Sample::Full : Sample::KeyOnly;
 
   if (vd_) {
-    if (!vd_->write(nvw_, sample, key_only)) {
+    if (!vd_->write(nvw_, sample, ext)) {
       ACE_ERROR((LM_WARNING, "WARNING: ValueDispatcher write failed\n"));
       return;
     }
