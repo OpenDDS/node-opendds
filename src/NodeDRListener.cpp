@@ -126,7 +126,8 @@ void NodeDRListener::push_back(const DDS::SampleInfo& src, const void* sample)
     return;
   }
 
-  const Sample::Extent ext = src.valid_data ? Sample::Full : Sample::KeyOnly;
+  const OpenDDS::DCPS::Sample::Extent ext =
+    src.valid_data ? OpenDDS::DCPS::Sample::Full : OpenDDS::DCPS::Sample::KeyOnly;
 
   if (vd_) {
     if (!vd_->write(nvw_, sample, ext)) {
