@@ -1,5 +1,7 @@
 #include "NodeDRListener.h"
 
+#include <dds/DCPS/Sample.h>
+
 #include <nan.h>
 #include <stdexcept>
 
@@ -124,15 +126,11 @@ void NodeDRListener::push_back(const DDS::SampleInfo& src, const void* sample)
     return;
   }
 
-  // TODO: When OpenDDS's vwrite works with key-only samples, e.g. from a dispose or
-  // unregister_instance call on the writer, this can be removed so that those samples
-  // can be delivered to the Javascript side.
-  if (!src.valid_data) {
-    return;
-  }
+  const OpenDDS::DCPS::Sample::Extent ext =
+    src.valid_data ? OpenDDS::DCPS::Sample::Full : OpenDDS::DCPS::Sample::KeyOnly;
 
   if (vd_) {
-    if (!vd_->write(nvw_, sample)) {
+    if (!vd_->write(nvw_, sample, ext)) {
       ACE_ERROR((LM_WARNING, "WARNING: ValueDispatcher write failed\n"));
       return;
     }
