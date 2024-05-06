@@ -14,9 +14,6 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-# The jobs with latest-release configuration are disabled until OpenDDS 3.28
-# which will have the updated ValueReader and ValueWriter interfaces.
-
 jobs:
   build:
     strategy:
@@ -27,7 +24,7 @@ jobs:
           - 20
         opendds_branch:
           - master
-          #- latest-release
+          - latest-release
         m:
           - {os: ubuntu-22.04, dds_security: 1}
           - {os: ubuntu-22.04, dds_security: 0}
@@ -38,29 +35,29 @@ jobs:
 
     runs-on: ${{ matrix.m.os }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: 'Checkout MPC'
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: DOCGroup/MPC
           path: MPC
           fetch-depth: 1
       - name: 'Checkout ACE_TAO'
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: DOCGroup/ACE_TAO
           ref: ace6tao2
           path: ACE_TAO
           fetch-depth: 1
       - name: 'Checkout OpenDDS'
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: OpenDDS/OpenDDS
           ref: ${{ matrix.opendds_branch }}
           path: OpenDDS
           fetch-depth: 1
       - name: 'Set Up node'
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node_version }}
       - name: 'Install xerces (ubuntu)'
@@ -84,7 +81,7 @@ jobs:
         uses: lukka/run-vcpkg@v11
         with:
           vcpkgDirectory: '${{ github.workspace }}/vcpkg'
-          vcpkgGitCommitId: 53bef8994c541b6561884a8395ea35715ece75db
+          vcpkgGitCommitId: 898b728edc5e0d12b50015f9cd18247c4257a3eb
           runVcpkgInstall: true
       - name: 'Set Up MSVC Environment'
         if: ${{ matrix.m.os == 'windows-2022' }}
