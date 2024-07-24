@@ -89,7 +89,7 @@ namespace {
       try {
         NodeValueReader nvr(qos_js);
         if (!OpenDDS::DCPS::vread(nvr, qos)) {
-          throw std::runtime_error("Unable to convert participant qos policy");
+          throw std::runtime_error("create_participant: Unable to convert participant qos policy");
         }
       } catch (const std::runtime_error& e) {
         Nan::ThrowError(e.what());
@@ -99,7 +99,7 @@ namespace {
     }
     DDS::DomainParticipant_var dp = dpf->create_participant(domain, qos, 0, 0);
     if (!dp) {
-      Nan::ThrowError("couldn't create DomainParticipant");
+      Nan::ThrowError("create_participant: couldn't create DomainParticipant");
       fci.GetReturnValue().SetUndefined();
       return;
     }
@@ -117,11 +117,11 @@ namespace {
   void delete_participant(const Nan::FunctionCallbackInfo<Value>& fci)
   {
     if (fci.Length() == 0) {
-      Nan::ThrowTypeError("1 argument required");
+      Nan::ThrowTypeError("delete_participant: 1 argument required");
       fci.GetReturnValue().SetUndefined();
       return;
     } else if (!fci[0]->IsObject()) {
-      Nan::ThrowTypeError("Argument must be of object type");
+      Nan::ThrowTypeError("delete_participant: Argument must be of object type");
       fci.GetReturnValue().SetUndefined();
       return;
     }
@@ -142,12 +142,12 @@ namespace {
   void subscribe(const Nan::FunctionCallbackInfo<Value>& fci)
   {
     if (fci.Length() < 3) {
-      Nan::ThrowTypeError("At least 3 arguments required");
+      Nan::ThrowTypeError("subscribe: At least 3 arguments required");
       fci.GetReturnValue().SetUndefined();
       return;
     }
     if (!fci[fci.Length() - 1]->IsFunction()) {
-      Nan::ThrowTypeError("Last argument must be a function");
+      Nan::ThrowTypeError("subscribe: Last argument must be a function");
       fci.GetReturnValue().SetUndefined();
       return;
     }
@@ -162,7 +162,7 @@ namespace {
     if (!ts) {
       ts = Registered_Data_Types->lookup(0, *topic_type);
       if (!ts) {
-        Nan::ThrowError("TypeSupport was not registered");
+        Nan::ThrowError("subscribe: TypeSupport was not registered");
         fci.GetReturnValue().SetUndefined();
         return;
       }
@@ -174,7 +174,7 @@ namespace {
     DDS::TopicDescription_var topic =
       DDS::TopicDescription::_duplicate(real_topic);
     if (!topic) {
-      Nan::ThrowError("couldn't create Topic");
+      Nan::ThrowError("subscribe: couldn't create Topic");
       fci.GetReturnValue().SetUndefined();
       return;
     }
@@ -193,7 +193,7 @@ namespace {
           ep_str = Nan::New<String>("expression_parameters");
         const Local<String> fe_lstr = fe_str.ToLocalChecked();
         if (!Nan::Has(cft_js, fe_lstr).ToChecked()) {
-          Nan::ThrowError("filter_expression is required in "
+          Nan::ThrowError("subscribe: filter_expression is required in "
                           "ContentFilteredTopic.");
           fci.GetReturnValue().SetUndefined();
           return;
@@ -230,7 +230,7 @@ namespace {
         try {
           NodeValueReader nvr(subqos_lv->ToObject(Nan::GetCurrentContext()).ToLocalChecked());
           if (!OpenDDS::DCPS::vread(nvr, sub_qos)) {
-            throw std::runtime_error("Unable to convert subscriber qos policy");
+            throw std::runtime_error("subscribe: Unable to convert subscriber qos policy");
           }
         } catch (const std::runtime_error& e) {
           Nan::ThrowError(e.what());
@@ -242,7 +242,7 @@ namespace {
 
     const DDS::Subscriber_var sub = dp->create_subscriber(sub_qos, 0, 0);
     if (!sub) {
-      Nan::ThrowError("couldn't create Subscriber");
+      Nan::ThrowError("subscribe: couldn't create Subscriber");
       fci.GetReturnValue().SetUndefined();
       return;
     }
@@ -261,7 +261,7 @@ namespace {
         try {
           NodeValueReader nvr(drqos_lv->ToObject(Nan::GetCurrentContext()).ToLocalChecked());
           if (!OpenDDS::DCPS::vread(nvr, dr_qos)) {
-            throw std::runtime_error("Unable to convert datareader qos policy");
+            throw std::runtime_error("subscribe: Unable to convert datareader qos policy");
           }
         } catch (const std::runtime_error& e) {
           Nan::ThrowError(e.what());
@@ -274,7 +274,7 @@ namespace {
     DDS::DataReader_var dr = sub->create_datareader(topic, dr_qos, listen,
                                                     DDS::DATA_AVAILABLE_STATUS);
     if (!dr) {
-      Nan::ThrowError("couldn't create DataReader");
+      Nan::ThrowError("subscribe: couldn't create DataReader");
       fci.GetReturnValue().SetUndefined();
       return;
     }
@@ -290,11 +290,11 @@ namespace {
   void unsubscribe(const Nan::FunctionCallbackInfo<Value>& fci)
   {
     if (fci.Length() < 1) {
-      Nan::ThrowTypeError("1 argument required");
+      Nan::ThrowTypeError("unsubscribe: 1 argument required");
       fci.GetReturnValue().SetUndefined();
       return;
     } else if (!fci[0]->IsObject()) {
-      Nan::ThrowTypeError("Argument must be of object type");
+      Nan::ThrowTypeError("unsubscribe: Argument must be of object type");
       fci.GetReturnValue().SetUndefined();
       return;
     }
@@ -314,7 +314,7 @@ namespace {
   void create_datawriter(const Nan::FunctionCallbackInfo<Value>& fci)
   {
     if (fci.Length() < 3) {
-      Nan::ThrowTypeError("At least 3 arguments required");
+      Nan::ThrowTypeError("create_datawriter: At least 3 arguments required");
       fci.GetReturnValue().SetUndefined();
       return;
     }
@@ -330,7 +330,7 @@ namespace {
     if (!ts) {
       ts = Registered_Data_Types->lookup(0, *topic_type);
       if (!ts) {
-        Nan::ThrowError("TypeSupport was not registered");
+        Nan::ThrowError("create_datawriter: TypeSupport was not registered");
         fci.GetReturnValue().SetUndefined();
         return;
       }
@@ -355,7 +355,7 @@ namespace {
         try {
           NodeValueReader nvr(pubqos_lv->ToObject(Nan::GetCurrentContext()).ToLocalChecked());
           if (!OpenDDS::DCPS::vread(nvr, pub_qos)) {
-            throw std::runtime_error("Unable to convert publisher qos policy");
+            throw std::runtime_error("create_datawriter: Unable to convert publisher qos policy");
           }
         } catch (const std::runtime_error& e) {
           Nan::ThrowError(e.what());
@@ -367,7 +367,7 @@ namespace {
 
     const DDS::Publisher_var pub = dp->create_publisher(pub_qos, 0, 0);
     if (!pub) {
-      Nan::ThrowError("couldn't create Publisher");
+      Nan::ThrowError("create_datawriter: couldn't create Publisher");
       fci.GetReturnValue().SetUndefined();
       return;
     }
@@ -381,7 +381,7 @@ namespace {
         try {
           NodeValueReader nvr(dwqos_lv->ToObject(Nan::GetCurrentContext()).ToLocalChecked());
           if (!OpenDDS::DCPS::vread(nvr, dw_qos)) {
-            throw std::runtime_error("Unable to convert datawriter qos policy");
+            throw std::runtime_error("create_datawriter: Unable to convert datawriter qos policy");
           }
         } catch (const std::runtime_error& e) {
           Nan::ThrowError(e.what());
@@ -393,7 +393,7 @@ namespace {
 
     DDS::DataWriter_var dw = pub->create_datawriter(topic, dw_qos, 0, 0);
     if (!dw) {
-      Nan::ThrowError("couldn't create DataWriter");
+      Nan::ThrowError("create_datawriter: couldn't create DataWriter");
       fci.GetReturnValue().SetUndefined();
       return;
     }
@@ -414,12 +414,12 @@ namespace {
   void register_instance(const Nan::FunctionCallbackInfo<Value>& fci)
   {
     if (fci.Length() < 1) {
-      Nan::ThrowTypeError("1 argument required");
+      Nan::ThrowTypeError("register_instance: 1 argument required");
       fci.GetReturnValue().SetUndefined();
       return;
     }
     if (!fci[0]->IsObject()) {
-      Nan::ThrowTypeError("Argument must be an object");
+      Nan::ThrowTypeError("register_instance: Argument must be an object");
       fci.GetReturnValue().SetUndefined();
       return;
     }
@@ -432,7 +432,7 @@ namespace {
     const OpenDDS::DCPS::ValueDispatcher* const vd = dynamic_cast<const OpenDDS::DCPS::ValueDispatcher* const>(ts);
 
     if (!vd) {
-      Nan::ThrowError("invalid typesupport attached to writer");
+      Nan::ThrowError("register_instance: invalid typesupport attached to writer");
       fci.GetReturnValue().SetUndefined();
       return;
     }
@@ -440,7 +440,7 @@ namespace {
     const Local<Object> sample_obj = fci[0]->ToObject(Nan::GetCurrentContext()).ToLocalChecked();
 
     if (sample_obj.IsEmpty()) {
-      Nan::ThrowError("invalid sample passed to writer");
+      Nan::ThrowError("register_instance: invalid sample passed to writer");
       fci.GetReturnValue().SetUndefined();
       return;
     }
@@ -451,7 +451,7 @@ namespace {
 
     if (!read_result) {
       vd->delete_value(sample_vp);
-      Nan::ThrowError("couldn't convert instance");
+      Nan::ThrowError("register_instance: couldn't convert instance");
       fci.GetReturnValue().SetUndefined();
       return;
     }
@@ -460,7 +460,7 @@ namespace {
     vd->delete_value(sample_vp);
 
     if (handle == DDS::HANDLE_NIL) {
-      Nan::ThrowError("couldn't register instance");
+      Nan::ThrowError("register_instance: couldn't register instance");
       fci.GetReturnValue().SetUndefined();
       return;
     }
@@ -470,12 +470,12 @@ namespace {
   void write(const Nan::FunctionCallbackInfo<Value>& fci)
   {
     if (fci.Length() < 1) {
-      Nan::ThrowTypeError("1 argument required");
+      Nan::ThrowTypeError("write: 1 argument required");
       fci.GetReturnValue().SetUndefined();
       return;
     }
     if (!fci[0]->IsObject()) {
-      Nan::ThrowTypeError("Sample argument must be an object");
+      Nan::ThrowTypeError("write: Sample argument must be an object");
       fci.GetReturnValue().SetUndefined();
       return;
     }
@@ -488,7 +488,7 @@ namespace {
     const OpenDDS::DCPS::ValueDispatcher* const vd = dynamic_cast<const OpenDDS::DCPS::ValueDispatcher* const>(ts);
 
     if (!vd) {
-      Nan::ThrowError("invalid typesupport attached to writer");
+      Nan::ThrowError("write: invalid typesupport attached to writer");
       fci.GetReturnValue().SetUndefined();
       return;
     }
@@ -498,7 +498,7 @@ namespace {
     DDS::InstanceHandle_t handle = DDS::HANDLE_NIL;
     if (fci.Length() > 1) {
       if (!fci[1]->IsNumber()) {
-        Nan::ThrowTypeError("Instance handle argument must be an Integer");
+        Nan::ThrowTypeError("write: Instance handle argument must be an Integer");
         fci.GetReturnValue().SetUndefined();
         return;
       }
@@ -511,7 +511,7 @@ namespace {
 
     if (!read_result) {
       vd->delete_value(sample_vp);
-      Nan::ThrowError("couldn't convert instance");
+      Nan::ThrowError("write: couldn't convert instance");
       fci.GetReturnValue().SetUndefined();
       return;
     }
@@ -520,7 +520,7 @@ namespace {
     vd->delete_value(sample_vp);
 
     if (return_code != DDS::RETCODE_OK) {
-      Nan::ThrowError("couldn't write sample");
+      Nan::ThrowError("write: couldn't write sample");
       fci.GetReturnValue().SetUndefined();
       return;
     }
@@ -538,7 +538,7 @@ namespace {
     const DDS::ReturnCode_t return_code = dw->wait_for_acknowledgments(delay);
 
     if (return_code != DDS::RETCODE_OK) {
-      Nan::ThrowError("couldn't wait for acknowledgments");
+      Nan::ThrowError("wait_for_acknowledgments: couldn't wait for acknowledgments");
       fci.GetReturnValue().SetUndefined();
       return;
     }
@@ -548,12 +548,12 @@ namespace {
   void unregister_instance(const Nan::FunctionCallbackInfo<Value>& fci)
   {
     if (fci.Length() < 1) {
-      Nan::ThrowTypeError("1 argument required");
+      Nan::ThrowTypeError("unregister_instance: 1 argument required");
       fci.GetReturnValue().SetUndefined();
       return;
     }
     if (!fci[0]->IsObject()) {
-      Nan::ThrowTypeError("Sample argument must be an object");
+      Nan::ThrowTypeError("unregister_instance: Sample argument must be an object");
       fci.GetReturnValue().SetUndefined();
       return;
     }
@@ -566,7 +566,7 @@ namespace {
     const OpenDDS::DCPS::ValueDispatcher* const vd = dynamic_cast<const OpenDDS::DCPS::ValueDispatcher* const>(ts);
 
     if (!vd) {
-      Nan::ThrowError("invalid typesupport attached to writer");
+      Nan::ThrowError("unregister_instance: invalid typesupport attached to writer");
       fci.GetReturnValue().SetUndefined();
       return;
     }
@@ -576,7 +576,7 @@ namespace {
     DDS::InstanceHandle_t handle = DDS::HANDLE_NIL;
     if (fci.Length() > 1) {
       if (!fci[1]->IsNumber()) {
-        Nan::ThrowTypeError("Instance handle argument must be an Integer");
+        Nan::ThrowTypeError("unregister_instance: Instance handle argument must be an Integer");
         fci.GetReturnValue().SetUndefined();
         return;
       }
@@ -589,7 +589,7 @@ namespace {
 
     if (!read_result) {
       vd->delete_value(sample_vp);
-      Nan::ThrowError("couldn't convert instance");
+      Nan::ThrowError("unregister_instance: couldn't convert instance");
       fci.GetReturnValue().SetUndefined();
       return;
     }
@@ -598,7 +598,7 @@ namespace {
     vd->delete_value(sample_vp);
 
     if (return_code != DDS::RETCODE_OK) {
-      Nan::ThrowError("couldn't unregister instance");
+      Nan::ThrowError("unregister_instance: couldn't unregister instance");
       fci.GetReturnValue().SetUndefined();
       return;
     }
@@ -608,12 +608,12 @@ namespace {
   void dispose(const Nan::FunctionCallbackInfo<Value>& fci)
   {
     if (fci.Length() < 1) {
-      Nan::ThrowTypeError("1 argument required");
+      Nan::ThrowTypeError("dispose: 1 argument required");
       fci.GetReturnValue().SetUndefined();
       return;
     }
     if (!fci[0]->IsObject()) {
-      Nan::ThrowTypeError("Sample argument must be an object");
+      Nan::ThrowTypeError("dispose: Sample argument must be an object");
       fci.GetReturnValue().SetUndefined();
       return;
     }
@@ -626,7 +626,7 @@ namespace {
     const OpenDDS::DCPS::ValueDispatcher* const vd = dynamic_cast<const OpenDDS::DCPS::ValueDispatcher* const>(ts);
 
     if (!vd) {
-      Nan::ThrowError("invalid typesupport attached to writer");
+      Nan::ThrowError("dispose: invalid typesupport attached to writer");
       fci.GetReturnValue().SetUndefined();
       return;
     }
@@ -636,7 +636,7 @@ namespace {
     DDS::InstanceHandle_t handle = DDS::HANDLE_NIL;
     if (fci.Length() > 1) {
       if (!fci[1]->IsNumber()) {
-        Nan::ThrowTypeError("Instance handle argument must be an Integer");
+        Nan::ThrowTypeError("dispose: Instance handle argument must be an Integer");
         fci.GetReturnValue().SetUndefined();
         return;
       }
@@ -649,7 +649,7 @@ namespace {
 
     if (!read_result) {
       vd->delete_value(sample_vp);
-      Nan::ThrowError("couldn't convert instance");
+      Nan::ThrowError("dispose: couldn't convert instance");
       fci.GetReturnValue().SetUndefined();
       return;
     }
@@ -658,7 +658,7 @@ namespace {
     vd->delete_value(sample_vp);
 
     if (return_code != DDS::RETCODE_OK) {
-      Nan::ThrowError("couldn't dispose instance");
+      Nan::ThrowError("dispose: couldn't dispose instance");
       fci.GetReturnValue().SetUndefined();
       return;
     }
@@ -668,11 +668,11 @@ namespace {
   void finalize(const Nan::FunctionCallbackInfo<Value>& fci)
   {
     if (fci.Length() < 1) {
-      Nan::ThrowTypeError("1 argument required");
+      Nan::ThrowTypeError("finalize: 1 argument required");
       fci.GetReturnValue().SetUndefined();
       return;
     } else if (!fci[0]->IsObject()) {
-      Nan::ThrowTypeError("Argument must be of object type");
+      Nan::ThrowTypeError("finalize: Argument must be of object type");
       fci.GetReturnValue().SetUndefined();
       return;
     }
@@ -696,7 +696,7 @@ namespace {
   void load(const Nan::FunctionCallbackInfo<Value>& fci)
   {
     if (fci.Length() == 0 || !fci[0]->IsString()) {
-      Nan::ThrowTypeError("1 argument required");
+      Nan::ThrowTypeError("load: 1 argument required");
       fci.GetReturnValue().SetUndefined();
       return;
     }
