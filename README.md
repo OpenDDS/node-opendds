@@ -8,7 +8,7 @@
     * If using security, you may need to ensure that OpenDDS is built with the same version of OpenSSL used by Node.js
 
 ## Tested platforms:
-* Node LTS versions 8, 10, 12, 14, 16, 18
+* Node LTS versions 8, 10, 12, 14, 16, 18, 20
 * Linux (Ubuntu 20.04) x86_64 using gcc 9.4.0
 * Linux (Ubuntu 22.04) x86_64 using gcc 11.2.0 (w/ openssl-1.1.1q)
 * Windows (Server 2022) x86_64 using Visual Studio Enterprise 2022
@@ -36,7 +36,7 @@ $ node-gyp configure build
 
 ## Other Resources
 * An article about [using node-opendds to bridge between OpenDDS and RESTful web](https://objectcomputing.com/resources/publications/sett/custom-bridges-between-restful-web-services-and-dds).
-    * A link to the [repository of the demo discussed in the article](https://github.com/oci-labs/node-opendds-rest-demo).
+    * A link to the [repository of the demo discussed in the article](https://github.com/OpenDDS/node-opendds-rest-demo).
 
 ## Changelog
 
