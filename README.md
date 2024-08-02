@@ -40,15 +40,22 @@ $ node-gyp configure build
 
 ## Changelog
 
+### Version 0.3.0
+
+* Update NodeValueWriter and NodeValueReader accordingly to the ValueWriter and ValueReader changes in OpenDDS 3.28.0
+  * requires OpenDDS 3.28.0 or later
+* Update test to use the same subject names for security documents as in OpenDDS
+* Update GitHub Actions workflow to use newer runner platforms and remove older node.js versions 14, 16
+
 ### Version 0.2.1
 
 * Remove requirement for V8 TypeSupport generation and NodeQosConversion
-** uses ValueReader/Writer Implementation for NaN / Node.js
-** requires OpenDDS 3.22, will not build with older versions of OpenDDS
-** slightly changes QoS object formatting to align with IDL types
+  * uses ValueReader/Writer Implementation for NaN / Node.js
+  * requires OpenDDS 3.22, will not build with older versions of OpenDDS
+  * slightly changes QoS object formatting to align with IDL types
 * Improved version support and CI test coverage
-** Good Coverage of Node.js 14, 16, 18 (Linux / macOS / Windows)
-** Limited Coverage of Node.js 8, 10, 12 (Linux / Windows)
+  * Good Coverage of Node.js 14, 16, 18 (Linux / macOS / Windows)
+  * Limited Coverage of Node.js 8, 10, 12 (Linux / Windows)
 
 ### Version 0.1.1
 
