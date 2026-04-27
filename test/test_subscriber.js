@@ -167,6 +167,9 @@ try {
         if (sample.id == last_sample_id) {
           setTimeout(function () { doStuff(participant, dr); }, 10000);
         }
+      } else if (sample !== undefined) {
+        console.log("Error: invalid-data callback included a sample payload");
+        process.exitCode = 1;
       }
     } catch (e) {
       console.log("Error in callback: " + e);
