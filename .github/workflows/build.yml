@@ -83,7 +83,7 @@ jobs:
         uses: lukka/run-vcpkg@v11
         with:
           vcpkgDirectory: '${{ github.workspace }}/vcpkg'
-          vcpkgGitCommitId: 898b728edc5e0d12b50015f9cd18247c4257a3eb
+          vcpkgGitCommitId: 940f58770cee8e2011bfb4847fb2bd70057301a8
           runVcpkgInstall: true
       - name: 'Set Up MSVC Environment'
         if: ${{ matrix.m.os == 'windows-2022' }}
