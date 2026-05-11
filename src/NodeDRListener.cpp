@@ -129,7 +129,7 @@ void NodeDRListener::push_back(const DDS::SampleInfo& src, const void* sample)
   const OpenDDS::DCPS::Sample::Extent ext =
     src.valid_data ? OpenDDS::DCPS::Sample::Full : OpenDDS::DCPS::Sample::KeyOnly;
 
-  if (vd_) {
+  if (vd_ && src.valid_data) {
     if (!vd_->write(nvw_, sample, ext)) {
       ACE_ERROR((LM_WARNING, "WARNING: ValueDispatcher write failed\n"));
       return;
@@ -139,7 +139,7 @@ void NodeDRListener::push_back(const DDS::SampleInfo& src, const void* sample)
   Local<Value> argv[] = {
     Nan::New(js_dr_),
     copyToV8(src),
-    vd_ ? nvw_.get_result().As<Value>() : Nan::Undefined().As<Value>()
+    vd_ && src.valid_data ? nvw_.get_result().As<Value>() : Nan::Undefined().As<Value>()
   };
 
   Local<Function> callback = Nan::New(callback_);
