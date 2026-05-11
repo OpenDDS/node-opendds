@@ -121,6 +121,36 @@ bool NodeValueWriter::end_element()
   return true;
 }
 
+bool NodeValueWriter::begin_map(OpenDDS::XTypes::TypeKind /*key_kind*/, OpenDDS::XTypes::TypeKind /*value_kind*/)
+{
+  return false;
+}
+
+bool NodeValueWriter::end_map()
+{
+  return false;
+}
+
+bool NodeValueWriter::begin_key()
+{
+  return false;
+}
+
+bool NodeValueWriter::end_key()
+{
+  return false;
+}
+
+bool NodeValueWriter::begin_value()
+{
+  return false;
+}
+
+bool NodeValueWriter::end_value()
+{
+  return false;
+}
+
 bool NodeValueWriter::write_boolean(ACE_CDR::Boolean value)
 {
   return primitive_helper<ACE_CDR::Boolean, v8::Boolean>(value);

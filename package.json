@@ -28,6 +28,6 @@
   "license": "BSD-3-Clause",
   "gypfile": true,
   "dependencies": {
-    "nan": "^2.19.0"
+    "nan": "^2.26.2"
   }
 }
