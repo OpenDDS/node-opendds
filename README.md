@@ -52,6 +52,12 @@ $ node-gyp configure build
 
 ## Changelog
 
+### Version 0.3.1
+
+* Added support for Node.js 22 and 24 (Updated `nan` dependency)
+* Fixed an issue where invalid-data callbacks included misleading sample payloads
+* Implemented map types in `ValueReader` and `ValueWriter` to satisfy updated OpenDDS interfaces
+
 ### Version 0.3.0
 
 * Update NodeValueWriter and NodeValueReader accordingly to the ValueWriter and ValueReader changes in OpenDDS 3.28.0
