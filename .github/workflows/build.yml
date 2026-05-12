@@ -22,14 +22,16 @@ jobs:
         node_version:
           - 18
           - 20
+          - 22
+          - 24
         opendds_branch:
           - master
           - latest-release
         m:
           - {os: ubuntu-22.04, dds_security: 1}
           - {os: ubuntu-22.04, dds_security: 0}
-          - {os: macos-13, dds_security: 1}
-          - {os: macos-13, dds_security: 0}
+          - {os: macos-14, dds_security: 1}
+          - {os: macos-14, dds_security: 0}
           - {os: windows-2022, dds_security: 1}
           - {os: windows-2022, dds_security: 0}
 
@@ -60,13 +62,30 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node_version }}
+          cache: 'npm'
+      - name: 'Get Repository SHAs'
+        id: get-shas
+        shell: bash
+        run: |
+          echo "opendds_sha=$(cd OpenDDS && git rev-parse HEAD)" >> $GITHUB_OUTPUT
+          echo "acetao_sha=$(cd ACE_TAO && git rev-parse HEAD)" >> $GITHUB_OUTPUT
+          echo "mpc_sha=$(cd MPC && git rev-parse HEAD)" >> $GITHUB_OUTPUT
+      - name: 'Cache OpenDDS Build'
+        uses: actions/cache@v4
+        id: cache-opendds
+        with:
+          path: |
+            ACE_TAO
+            OpenDDS
+            MPC
+          key: opendds-build-${{ matrix.m.os }}-${{ matrix.opendds_branch }}-sec${{ matrix.m.dds_security }}-${{ steps.get-shas.outputs.opendds_sha }}-${{ steps.get-shas.outputs.acetao_sha }}
       - name: 'Install xerces (ubuntu)'
         if: ${{ matrix.m.dds_security == 1 && matrix.m.os == 'ubuntu-22.04' }}
         run: |-
           sudo apt-get update
           sudo apt-get -y install libxerces-c-dev
       - name: 'Install xerces (macos)'
-        if: ${{ matrix.m.dds_security == 1 && matrix.m.os == 'macos-13' }}
+        if: ${{ matrix.m.dds_security == 1 && matrix.m.os == 'macos-14' }}
         run: |
           brew install xerces-c
       - name: Setup for run-vcpkg
@@ -81,7 +100,7 @@ jobs:
         uses: lukka/run-vcpkg@v11
         with:
           vcpkgDirectory: '${{ github.workspace }}/vcpkg'
-          vcpkgGitCommitId: 898b728edc5e0d12b50015f9cd18247c4257a3eb
+          vcpkgGitCommitId: 940f58770cee8e2011bfb4847fb2bd70057301a8
           runVcpkgInstall: true
       - name: 'Set Up MSVC Environment'
         if: ${{ matrix.m.os == 'windows-2022' }}
@@ -90,10 +109,10 @@ jobs:
         if: ${{ matrix.m.os == 'windows-2022' }}
         uses: ammaraskar/msvc-problem-matcher@0.3.0
       - name: 'Set Up Problem Matcher (ubuntu / macos)'
-        if: ${{ matrix.m.os == 'ubuntu-22.04' || matrix.m.os == 'macos-13' }}
+        if: ${{ matrix.m.os == 'ubuntu-22.04' || matrix.m.os == 'macos-14' }}
         uses: ammaraskar/gcc-problem-matcher@0.3.0
       - name: 'Set environment variables (ubuntu / macos)'
-        if: ${{ matrix.m.os == 'ubuntu-22.04' || matrix.m.os == 'macos-13' }}
+        if: ${{ matrix.m.os == 'ubuntu-22.04' || matrix.m.os == 'macos-14' }}
         shell: bash
         run: |-
           echo "ACE_ROOT=$GITHUB_WORKSPACE/ACE_TAO/ACE" >> $GITHUB_ENV
@@ -106,8 +125,8 @@ jobs:
           if [ ${{ matrix.m.dds_security }} == 1 ]; then
             CONFIG_OPTIONS+=" --security"
             BUILD_TARGETS+=" OpenDDS_Security"
-            if [ '${{ matrix.m.os }}' == 'macos-13' ]; then
-              CONFIG_OPTIONS+=" --xerces3=$(brew --prefix xerces-c) --openssl=/usr/local/opt/openssl@1.1"
+            if [ '${{ matrix.m.os }}' == 'macos-14' ]; then
+              CONFIG_OPTIONS+=" --xerces3=$(brew --prefix xerces-c) --openssl=$(brew --prefix openssl@3)"
             fi
           fi
           echo "CONFIG_OPTIONS=$CONFIG_OPTIONS" >> $GITHUB_ENV
@@ -130,7 +149,7 @@ jobs:
           echo "BUILD_TARGETS=DCPSInfoRepo_Main;OpenDDS_Rtps_Udp$BUILD_TARGETS" >> $GITHUB_ENV
           echo "ACE_TEST_LOG_STUCK_STACKS=1" >> $GITHUB_ENV
       - name: 'Configure & Build OpenDDS (ubuntu / macos)'
-        if: ${{ matrix.m.os == 'ubuntu-22.04' || matrix.m.os == 'macos-13' }}
+        if: ${{ (matrix.m.os == 'ubuntu-22.04' || matrix.m.os == 'macos-14') && steps.cache-opendds.outputs.cache-hit != 'true' }}
         shell: bash
         run: |-
           echo "dds_security=${{ matrix.m.dds_security }}; CONFIG_OPTIONS=${{ env.CONFIG_OPTIONS }}; BUILD_TARGETS=${{ env.BUILD_TARGETS }}"
@@ -140,7 +159,7 @@ jobs:
           . setenv.sh
           make -j$(getconf _NPROCESSORS_ONLN) ${{ env.BUILD_TARGETS }}
       - name: 'Configure OpenDDS (windows)'
-        if: ${{ matrix.m.os == 'windows-2022' }}
+        if: ${{ matrix.m.os == 'windows-2022' && steps.cache-opendds.outputs.cache-hit != 'true' }}
         shell: cmd
         run: |-
           echo "dds_security=${{ matrix.m.dds_security }}; CONFIG_OPTIONS=${{ env.CONFIG_OPTIONS }}; BUILD_TARGETS=${{ env.BUILD_TARGETS }}"
@@ -148,14 +167,14 @@ jobs:
           configure --no-tests ${{ env.CONFIG_OPTIONS }}
           perl tools/scripts/show_build_config.pl
       - name: 'Build OpenDDS (windows)'
-        if: ${{ matrix.m.os == 'windows-2022' }}
+        if: ${{ matrix.m.os == 'windows-2022' && steps.cache-opendds.outputs.cache-hit != 'true' }}
         shell: cmd
         run: |-
           cd OpenDDS
           call setenv.cmd
           msbuild -p:Configuration=Debug,Platform=x64 -t:${{ env.BUILD_TARGETS }} -m DDS_TAOv2.sln
       - name: 'Install (ubuntu / macos)'
-        if: ${{ matrix.m.os == 'ubuntu-22.04' || matrix.m.os == 'macos-13' }}
+        if: ${{ matrix.m.os == 'ubuntu-22.04' || matrix.m.os == 'macos-14' }}
         shell: bash
         run: |-
           npm install
@@ -176,12 +195,12 @@ jobs:
           echo Core file pattern set to:
           cat /proc/sys/kernel/core_pattern
       - name: 'Change Cores Directory Permissions (macos)'
-        if: ${{ matrix.m.os == 'macos-13' }}
+        if: ${{ matrix.m.os == 'macos-14' }}
         shell: bash
         run: |
           sudo chmod o+w /cores
       - name: 'Test (ubuntu / macos)'
-        if: ${{ matrix.m.os == 'ubuntu-22.04' || matrix.m.os == 'macos-13' }}
+        if: ${{ matrix.m.os == 'ubuntu-22.04' || matrix.m.os == 'macos-14' }}
         shell: bash
         run: |-
           ulimit -c unlimited
@@ -193,7 +212,7 @@ jobs:
           ./run_test.pl node2cpp --rtps
           ./run_test.pl node2node --rtps
       - name: 'Test Secure (ubuntu / macos)'
-        if: ${{ (matrix.m.os == 'ubuntu-22.04' || matrix.m.os == 'macos-13') && matrix.m.dds_security == 1 }}
+        if: ${{ (matrix.m.os == 'ubuntu-22.04' || matrix.m.os == 'macos-14') && matrix.m.dds_security == 1 }}
         shell: bash
         run: |-
           ulimit -c unlimited

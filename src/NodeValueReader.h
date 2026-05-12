@@ -49,6 +49,13 @@ public:
   bool begin_element();
   bool end_element();
 
+  bool begin_map(OpenDDS::XTypes::TypeKind key_kind, OpenDDS::XTypes::TypeKind value_kind);
+  bool end_map();
+  bool begin_key();
+  bool end_key();
+  bool begin_value();
+  bool end_value();
+
   bool read_boolean(ACE_CDR::Boolean& value);
   bool read_byte(ACE_CDR::Octet& value);
 #if OPENDDS_HAS_EXPLICIT_INTS

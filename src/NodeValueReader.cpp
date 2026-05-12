@@ -191,6 +191,36 @@ bool NodeValueReader::end_element()
   return true;
 }
 
+bool NodeValueReader::begin_map(OpenDDS::XTypes::TypeKind /*key_kind*/, OpenDDS::XTypes::TypeKind /*value_kind*/)
+{
+  return false;
+}
+
+bool NodeValueReader::end_map()
+{
+  return false;
+}
+
+bool NodeValueReader::begin_key()
+{
+  return false;
+}
+
+bool NodeValueReader::end_key()
+{
+  return false;
+}
+
+bool NodeValueReader::begin_value()
+{
+  return false;
+}
+
+bool NodeValueReader::end_value()
+{
+  return false;
+}
+
 bool NodeValueReader::read_boolean(ACE_CDR::Boolean& value)
 {
   return primitive_helper<v8::Boolean>(value, &v8::Value::IsBoolean);

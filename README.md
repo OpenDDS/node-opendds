@@ -8,12 +8,24 @@
     * If using security, you may need to ensure that OpenDDS is built with the same version of OpenSSL used by Node.js
 
 ## Tested platforms:
-* Node LTS versions 8, 10, 12, 14, 16, 18, 20
+* Node LTS versions 18, 20, 22, 24
 * Linux (Ubuntu 20.04) x86_64 using gcc 9.4.0
 * Linux (Ubuntu 22.04) x86_64 using gcc 11.2.0 (w/ openssl-1.1.1q)
 * Windows (Server 2022) x86_64 using Visual Studio Enterprise 2022
 * macOS (11.7) x86_54 using clang 13.0
 * Other OpenDDS-supported platforms should work, but may required changes to binding.gyp
+
+## Quality of Service (QoS)
+When passing QoS objects to entities, note that fields defined as sequences (like `representation`) must be passed as arrays, even if they only contain a single value. For example, to set the `representation` QoS for a DataWriter, the property should be structured like this:
+
+```javascript
+let qos = {
+  // ... other QoS settings
+  representation: {
+    value: ["DDS::XCDR_DATA_REPRESENTATION"]
+  }
+};
+```
 
 ## Building and running the tests
 * In OpenDDS directory:
@@ -39,6 +51,12 @@ $ node-gyp configure build
     * A link to the [repository of the demo discussed in the article](https://github.com/OpenDDS/node-opendds-rest-demo).
 
 ## Changelog
+
+### Version 0.3.1
+
+* Added support for Node.js 22 and 24 (Updated `nan` dependency)
+* Fixed an issue where invalid-data callbacks included misleading sample payloads
+* Implemented map types in `ValueReader` and `ValueWriter` to satisfy updated OpenDDS interfaces
 
 ### Version 0.3.0
 
