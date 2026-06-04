@@ -9,7 +9,6 @@
 #include <dds/DCPS/Registered_Data_Types.h>
 #include <dds/DCPS/BuiltInTopicUtils.h>
 
-#include <dds/DCPS/V8TypeConverter.h>
 #include <dds/DCPS/LocalObject.h>
 #include <dds/DCPS/DataReaderImpl.h>
 

@@ -66,9 +66,9 @@ NodePBITListener::NodePBITListener(const Local<Function>& callback,
                                   const DDS::SampleInfoSeq infos,
                                   const DDS::DataReader_var& dr)
   : callback_(callback)
+  , dr_(dr)
   , part_data_(part_data)
   , infos_(infos)
-  , dr_(dr)
   , async_uv_pbit_(this)
 {
   uv_async_init(uv_default_loop(), &async_uv_pbit_, async_cb);
@@ -111,8 +111,6 @@ void NodePBITListener::async() // called from libuv event loop
   Nan::HandleScope scope;
   
   try {
-    const v8::Local<v8::Object> stru = Nan::New<v8::Object>();
-    
     Local<Value> argv[] = { copytoV8(infos_[0]), toV8(part_data_[0]) };
 
     Local<Function> callback = Nan::New(callback_);

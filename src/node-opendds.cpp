@@ -782,6 +782,3 @@ NODE_MODULE(node_opendds, init_node_opendds);
 #ifdef ACE_LINUX
 #pragma GCC diagnostic pop
 #endif
-fdef ACE_LINUX
-#pragma GCC diagnostic pop
-#endif
