@@ -13,8 +13,8 @@ using namespace v8;
 Local<Object> copytoV8(const DDS::Time_t& src)
 {
   Local<Object> stru = Nan::New<Object>();
-  stru->Set(Nan::New<String>("sec").ToLocalChecked(), Nan::New(src.sec));
-  stru->Set(Nan::New<String>("nanosec").ToLocalChecked(),
+  Nan::Set(stru, Nan::New<String>("sec").ToLocalChecked(), Nan::New(src.sec));
+  Nan::Set(stru, Nan::New<String>("nanosec").ToLocalChecked(),
             Nan::New(src.nanosec));
   return stru;
 }
@@ -22,11 +22,11 @@ Local<Object> copytoV8(const DDS::Time_t& src)
 Local<Object> copytoV8(const DDS::SampleInfo& src)
 {
   Local<Object> stru = Nan::New<Object>();
-#define INT(X) stru->Set(Nan::New<String>(#X).ToLocalChecked(), Nan::New(src.X))
+#define INT(X) Nan::Set(stru, Nan::New<String>(#X).ToLocalChecked(), Nan::New(src.X))
   INT(sample_state);
   INT(view_state);
   INT(instance_state);
-  stru->Set(Nan::New<String>("source_timestamp").ToLocalChecked(),
+  Nan::Set(stru, Nan::New<String>("source_timestamp").ToLocalChecked(),
             copytoV8(src.source_timestamp));
   INT(instance_handle);
   INT(publication_handle);
@@ -36,7 +36,7 @@ Local<Object> copytoV8(const DDS::SampleInfo& src)
   INT(generation_rank);
   INT(absolute_generation_rank);
 #undef INT
-  stru->Set(Nan::New<String>("valid_data").ToLocalChecked(),
+  Nan::Set(stru, Nan::New<String>("valid_data").ToLocalChecked(),
             Nan::New(src.valid_data));
   return stru;
 }
@@ -50,13 +50,13 @@ Local<Object> toV8(const DDS::ParticipantBuiltinTopicData& src)
   for (CORBA::ULong i = 0; i < src.user_data.value.length(); ++i) {
     str += src.user_data.value[i];
   }
-  stru->Set(Nan::New<v8::String>("user_data").ToLocalChecked(), Nan::New(str).ToLocalChecked());
+  Nan::Set(stru, Nan::New<v8::String>("user_data").ToLocalChecked(), Nan::New(str).ToLocalChecked());
   
   const v8::Local<v8::Array> tgt(Nan::New<v8::Array>(3));
   for (CORBA::Long i = 0; i < 3; ++i) {
-    tgt->Set(Nan::New(i), Nan::New(src.key.value[i]));
+    Nan::Set(tgt, i, Nan::New(src.key.value[i]));
   }
-  stru->Set(Nan::New<v8::String>("key").ToLocalChecked(), tgt);
+  Nan::Set(stru, Nan::New<v8::String>("key").ToLocalChecked(), tgt);
 
   return stru;
 }
