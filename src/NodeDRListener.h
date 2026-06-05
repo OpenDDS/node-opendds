@@ -7,19 +7,18 @@
 
 #include <dds/DdsDcpsSubscriptionC.h>
 
-#include <dds/DCPS/LocalObject.h>
 #include <dds/DCPS/DataReaderImpl.h>
+#include <dds/DCPS/LocalObject.h>
 
 #include <mutex>
 
 namespace NodeOpenDDS {
 
-  class NodeDRListener
-    : public virtual OpenDDS::DCPS::LocalObject<DDS::DataReaderListener>
-    , private OpenDDS::DCPS::AbstractSamples {
+  class NodeDRListener : public virtual OpenDDS::DCPS::LocalObject<DDS::DataReaderListener>,
+                         private OpenDDS::DCPS::AbstractSamples
+  {
   public:
-    NodeDRListener(DDS::DomainParticipant* dp,
-                   const v8::Local<v8::Function>& callback);
+    NodeDRListener(DDS::DomainParticipant* dp, const v8::Local<v8::Function>& callback);
     ~NodeDRListener();
 
     void set_javascript_datareader(const v8::Local<v8::Object>& js_dr);
@@ -43,12 +42,9 @@ namespace NodeOpenDDS {
     void on_requested_deadline_missed(DDS::DataReader*, const RDMStatus&) {}
     typedef DDS::RequestedIncompatibleQosStatus RIQStatus;
     void on_requested_incompatible_qos(DDS::DataReader*, const RIQStatus&) {}
-    void on_sample_rejected(DDS::DataReader*,
-                            const DDS::SampleRejectedStatus&) {}
-    void on_liveliness_changed(DDS::DataReader*,
-                               const DDS::LivelinessChangedStatus&) {}
-    void on_subscription_matched(DDS::DataReader*,
-                                 const DDS::SubscriptionMatchedStatus&) {}
+    void on_sample_rejected(DDS::DataReader*, const DDS::SampleRejectedStatus&) {}
+    void on_liveliness_changed(DDS::DataReader*, const DDS::LivelinessChangedStatus&) {}
+    void on_subscription_matched(DDS::DataReader*, const DDS::SubscriptionMatchedStatus&) {}
     void on_sample_lost(DDS::DataReader*, const DDS::SampleLostStatus&) {}
 
     void on_data_available(DDS::DataReader*);
@@ -61,7 +57,8 @@ namespace NodeOpenDDS {
     const OpenDDS::DCPS::ValueDispatcher* vd_;
     NodeValueWriter nvw_;
 
-    struct AsyncUv : uv_async_t {
+    struct AsyncUv : uv_async_t
+    {
       explicit AsyncUv(NodeDRListener* outer) : outer_(outer) {}
       NodeDRListener* outer_;
     } async_uv_;
@@ -84,7 +81,8 @@ namespace NodeOpenDDS {
 
   /// Wrapper object to call unsubscribe at a better time using Node Event
   /// Loop.
-  class UnsubscribeWorker : public Nan::AsyncWorker {
+  class UnsubscribeWorker : public Nan::AsyncWorker
+  {
   public:
     UnsubscribeWorker(NodeDRListener* ndrl);
     ~UnsubscribeWorker();
@@ -99,6 +97,6 @@ namespace NodeOpenDDS {
     void HandleErrorCallback();
   };
 
-}
+} // namespace NodeOpenDDS
 
 #endif

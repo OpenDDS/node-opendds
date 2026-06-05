@@ -15,12 +15,27 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: 'Set Up node'
+        uses: actions/setup-node@v6
+        with:
+          node-version: 20
+          cache: 'npm'
+      - run: npm install --include=dev --ignore-scripts
+      - name: 'Lint JS'
+        run: npm run lint:js
+      - name: 'Check C++ Formatting'
+        run: npm run lint:cpp
+
   build:
+    needs: lint
     strategy:
       fail-fast: false
       matrix:
         node_version:
-          - 18
           - 20
           - 22
           - 24

@@ -57,7 +57,7 @@ function log(label, object) {
   console.log(label + ': ' + JSON.stringify(object, (key, value) => typeof value === 'bigint' ? value.toString() : value, 2));
 }
 
-function doStuff(participant, reader) {
+function doStuff(participant) {
   console.log("reader has waited long enough for acknowledgments");
   participant.unsubscribe(reader);
 }

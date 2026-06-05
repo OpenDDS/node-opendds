@@ -5,21 +5,21 @@
 
 #include <dds/DdsDcpsSubscriptionC.h>
 
-#include <dds/DCPS/Service_Participant.h>
-#include <dds/DCPS/Registered_Data_Types.h>
 #include <dds/DCPS/BuiltInTopicUtils.h>
+#include <dds/DCPS/Registered_Data_Types.h>
+#include <dds/DCPS/Service_Participant.h>
 
-#include <dds/DCPS/LocalObject.h>
 #include <dds/DCPS/DataReaderImpl.h>
+#include <dds/DCPS/LocalObject.h>
 
 namespace NodeOpenDDS {
 
-  class NodePBITListener
-    : public virtual OpenDDS::DCPS::LocalObject<DDS::DataReaderListener>
-    , private OpenDDS::DCPS::AbstractSamples {
+  class NodePBITListener : public virtual OpenDDS::DCPS::LocalObject<DDS::DataReaderListener>,
+                           private OpenDDS::DCPS::AbstractSamples
+  {
   public:
-    NodePBITListener(const v8::Local<v8::Function>& callback, 
-                    const DDS::ParticipantBuiltinTopicDataSeq part_data,
+    NodePBITListener(const v8::Local<v8::Function>& callback,
+                     const DDS::ParticipantBuiltinTopicDataSeq part_data,
                      const DDS::SampleInfoSeq infos, const DDS::DataReader_var& dr);
     ~NodePBITListener();
     void shutdown();
@@ -32,12 +32,9 @@ namespace NodeOpenDDS {
     void on_requested_deadline_missed(DDS::DataReader*, const RDMStatus&) {}
     typedef DDS::RequestedIncompatibleQosStatus RIQStatus;
     void on_requested_incompatible_qos(DDS::DataReader*, const RIQStatus&) {}
-    void on_sample_rejected(DDS::DataReader*,
-                            const DDS::SampleRejectedStatus&) {}
-    void on_liveliness_changed(DDS::DataReader*,
-                               const DDS::LivelinessChangedStatus&) {}
-    void on_subscription_matched(DDS::DataReader*,
-                                 const DDS::SubscriptionMatchedStatus&) {}
+    void on_sample_rejected(DDS::DataReader*, const DDS::SampleRejectedStatus&) {}
+    void on_liveliness_changed(DDS::DataReader*, const DDS::LivelinessChangedStatus&) {}
+    void on_subscription_matched(DDS::DataReader*, const DDS::SubscriptionMatchedStatus&) {}
     void on_sample_lost(DDS::DataReader*, const DDS::SampleLostStatus&) {}
 
     void on_data_available(DDS::DataReader*);
@@ -50,7 +47,8 @@ namespace NodeOpenDDS {
     DDS::ParticipantBuiltinTopicDataSeq part_data_;
     DDS::SampleInfoSeq infos_;
 
-    struct AsyncUvN : uv_async_t {
+    struct AsyncUvN : uv_async_t
+    {
       explicit AsyncUvN(NodePBITListener* outer) : outer_(outer) {}
       NodePBITListener* outer_;
     } async_uv_pbit_;
@@ -58,11 +56,10 @@ namespace NodeOpenDDS {
     NodePBITListener(const NodePBITListener&);
     NodePBITListener& operator=(const NodePBITListener&);
 
-   void reserve(CORBA::ULong);
-   void push_back(const DDS::SampleInfo& src, const void* sample);
-
+    void reserve(CORBA::ULong);
+    void push_back(const DDS::SampleInfo& src, const void* sample);
   };
 
-}
+} // namespace NodeOpenDDS
 
 #endif

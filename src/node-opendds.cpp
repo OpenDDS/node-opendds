@@ -1,25 +1,25 @@
 #include "NodeDRListener.h"
-#include "NodeValueReader.h"
 #include "NodePBITListener.h"
+#include "NodeValueReader.h"
 
 #include <nan.h>
 
-#include <dds/DCPS/Service_Participant.h>
-#include <dds/DCPS/Registered_Data_Types.h>
 #include <dds/DCPS/Marked_Default_Qos.h>
+#include <dds/DCPS/Registered_Data_Types.h>
+#include <dds/DCPS/Service_Participant.h>
 
 #include <ace/DLL_Manager.h>
 #include <ace/Init_ACE.h>
 
+#include <cstring>
 #include <string>
 #include <vector>
-#include <cstring>
 
 using namespace v8;
-using OpenDDS::DCPS::Data_Types_Register;
 using NodeOpenDDS::NodeDRListener;
-using NodeOpenDDS::NodeValueReader;
 using NodeOpenDDS::NodePBITListener;
+using NodeOpenDDS::NodeValueReader;
+using OpenDDS::DCPS::Data_Types_Register;
 
 namespace {
   std::vector<DDS::DomainParticipant_var> participants_;
@@ -65,8 +65,7 @@ namespace {
       argv.add(str.c_str());
     }
     int argc = argv.argc();
-    DDS::DomainParticipantFactory_var dpf =
-      TheParticipantFactoryWithArgs(argc, argv.argv());
+    DDS::DomainParticipantFactory_var dpf = TheParticipantFactoryWithArgs(argc, argv.argv());
     const Local<ObjectTemplate> ot = Nan::New<ObjectTemplate>();
     ot->SetInternalFieldCount(1);
     Nan::SetMethod(ot, "create_participant", create_participant);
@@ -81,11 +80,12 @@ namespace {
     const Local<Object> this_js = fci.This();
     DDS::DomainId_t domain = 0;
     if (fci.Length() > 0) {
-      domain = static_cast<DDS::DomainId_t>(fci[0]->NumberValue(Nan::GetCurrentContext()).FromMaybe(0.0));
+      domain = static_cast<DDS::DomainId_t>(
+          fci[0]->NumberValue(Nan::GetCurrentContext()).FromMaybe(0.0));
     }
     void* const internal = Nan::GetInternalFieldPointer(this_js, 0);
     DDS::DomainParticipantFactory* const dpf =
-      static_cast<DDS::DomainParticipantFactory*>(internal);
+        static_cast<DDS::DomainParticipantFactory*>(internal);
     DDS::DomainParticipantQos qos;
     dpf->get_default_participant_qos(qos);
     if (fci.Length() > 1 && !fci[1]->ToObject(Nan::GetCurrentContext()).IsEmpty()) {
@@ -133,12 +133,12 @@ namespace {
     }
     const Local<Object> js_obj = fci[0]->ToObject(Nan::GetCurrentContext()).ToLocalChecked();
     void* const internal = Nan::GetInternalFieldPointer(js_obj, 0);
-    const DDS::DomainParticipant_var part =
-      static_cast<DDS::DomainParticipant*>(internal);
+    const DDS::DomainParticipant_var part = static_cast<DDS::DomainParticipant*>(internal);
     Nan::SetInternalFieldPointer(js_obj, 0, 0);
     const std::vector<DDS::DomainParticipant_var>::iterator i =
-      std::find(participants_.begin(), participants_.end(), part);
-    if (i != participants_.end()) participants_.erase(i);
+        std::find(participants_.begin(), participants_.end(), part);
+    if (i != participants_.end())
+      participants_.erase(i);
     part->delete_contained_entities();
     const DDS::DomainParticipantFactory_var dpf = TheParticipantFactory;
     dpf->delete_participant(part);
@@ -158,13 +158,11 @@ namespace {
       return;
     }
     void* const internal = Nan::GetInternalFieldPointer(fci.This(), 0);
-    DDS::DomainParticipant* const dp =
-      static_cast<DDS::DomainParticipant*>(internal);
+    DDS::DomainParticipant* const dp = static_cast<DDS::DomainParticipant*>(internal);
 
     const Nan::Utf8String topic_name(fci[0]);
     const Nan::Utf8String topic_type(fci[1]);
-    OpenDDS::DCPS::TypeSupport* ts =
-      Registered_Data_Types->lookup(dp, *topic_type);
+    OpenDDS::DCPS::TypeSupport* ts = Registered_Data_Types->lookup(dp, *topic_type);
     if (!ts) {
       ts = Registered_Data_Types->lookup(0, *topic_type);
       if (!ts) {
@@ -175,10 +173,8 @@ namespace {
       Registered_Data_Types->register_type(dp, *topic_type, ts);
     }
 
-    DDS::Topic_var real_topic =
-      dp->create_topic(*topic_name, *topic_type, TOPIC_QOS_DEFAULT, 0, 0);
-    DDS::TopicDescription_var topic =
-      DDS::TopicDescription::_duplicate(real_topic);
+    DDS::Topic_var real_topic = dp->create_topic(*topic_name, *topic_type, TOPIC_QOS_DEFAULT, 0, 0);
+    DDS::TopicDescription_var topic = DDS::TopicDescription::_duplicate(real_topic);
     if (!topic) {
       Nan::ThrowError("subscribe: couldn't create Topic");
       fci.GetReturnValue().SetUndefined();
@@ -196,7 +192,7 @@ namespace {
       if (cft_js_lv->IsObject()) {
         const Local<Object> cft_js = cft_js_lv->ToObject(Nan::GetCurrentContext()).ToLocalChecked();
         Nan::MaybeLocal<String> fe_str = Nan::New<String>("filter_expression"),
-          ep_str = Nan::New<String>("expression_parameters");
+                                ep_str = Nan::New<String>("expression_parameters");
         const Local<String> fe_lstr = fe_str.ToLocalChecked();
         if (!Nan::Has(cft_js, fe_lstr).ToChecked()) {
           Nan::ThrowError("subscribe: filter_expression is required in "
@@ -210,9 +206,10 @@ namespace {
         if (Nan::Has(cft_js, ep_lstr).ToChecked()) {
           const Local<Value> params_js_lv = Nan::Get(cft_js, ep_lstr).ToLocalChecked();
           if (params_js_lv->IsObject()) {
-            const Local<Object> params_js = params_js_lv->ToObject(Nan::GetCurrentContext()).ToLocalChecked();
-            const Nan::Maybe<uint32_t> len =
-              Nan::To<uint32_t>(Nan::Get(params_js, Nan::New<String>("length").ToLocalChecked()).ToLocalChecked());
+            const Local<Object> params_js =
+                params_js_lv->ToObject(Nan::GetCurrentContext()).ToLocalChecked();
+            const Nan::Maybe<uint32_t> len = Nan::To<uint32_t>(
+                Nan::Get(params_js, Nan::New<String>("length").ToLocalChecked()).ToLocalChecked());
             params.length(len.FromMaybe(0));
             for (uint32_t i = 0; i < params.length(); ++i) {
               const Nan::Utf8String pstr(Nan::Get(params_js, i).ToLocalChecked());
@@ -220,8 +217,7 @@ namespace {
             }
           }
         }
-        topic = dp->create_contentfilteredtopic(cft_name.c_str(), real_topic,
-                                                *filt, params);
+        topic = dp->create_contentfilteredtopic(cft_name.c_str(), real_topic, *filt, params);
         increment(cft_name);
       }
     }
@@ -277,8 +273,8 @@ namespace {
       }
     }
 
-    DDS::DataReader_var dr = sub->create_datareader(topic, dr_qos, listen,
-                                                    DDS::DATA_AVAILABLE_STATUS);
+    DDS::DataReader_var dr =
+        sub->create_datareader(topic, dr_qos, listen, DDS::DATA_AVAILABLE_STATUS);
     if (!dr) {
       Nan::ThrowError("subscribe: couldn't create DataReader");
       fci.GetReturnValue().SetUndefined();
@@ -293,7 +289,8 @@ namespace {
     fci.GetReturnValue().Set(obj);
   }
 
-  void subscribe_participant_topic(const Nan::FunctionCallbackInfo<Value>& fci) {
+  void subscribe_participant_topic(const Nan::FunctionCallbackInfo<Value>& fci)
+  {
     if (fci.Length() < 1) {
       Nan::ThrowTypeError("At least 1 argument required");
       fci.GetReturnValue().SetUndefined();
@@ -305,10 +302,9 @@ namespace {
       return;
     }
     void* const internal = Nan::GetInternalFieldPointer(fci.This(), 0);
-    DDS::DomainParticipant* const dp =
-      static_cast<DDS::DomainParticipant*>(internal);
+    DDS::DomainParticipant* const dp = static_cast<DDS::DomainParticipant*>(internal);
 
-    DDS::Subscriber_var bit_subscriber = dp->get_builtin_subscriber() ;
+    DDS::Subscriber_var bit_subscriber = dp->get_builtin_subscriber();
     DDS::DataReader_var dr =
         bit_subscriber->lookup_datareader(OpenDDS::DCPS::BUILT_IN_PARTICIPANT_TOPIC);
 
@@ -320,7 +316,7 @@ namespace {
     const DDS::DataReaderListener_var listen(npbitl);
 
     dr->set_listener(listen.in(), OpenDDS::DCPS::DEFAULT_STATUS_MASK);
-    
+
     fci.GetReturnValue().SetUndefined();
   }
 
@@ -357,13 +353,11 @@ namespace {
     }
 
     void* const internal = Nan::GetInternalFieldPointer(fci.This(), 0);
-    DDS::DomainParticipant* const dp =
-      static_cast<DDS::DomainParticipant*>(internal);
+    DDS::DomainParticipant* const dp = static_cast<DDS::DomainParticipant*>(internal);
 
     const Nan::Utf8String topic_name(fci[0]);
     const Nan::Utf8String topic_type(fci[1]);
-    OpenDDS::DCPS::TypeSupport* ts =
-      Registered_Data_Types->lookup(dp, *topic_type);
+    OpenDDS::DCPS::TypeSupport* ts = Registered_Data_Types->lookup(dp, *topic_type);
     if (!ts) {
       ts = Registered_Data_Types->lookup(0, *topic_type);
       if (!ts) {
@@ -374,8 +368,7 @@ namespace {
       Registered_Data_Types->register_type(dp, *topic_type, ts);
     }
 
-    DDS::Topic_var topic =
-      dp->create_topic(*topic_name, *topic_type, TOPIC_QOS_DEFAULT, 0, 0);
+    DDS::Topic_var topic = dp->create_topic(*topic_name, *topic_type, TOPIC_QOS_DEFAULT, 0, 0);
 
     Local<Object> qos_js;
     if (fci[2]->IsObject()) {
@@ -465,8 +458,10 @@ namespace {
     DDS::DataWriter* const dw = static_cast<DDS::DataWriter*>(dw_i);
 
     const void* const ts_i = Nan::GetInternalFieldPointer(fci.This(), 1);
-    const OpenDDS::DCPS::TypeSupport* const ts = static_cast<const OpenDDS::DCPS::TypeSupport*>(ts_i);
-    const OpenDDS::DCPS::ValueDispatcher* const vd = dynamic_cast<const OpenDDS::DCPS::ValueDispatcher* const>(ts);
+    const OpenDDS::DCPS::TypeSupport* const ts =
+        static_cast<const OpenDDS::DCPS::TypeSupport*>(ts_i);
+    const OpenDDS::DCPS::ValueDispatcher* const vd =
+        dynamic_cast<const OpenDDS::DCPS::ValueDispatcher* const>(ts);
 
     if (!vd) {
       Nan::ThrowError("register_instance: invalid typesupport attached to writer");
@@ -521,8 +516,10 @@ namespace {
     DDS::DataWriter* const dw = static_cast<DDS::DataWriter*>(dw_i);
 
     const void* const ts_i = Nan::GetInternalFieldPointer(fci.This(), 1);
-    const OpenDDS::DCPS::TypeSupport* const ts = static_cast<const OpenDDS::DCPS::TypeSupport*>(ts_i);
-    const OpenDDS::DCPS::ValueDispatcher* const vd = dynamic_cast<const OpenDDS::DCPS::ValueDispatcher* const>(ts);
+    const OpenDDS::DCPS::TypeSupport* const ts =
+        static_cast<const OpenDDS::DCPS::TypeSupport*>(ts_i);
+    const OpenDDS::DCPS::ValueDispatcher* const vd =
+        dynamic_cast<const OpenDDS::DCPS::ValueDispatcher* const>(ts);
 
     if (!vd) {
       Nan::ThrowError("write: invalid typesupport attached to writer");
@@ -599,8 +596,10 @@ namespace {
     DDS::DataWriter* const dw = static_cast<DDS::DataWriter*>(dw_i);
 
     const void* const ts_i = Nan::GetInternalFieldPointer(fci.This(), 1);
-    const OpenDDS::DCPS::TypeSupport* const ts = static_cast<const OpenDDS::DCPS::TypeSupport*>(ts_i);
-    const OpenDDS::DCPS::ValueDispatcher* const vd = dynamic_cast<const OpenDDS::DCPS::ValueDispatcher* const>(ts);
+    const OpenDDS::DCPS::TypeSupport* const ts =
+        static_cast<const OpenDDS::DCPS::TypeSupport*>(ts_i);
+    const OpenDDS::DCPS::ValueDispatcher* const vd =
+        dynamic_cast<const OpenDDS::DCPS::ValueDispatcher* const>(ts);
 
     if (!vd) {
       Nan::ThrowError("unregister_instance: invalid typesupport attached to writer");
@@ -659,8 +658,10 @@ namespace {
     DDS::DataWriter* const dw = static_cast<DDS::DataWriter*>(dw_i);
 
     const void* const ts_i = Nan::GetInternalFieldPointer(fci.This(), 1);
-    const OpenDDS::DCPS::TypeSupport* const ts = static_cast<const OpenDDS::DCPS::TypeSupport*>(ts_i);
-    const OpenDDS::DCPS::ValueDispatcher* const vd = dynamic_cast<const OpenDDS::DCPS::ValueDispatcher* const>(ts);
+    const OpenDDS::DCPS::TypeSupport* const ts =
+        static_cast<const OpenDDS::DCPS::TypeSupport*>(ts_i);
+    const OpenDDS::DCPS::ValueDispatcher* const vd =
+        dynamic_cast<const OpenDDS::DCPS::ValueDispatcher* const>(ts);
 
     if (!vd) {
       Nan::ThrowError("dispose: invalid typesupport attached to writer");
@@ -705,13 +706,12 @@ namespace {
   void unsubscribe_participant_topic(const Nan::FunctionCallbackInfo<Value>& fci)
   {
     void* const internal = Nan::GetInternalFieldPointer(fci.This(), 0);
-    DDS::DomainParticipant* const dp =
-      static_cast<DDS::DomainParticipant*>(internal);
+    DDS::DomainParticipant* const dp = static_cast<DDS::DomainParticipant*>(internal);
 
-    DDS::Subscriber_var bit_subscriber = dp->get_builtin_subscriber() ;
+    DDS::Subscriber_var bit_subscriber = dp->get_builtin_subscriber();
     DDS::DataReader_var dr =
         bit_subscriber->lookup_datareader(OpenDDS::DCPS::BUILT_IN_PARTICIPANT_TOPIC);
-        
+
     const DDS::DataReaderListener_var drl = dr->get_listener();
     NodePBITListener* const ndrl = dynamic_cast<NodePBITListener*>(drl.in());
     ndrl->shutdown();
@@ -737,7 +737,7 @@ namespace {
     const Local<Object> dpf_js = fci[0]->ToObject(Nan::GetCurrentContext()).ToLocalChecked();
     void* const internal = Nan::GetInternalFieldPointer(dpf_js, 0);
     const DDS::DomainParticipantFactory_var dpf =
-      static_cast<DDS::DomainParticipantFactory*>(internal);
+        static_cast<DDS::DomainParticipantFactory*>(internal);
     Nan::SetInternalFieldPointer(dpf_js, 0, 0);
 
     for (size_t i = 0; i < participants_.size(); ++i) {
@@ -760,9 +760,7 @@ namespace {
     }
     const Nan::Utf8String lib_js(fci[0]);
     const ACE_TString lib(ACE_TEXT_CHAR_TO_TCHAR(*lib_js));
-    const bool ok =
-      ACE_DLL_Manager::instance()->open_dll(lib.c_str(),
-                                            ACE_DEFAULT_SHLIB_MODE, 0);
+    const bool ok = ACE_DLL_Manager::instance()->open_dll(lib.c_str(), ACE_DEFAULT_SHLIB_MODE, 0);
     fci.GetReturnValue().Set(ok);
   }
 
@@ -772,7 +770,7 @@ namespace {
     Nan::SetMethod(target, "finalize", finalize);
     Nan::SetMethod(target, "load", load);
   }
-}
+} // namespace
 
 #ifdef ACE_LINUX
 #pragma GCC diagnostic push

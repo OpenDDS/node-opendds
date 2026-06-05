@@ -45,17 +45,12 @@ function init_opendds(opendds_addon) {
 }
 
 var opendds_addon = require('../lib/node-opendds'),
-  util = require('util'),
-  sleep = util.promisify(setTimeout),
   factory = init_opendds(opendds_addon),
   library = opendds_addon.load('idl/NodeJSTest'),
   participant = factory.create_participant(DOMAIN_ID, qos),
-  writer,
-  last_sample_id = 24,
-  dds_inf = 0x7fffffff,
-  infinite = { sec: dds_inf, nanosec: dds_inf };
+  writer;
 
-function log(label, object) {
+function _log(label, object) {
   console.log(label + ': ' + JSON.stringify(object, null, 2));
 }
 
@@ -96,21 +91,21 @@ function doStuff(writer) {
   sample2.id = 24;
   sample2.mu = { "$discriminator": "four", s: [ ["string1", "string2", "string3", "string4"], ["string5"] ] };
 
-  var handle = 0, retcode = 0;
+  var handle = 0;
 
   handle = writer.register_instance(sample1);
 
-  retcode = writer.write(sample1, handle);
+  writer.write(sample1, handle);
 
-  retcode = writer.write(sample2);
+  writer.write(sample2);
 
-  retcode = writer.wait_for_acknowledgments();
+  writer.wait_for_acknowledgments();
 
-  retcode = writer.dispose(sample1, handle);
+  writer.dispose(sample1, handle);
 
-  retcode = writer.unregister_instance(sample1, handle);
+  writer.unregister_instance(sample1, handle);
 
-  retcode = writer.unregister_instance(sample2);
+  writer.unregister_instance(sample2);
 }
 
 try {
