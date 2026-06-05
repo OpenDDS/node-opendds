@@ -7,7 +7,10 @@
     "test": "test"
   },
   "scripts": {
-    "install": "node-gyp rebuild"
+    "install": "node-gyp rebuild",
+    "test": "cd test && perl run_test.pl cpp2node && perl run_test.pl node2cpp && perl run_test.pl node2node",
+    "lint:js": "eslint .",
+    "lint:cpp": "clang-format --dry-run --Werror src/*.cpp src/*.h"
   },
   "repository": {
     "type": "git",
@@ -29,5 +32,8 @@
   "gypfile": true,
   "dependencies": {
     "nan": "^2.26.2"
+  },
+  "devDependencies": {
+    "eslint": "^9.16.0"
   }
 }

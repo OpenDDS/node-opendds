@@ -2,6 +2,9 @@ const fs = require('fs');
 const path = require('path');
 
 const dds = process.env['DDS_ROOT'];
+if (!dds) {
+    process.exit(0);
+}
 if (!fs.existsSync(path.join(dds, 'lib'))) {
     const prefix = path.dirname(path.dirname(dds));
     if (process.argv[2] === 'includes') {
