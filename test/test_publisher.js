@@ -91,9 +91,7 @@ function doStuff(writer) {
   sample2.id = 24;
   sample2.mu = { "$discriminator": "four", s: [ ["string1", "string2", "string3", "string4"], ["string5"] ] };
 
-  var handle = 0;
-
-  handle = writer.register_instance(sample1);
+  var handle = writer.register_instance(sample1);
 
   writer.write(sample1, handle);
 
