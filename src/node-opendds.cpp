@@ -21,6 +21,8 @@ using NodeOpenDDS::NodePBITListener;
 using NodeOpenDDS::NodeValueReader;
 using OpenDDS::DCPS::Data_Types_Register;
 
+// This comment will trigger CI
+
 namespace {
   std::vector<DDS::DomainParticipant_var> participants_;
   std::string cft_name("CFT000001"); // unique names for ContentFilteredTopic
