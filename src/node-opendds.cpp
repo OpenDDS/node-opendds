@@ -21,7 +21,7 @@ using NodeOpenDDS::NodePBITListener;
 using NodeOpenDDS::NodeValueReader;
 using OpenDDS::DCPS::Data_Types_Register;
 
-// This comment will trigger CI
+// This comment will trigger CI again
 
 namespace {
   std::vector<DDS::DomainParticipant_var> participants_;
