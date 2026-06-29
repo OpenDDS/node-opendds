@@ -86,7 +86,7 @@ jobs:
           echo "acetao_sha=$(cd ACE_TAO && git rev-parse HEAD)" >> $GITHUB_OUTPUT
           echo "mpc_sha=$(cd MPC && git rev-parse HEAD)" >> $GITHUB_OUTPUT
       - name: 'Cache OpenDDS Build'
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         id: cache-opendds
         with:
           path: |
